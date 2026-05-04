@@ -28,4 +28,10 @@ async function loadRequest() {
   claimCard.style.display = status === 'Ready for Pickup' ? '' : 'none';
 }
 
-document.addEventListener('DOMContentLoaded', async()=>{ showStatusMessage('pageMessage'); await loadRequest(); });
+document.addEventListener('DOMContentLoaded', async()=>{
+  showStatusMessage('pageMessage');
+  await loadRequest();
+  // Prevent selecting past dates for release date
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('releaseDateInput').min = today;
+});

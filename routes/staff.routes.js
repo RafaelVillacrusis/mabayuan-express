@@ -161,6 +161,12 @@ router.post('/api/staff/requests/:id/set-release', requireRole('staff'), async (
     const request = await getRequestById(requestId);
     if (!request) return res.status(404).send('Request not found.');
 
+    // Prevent past dates
+    const today = new Date().toISOString().slice(0, 10);
+    if (release_date < today) {
+      return res.status(400).json({ error: 'Release date cannot be in the past.' });
+    }
+
     await pool.query(
       `UPDATE requests
        SET release_date = $1, staff_notes = $2, status = 'Ready for Pickup', processed_by = $3, updated_at = NOW()
