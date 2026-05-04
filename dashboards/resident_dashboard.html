@@ -89,6 +89,24 @@
 </head>
 <body class="no-footer">
 
+  <!-- Delete Confirmation Modal -->
+  <div class="details-modal" id="deleteModal">
+    <div class="details-card" style="max-width:400px;">
+      <div class="details-head" style="background:linear-gradient(135deg,#8b1a22,#b03040);">
+        <h2>🗑 Delete Request</h2>
+        <button class="details-close" onclick="closeDeleteModal()">✕</button>
+      </div>
+      <div class="details-body" style="text-align:center;padding:28px 24px;">
+        <p style="font-size:15px;color:#2d1518;margin:0 0 8px;font-weight:600;">Are you sure you want to delete this request?</p>
+        <p style="font-size:13px;color:#9a7a7d;margin:0;">This cannot be undone.</p>
+      </div>
+      <div class="details-foot" style="justify-content:center;gap:12px;">
+        <button class="btn-delete" style="border-radius:10px;padding:11px 24px;font-size:14px;" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-view" style="border-radius:10px;padding:11px 24px;font-size:14px;background:#8b1a22;" id="confirmDeleteBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Request Details Modal -->
   <div class="details-modal" id="detailsModal">
     <div class="details-card">
@@ -241,15 +259,30 @@
       document.body.style.overflow = '';
     }
 
-    async function deleteRequest(requestId) {
-      if (!confirm('Are you sure you want to delete this pending request? This cannot be undone.')) return;
+    let _pendingDeleteId = null;
+
+    function deleteRequest(requestId) {
+      _pendingDeleteId = requestId;
+      document.getElementById('deleteModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+      _pendingDeleteId = null;
+      document.getElementById('deleteModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+      if (!_pendingDeleteId) return;
+      const requestId = _pendingDeleteId;
+      closeDeleteModal();
       const res = await fetch(`/api/resident/requests/${requestId}`, {
         method: 'DELETE', credentials: 'include'
       });
       const data = await res.json();
       if (data.ok) {
         closeDetails();
-        // Refresh dashboard
         await loadResidentStats();
         await loadResidentRequests();
         const msg = document.getElementById('pageMessage');
@@ -257,9 +290,16 @@
         msg.style.display = 'block';
         setTimeout(() => { msg.style.display = 'none'; }, 4000);
       } else {
-        alert(data.error || 'Could not delete request.');
+        const msg = document.getElementById('pageMessage');
+        msg.textContent = '✗ ' + (data.error || 'Could not delete request.');
+        msg.style.display = 'block';
+        setTimeout(() => { msg.style.display = 'none'; }, 4000);
       }
-    }
+    });
+
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
 
     // Close modal on backdrop click
     document.getElementById('detailsModal').addEventListener('click', function(e) {
