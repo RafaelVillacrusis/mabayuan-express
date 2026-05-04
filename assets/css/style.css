@@ -363,6 +363,7 @@ label.form-label { display:block; font-size:13px; font-weight:700; margin-bottom
   border:1px solid var(--border); border-radius:16px;
   padding:14px; background:var(--surface-soft);
   margin-bottom:14px; transition:var(--transition);
+  overflow:hidden;
 }
 .info-card:hover { border-color:var(--primary); }
 .info-card h3 { margin:0 0 10px; font-size:15px; }
@@ -370,10 +371,22 @@ label.form-label { display:block; font-size:13px; font-weight:700; margin-bottom
 .info-list div {
   display:flex; justify-content:space-between; gap:10px;
   align-items:flex-start; border-bottom:1px dashed var(--border); padding-bottom:8px;
+  min-width:0;
 }
-.info-list div span { display:block; font-size:12px; color:var(--muted); margin-bottom:3px; }
-.info-list div strong { font-size:14px; }
-.preview-box { border:1px dashed #c7bbbb; border-radius:16px; padding:12px; min-height:200px; background:#fff; }
+.info-list div span { display:block; font-size:12px; color:var(--muted); margin-bottom:3px; flex-shrink:0; }
+.info-list div strong {
+  font-size:14px;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  text-align:right;
+  min-width:0;
+}
+.info-card p {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  min-width: 0;
+}
 .preview-image { width:100%; max-height:60vh; object-fit:contain; border-radius:10px; }
 .disabled { opacity:.55; pointer-events:none; }
 
@@ -405,7 +418,7 @@ label.form-label { display:block; font-size:13px; font-weight:700; margin-bottom
 .dashboard-link-card p { margin:0; color:var(--muted); line-height:1.6; font-size:14px; }
 
 /* ── Audit filter ── */
-.audit-filter-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; align-items:end; }
+.audit-filter-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:end; }
 
 /* ══════════════════════════════════════════════════
    SYSTEM ADMIN LAYOUT
@@ -1134,3 +1147,4 @@ label.form-label { display:block; font-size:13px; font-weight:700; margin-bottom
     background: var(--primary);
   }
 }
+.preview-box { border:1px dashed #c7bbbb; border-radius:16px; padding:12px; min-height:200px; background:#fff; }
