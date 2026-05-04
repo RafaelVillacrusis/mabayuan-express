@@ -89,6 +89,11 @@ router.post('/api/resident/requests', requireResident, async (req, res) => {
     const residentId = req.session.resident.resident_id;
     const { document_id, contact_number, purpose, purpose_details } = req.body;
 
+    // Validate contact number — must be 11 digits starting with 09
+    if (contact_number && !/^09[0-9]{9}$/.test(contact_number.trim())) {
+      return res.status(400).send('Invalid contact number. Must be 11 digits starting with 09.');
+    }
+
     // Document
     const docResult = await pool.query(
       `SELECT document_id, document_name, price, processing_days
