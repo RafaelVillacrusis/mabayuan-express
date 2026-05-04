@@ -31,12 +31,35 @@ async function loadRequest() {
 document.addEventListener('DOMContentLoaded', async()=>{
   showStatusMessage('pageMessage');
   await loadRequest();
+
   // Prevent selecting past dates for release date
-  const today = new Date().toISOString().slice(0, 10);
+  const todayPHT = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const releaseDateInput = document.getElementById('releaseDateInput');
-  releaseDateInput.min = today;
+  releaseDateInput.min = todayPHT;
   // If pre-filled value is in the past, reset it to today
-  if (releaseDateInput.value && releaseDateInput.value < today) {
-    releaseDateInput.value = today;
+  if (releaseDateInput.value && releaseDateInput.value < todayPHT) {
+    releaseDateInput.value = todayPHT;
   }
+
+  // Intercept release form — validate date before submitting
+  document.getElementById('releaseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const chosenDate = releaseDateInput.value;
+    if (!chosenDate || chosenDate < todayPHT) {
+      alert(`Release date cannot be in the past. Please choose ${todayPHT} or later.`);
+      releaseDateInput.value = todayPHT;
+      return;
+    }
+    const formData = new FormData(this);
+    const res = await fetch(this.action, {
+      method: 'POST',
+      body: new URLSearchParams(formData)
+    });
+    if (res.ok) {
+      window.location.href = '/staff/dashboard?msg=Release+date+saved.';
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Could not save release date. Please try again.');
+    }
+  });
 });

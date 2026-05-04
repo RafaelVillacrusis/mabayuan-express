@@ -161,10 +161,11 @@ router.post('/api/staff/requests/:id/set-release', requireRole('staff'), async (
     const request = await getRequestById(requestId);
     if (!request) return res.status(404).send('Request not found.');
 
-    // Prevent past dates
-    const today = new Date().toISOString().slice(0, 10);
-    if (release_date < today) {
-      return res.status(400).json({ error: 'Release date cannot be in the past.' });
+    // Prevent past dates — compare as date strings (YYYY-MM-DD) in PHT (UTC+8)
+    const nowPHT = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const today = nowPHT.toISOString().slice(0, 10);
+    if (!release_date || release_date < today) {
+      return res.status(400).json({ error: `Release date cannot be in the past. Today is ${today}.` });
     }
 
     await pool.query(
