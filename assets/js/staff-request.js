@@ -33,5 +33,10 @@ document.addEventListener('DOMContentLoaded', async()=>{
   await loadRequest();
   // Prevent selecting past dates for release date
   const today = new Date().toISOString().slice(0, 10);
-  document.getElementById('releaseDateInput').min = today;
+  const releaseDateInput = document.getElementById('releaseDateInput');
+  releaseDateInput.min = today;
+  // If pre-filled value is in the past, reset it to today
+  if (releaseDateInput.value && releaseDateInput.value < today) {
+    releaseDateInput.value = today;
+  }
 });
