@@ -79,7 +79,7 @@ async function getResidentStats(residentId) {
     `
     SELECT
       COUNT(*) AS total_requests,
-      SUM(CASE WHEN status IN ('Pending Approval','Approved') THEN 1 ELSE 0 END) AS pending_count,
+      SUM(CASE WHEN status = 'Pending Approval' THEN 1 ELSE 0 END) AS pending_count,
       SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) AS processing_count,
       SUM(CASE WHEN status = 'Ready for Pickup' THEN 1 ELSE 0 END) AS ready_count,
       SUM(CASE WHEN status = 'Declined' THEN 1 ELSE 0 END) AS declined_count
@@ -100,7 +100,7 @@ async function getResidentRequests(residentId, filter = 'all') {
   const params = [residentId];
 
   if (filter === 'pending') {
-    sql += ` AND status IN ('Pending Approval','Approved')`;
+    sql += ` AND status = 'Pending Approval'`;
   } else if (filter === 'ready') {
     sql += ` AND status = 'Ready for Pickup'`;
   } else if (filter !== 'all') {
