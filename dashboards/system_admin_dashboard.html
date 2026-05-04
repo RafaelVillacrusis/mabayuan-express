@@ -44,9 +44,6 @@
       <button class="sa-nav-item" onclick="showSection('documents',this)">
         <span class="sa-icon">📄</span> Documents
       </button>
-      <a class="sa-nav-item" href="/system-admin/rbac">
-        <span class="sa-icon">👥</span> Personnel Users
-      </a>
       <div class="sa-nav-label">Tools</div>
       <a class="sa-nav-item" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
       <a class="sa-nav-item" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
@@ -170,58 +167,6 @@
       </div>
 
       <!-- ── USERS ── -->
-      <div class="sa-section" id="view-users">
-        <div class="admin-page-header">
-          <div><h1>Personnel Users</h1><p>Manage staff, captain, and admin accounts.</p></div>
-          <button class="sa-btn sa-btn-primary sa-btn-sm" onclick="toggleUserForm()">+ Add User</button>
-        </div>
-
-        <!-- Add User Form — inline panel matching screenshot style -->
-        <div id="userFormPanel" style="display:none;background:#fff;border:1px solid #e8d5d7;border-radius:16px;padding:24px 28px;margin-bottom:20px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #f0e4e5;">
-            <span style="font-size:1.2rem;color:var(--primary);">✦</span>
-            <h3 style="margin:0;font-size:16px;font-weight:700;color:#2d1518;">New User</h3>
-          </div>
-          <div id="dashUserError" style="display:none;background:#fdeaea;color:#dc2626;border:1px solid #f5c0c4;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;"></div>
-          <div class="sa-form-grid" style="margin-bottom:20px;">
-            <div>
-              <label class="form-label">Full name</label>
-              <input class="input" id="dashFullName" placeholder="Juan Dela Cruz" />
-            </div>
-            <div>
-              <label class="form-label">Role</label>
-              <select class="select" id="dashRole">
-                <option value="">Select role…</option>
-                <option value="staff">Staff</option>
-                <option value="captain">Captain</option>
-                <option value="system_admin">System Admin</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Email</label>
-              <input class="input" type="email" id="dashEmail" placeholder="user@example.com" />
-            </div>
-            <div>
-              <label class="form-label">Password</label>
-              <input class="input" type="password" id="dashPassword" placeholder="Min. 6 characters" />
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;">
-            <button class="sa-btn sa-btn-primary sa-btn-sm" onclick="submitDashUser()">Create User</button>
-            <button class="sa-btn sa-btn-ghost sa-btn-sm" onclick="toggleUserForm()">Cancel</button>
-          </div>
-        </div>
-
-        <div class="sa-panel">
-          <div class="sa-panel-header"><h2>👥 All Personnel</h2></div>
-          <div class="table-wrap">
-            <table class="sa-table">
-              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr></thead>
-              <tbody id="userRows"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -229,8 +174,8 @@
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/system-admin-dashboard.js"></script>
 <script>
-  const sectionTitles = { overview:'Dashboard', documents:'Document Configuration', users:'Personnel Users' };
-  const sectionIcons = { overview:'📊', documents:'📄', users:'👥' };
+  const sectionTitles = { overview:'Dashboard', documents:'Document Configuration' };
+  const sectionIcons = { overview:'📊', documents:'📄' };
 
   function showSection(name, btn) {
     document.querySelectorAll('.sa-section').forEach(el=>el.classList.remove('active'));

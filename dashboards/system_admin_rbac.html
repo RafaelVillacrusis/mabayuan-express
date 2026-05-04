@@ -163,6 +163,30 @@
       </div>
 
       <!-- User table -->
+      <div id="addUserInline" style="display:none;background:#fff;border:1px solid #e8d5d7;border-radius:16px;padding:24px 28px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #f0e4e5;">
+          <span style="font-size:1.2rem;color:var(--primary,#a64d57);">✦</span>
+          <h3 style="margin:0;font-size:16px;font-weight:700;color:#2d1518;">New User</h3>
+        </div>
+        <div id="addUserError" style="display:none;background:#fdeaea;color:#dc2626;border:1px solid #f5c0c4;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;"></div>
+        <div class="sa-form-grid" style="margin-bottom:20px;">
+          <div><label class="form-label">Full name</label><input class="input" id="newFullName" placeholder="Juan Dela Cruz" /></div>
+          <div><label class="form-label">Role</label>
+            <select class="select" id="newRole">
+              <option value="">Select role…</option>
+              <option value="staff">Staff</option>
+              <option value="captain">Captain</option>
+              <option value="system_admin">System Admin</option>
+            </select>
+          </div>
+          <div><label class="form-label">Email</label><input class="input" type="email" id="newEmail" placeholder="user@example.com" /></div>
+          <div><label class="form-label">Password</label><input class="input" type="password" id="newPassword" placeholder="Min. 6 characters" /></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="sa-btn sa-btn-primary sa-btn-sm" id="addUserSubmitBtn" onclick="submitAddUser()">Create User</button>
+          <button class="sa-btn sa-btn-ghost sa-btn-sm" onclick="closeAddUserModal()">Cancel</button>
+        </div>
+      </div>
       <div class="sa-panel">
         <div class="sa-panel-header">
           <h2>👤 Personnel User Access Management</h2>
@@ -316,59 +340,25 @@
   }
 </script>
 
-<!-- Add New User Modal -->
-<div class="details-modal" id="addUserModal" style="position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
-  <div style="background:#fff;border-radius:20px;width:min(480px,100%);box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden;">
-    <div style="padding:18px 22px;background:linear-gradient(135deg,var(--primary),#ba616a);color:#fff;display:flex;align-items:center;justify-content:space-between;">
-      <h2 style="margin:0;font-size:17px;">👤 Add New User</h2>
-      <button onclick="closeAddUserModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:grid;place-items:center;">✕</button>
-    </div>
-    <div style="padding:22px;">
-      <div id="addUserError" style="display:none;background:#fdeaea;color:#dc2626;border:1px solid #f5c0c4;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
-      <div style="display:grid;gap:14px;">
-        <div>
-          <label class="form-label">Full Name</label>
-          <input class="input" id="newFullName" placeholder="e.g. Juan dela Cruz" required />
-        </div>
-        <div>
-          <label class="form-label">Email</label>
-          <input class="input" type="email" id="newEmail" placeholder="e.g. juan@mabayuan.gov.ph" required />
-        </div>
-        <div>
-          <label class="form-label">Password</label>
-          <input class="input" type="password" id="newPassword" placeholder="At least 6 characters" required />
-        </div>
-        <div>
-          <label class="form-label">Role</label>
-          <select class="select" id="newRole">
-            <option value="staff">Staff</option>
-            <option value="captain">Captain</option>
-            <option value="system_admin">System Admin</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div style="padding:14px 22px;border-top:1px solid #f0e4e5;display:flex;gap:10px;justify-content:flex-end;background:#fdf8f8;">
-      <button onclick="closeAddUserModal()" class="btn btn-small btn-ghost">Cancel</button>
-      <button onclick="submitAddUser()" class="btn btn-small" id="addUserSubmitBtn">Create User</button>
-    </div>
-  </div>
-</div>
+<!-- Add New User — inline panel -->
+
 
 <script>
   function openAddUserModal() {
-    document.getElementById('addUserModal').style.display = 'flex';
-    document.getElementById('addUserError').style.display = 'none';
-    document.getElementById('newFullName').value = '';
-    document.getElementById('newEmail').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('newRole').value = 'staff';
-    document.body.style.overflow = 'hidden';
+    const panel = document.getElementById('addUserInline');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    if (panel.style.display === 'block') {
+      document.getElementById('addUserError').style.display = 'none';
+      document.getElementById('newFullName').value = '';
+      document.getElementById('newEmail').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('newRole').value = '';
+      document.getElementById('newFullName').focus();
+    }
   }
 
   function closeAddUserModal() {
-    document.getElementById('addUserModal').style.display = 'none';
-    document.body.style.overflow = '';
+    document.getElementById('addUserInline').style.display = 'none';
   }
 
   async function submitAddUser() {
@@ -408,10 +398,7 @@
     }
   }
 
-  // Close modal on backdrop click
-  document.getElementById('addUserModal').addEventListener('click', function(e) {
-    if (e.target === this) closeAddUserModal();
-  });
+
 </script>
 </body>
 </html>
