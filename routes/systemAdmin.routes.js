@@ -104,6 +104,11 @@ router.get('/api/system-admin/users', requireRole('system_admin'), async (req, r
 
 router.post('/api/system-admin/users', requireRole('system_admin'), async (req, res) => {
   const { full_name, email, password, role } = req.body;
+  if (!full_name || !email || !password || !role) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+  const { rows: existing } = await pool.query('SELECT user_id FROM users WHERE email=$1', [email]);
+  if (existing.length) return res.status(400).json({ error: 'Email already exists.' });
   const hash = await bcrypt.hash(password, 10);
   const { rows: [result] } = await pool.query(
     `INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING user_id`,
@@ -119,7 +124,7 @@ router.post('/api/system-admin/users', requireRole('system_admin'), async (req, 
     metadata: { email, role }
   });
   refreshRoleDashboards('system_admin');
-  res.redirect('/system-admin/dashboard?saved=1');
+  res.json({ ok: true, user_id: result.user_id });
 });
 
 router.post('/api/system-admin/users/:id/update-role', requireRole('system_admin'), async (req, res) => {

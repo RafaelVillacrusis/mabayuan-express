@@ -228,6 +228,15 @@
     const p = document.getElementById('userFormPanel');
     p.style.display = p.style.display==='none' ? 'block' : 'none';
   }
+
+  // Auto-open section from ?section= URL param (e.g. from sidebar links on sub-pages)
+  document.addEventListener('DOMContentLoaded', function() {
+    const section = new URLSearchParams(window.location.search).get('section');
+    if (section && ['documents','users','overview'].includes(section)) {
+      const btn = document.querySelector(`[onclick*="showSection('${section}"]`);
+      showSection(section, btn);
+    }
+  });
 </script>
 <script>
 (function(){
