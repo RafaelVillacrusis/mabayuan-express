@@ -44,9 +44,9 @@
       <button class="sa-nav-item" onclick="showSection('documents',this)">
         <span class="sa-icon">📄</span> Documents
       </button>
-      <button class="sa-nav-item" onclick="showSection('users',this)">
+      <a class="sa-nav-item" href="/system-admin/rbac">
         <span class="sa-icon">👥</span> Personnel Users
-      </button>
+      </a>
       <div class="sa-nav-label">Tools</div>
       <a class="sa-nav-item" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
       <a class="sa-nav-item" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
@@ -175,23 +175,43 @@
           <div><h1>Personnel Users</h1><p>Manage staff, captain, and admin accounts.</p></div>
           <button class="sa-btn sa-btn-primary sa-btn-sm" onclick="toggleUserForm()">+ Add User</button>
         </div>
-        <div class="sa-panel" id="userFormPanel" style="display:none;margin-bottom:20px;">
-          <div class="sa-panel-header"><h2>➕ New User</h2></div>
-          <div class="sa-panel-body">
-            <form action="/api/system-admin/users" method="POST">
-              <div class="sa-form-grid">
-                <div><label class="form-label">Full name</label><input class="input" name="full_name" required placeholder="Juan Dela Cruz"></div>
-                <div><label class="form-label">Role</label><select class="select" name="role" required><option value="">Select role…</option><option value="staff">Staff</option><option value="captain">Captain</option><option value="system_admin">System Admin</option></select></div>
-                <div><label class="form-label">Email</label><input class="input" type="email" name="email" required placeholder="user@example.com"></div>
-                <div><label class="form-label">Password</label><input class="input" type="password" name="password" required placeholder="Min. 6 characters"></div>
-              </div>
-              <div class="sa-form-actions">
-                <button class="sa-btn sa-btn-primary sa-btn-sm">Create User</button>
-                <button class="sa-btn sa-btn-ghost sa-btn-sm" type="button" onclick="toggleUserForm()">Cancel</button>
-              </div>
-            </form>
+
+        <!-- Add User Form — inline panel matching screenshot style -->
+        <div id="userFormPanel" style="display:none;background:#fff;border:1px solid #e8d5d7;border-radius:16px;padding:24px 28px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #f0e4e5;">
+            <span style="font-size:1.2rem;color:var(--primary);">✦</span>
+            <h3 style="margin:0;font-size:16px;font-weight:700;color:#2d1518;">New User</h3>
+          </div>
+          <div id="dashUserError" style="display:none;background:#fdeaea;color:#dc2626;border:1px solid #f5c0c4;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;"></div>
+          <div class="sa-form-grid" style="margin-bottom:20px;">
+            <div>
+              <label class="form-label">Full name</label>
+              <input class="input" id="dashFullName" placeholder="Juan Dela Cruz" />
+            </div>
+            <div>
+              <label class="form-label">Role</label>
+              <select class="select" id="dashRole">
+                <option value="">Select role…</option>
+                <option value="staff">Staff</option>
+                <option value="captain">Captain</option>
+                <option value="system_admin">System Admin</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Email</label>
+              <input class="input" type="email" id="dashEmail" placeholder="user@example.com" />
+            </div>
+            <div>
+              <label class="form-label">Password</label>
+              <input class="input" type="password" id="dashPassword" placeholder="Min. 6 characters" />
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="sa-btn sa-btn-primary sa-btn-sm" onclick="submitDashUser()">Create User</button>
+            <button class="sa-btn sa-btn-ghost sa-btn-sm" onclick="toggleUserForm()">Cancel</button>
           </div>
         </div>
+
         <div class="sa-panel">
           <div class="sa-panel-header"><h2>👥 All Personnel</h2></div>
           <div class="table-wrap">
@@ -226,7 +246,49 @@
   }
   function toggleUserForm() {
     const p = document.getElementById('userFormPanel');
-    p.style.display = p.style.display==='none' ? 'block' : 'none';
+    const isHidden = p.style.display === 'none';
+    p.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+      document.getElementById('dashFullName').value = '';
+      document.getElementById('dashEmail').value = '';
+      document.getElementById('dashPassword').value = '';
+      document.getElementById('dashRole').value = '';
+      document.getElementById('dashUserError').style.display = 'none';
+    }
+  }
+
+  async function submitDashUser() {
+    const full_name = document.getElementById('dashFullName').value.trim();
+    const email = document.getElementById('dashEmail').value.trim();
+    const password = document.getElementById('dashPassword').value;
+    const role = document.getElementById('dashRole').value;
+    const errorEl = document.getElementById('dashUserError');
+
+    if (!full_name || !email || !password || !role) {
+      errorEl.textContent = 'All fields are required.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (password.length < 6) {
+      errorEl.textContent = 'Password must be at least 6 characters.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const res = await fetch('/api/system-admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name, email, password, role })
+    });
+
+    if (res.ok) {
+      toggleUserForm();
+      loadUsers();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      errorEl.textContent = data.error || 'Failed to create user.';
+      errorEl.style.display = 'block';
+    }
   }
 
   // Auto-open section from ?section= URL param (e.g. from sidebar links on sub-pages)
