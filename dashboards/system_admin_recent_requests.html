@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recent Requests — Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+    .s-Pending{background:#fef3e2;color:#d97706}
+    .s-Approved,.s-Ready\.for\.Pickup{background:#dcfce7;color:#16a34a}
+    .s-Claimed{background:#e3eeff;color:#1b74d1}
+    .s-Declined,.s-Rejected{background:#fce8ea;color:#8b3d46}
+  </style>
+</head>
+<body>
+  <div class="sa-overlay" id="sidebarOverlay"></div>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <div class="sa-mark" style="background:transparent;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+      <h2>Mabayuan Express</h2>
+      <small>System Administrator</small>
+    </div>
+    <nav class="admin-sidebar-nav">
+      <div class="sa-nav-label">Overview</div>
+      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">📊</span> Dashboard</a>
+      <div class="sa-nav-label">Management</div>
+      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">📄</span> Documents</a>
+      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">👥</span> Personnel Users</a>
+      <div class="sa-nav-label">Tools</div>
+      <a class="sa-nav-item" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
+      <a class="sa-nav-item" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
+      <a class="sa-nav-item active" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Recent Requests</a>
+      <a class="sa-nav-item" href="/api/system-admin/backup"><span class="sa-icon">💾</span> Download Backup</a>
+    </nav>
+    <div class="admin-sidebar-footer">
+      <div class="sa-user" id="sidebarUser">System Administrator</div>
+      <form action="/auth/logout" method="POST">
+        <button class="sa-btn sa-btn-ghost" style="width:100%;justify-content:center">Logout</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <button class="sa-menu-toggle sa-menu-toggle--topbar" id="sidebarToggle" aria-label="Toggle menu">☰</button>
+      <div class="admin-topbar-title">
+        <div class="page-icon">📥</div>
+        Recent Requests
+      </div>
+      <div class="admin-topbar-right">
+        <div class="admin-topbar-user">
+          <div class="avatar" id="avatarInit">SA</div>
+          <span id="topbarUser">System Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-page-header">
+        <div>
+          <h1>Recent Requests</h1>
+          <p>Monitor all incoming document requests and their current status.</p>
+        </div>
+        <a href="/system-admin/dashboard" class="sa-btn sa-btn-ghost sa-btn-sm">← Back to Dashboard</a>
+      </div>
+
+      <div class="sa-panel">
+        <div class="sa-panel-header">
+          <h2>📋 Request Activity</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="sa-table">
+            <thead>
+              <tr>
+                <th>Transaction No.</th>
+                <th>Resident</th>
+                <th>Document</th>
+                <th>Status</th>
+                <th>Suggested Release</th>
+              </tr>
+            </thead>
+            <tbody id="requestRows">
+              <tr><td colspan="5" class="empty-state">Loading requests…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common.js"></script>
+<script src="/assets/js/system-admin-recent-requests.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const me = await fetch('/api/system-admin/me').then(r => r.json());
+    document.getElementById('sidebarUser').textContent = me.full_name;
+    document.getElementById('topbarUser').textContent = me.full_name;
+    document.getElementById('avatarInit').textContent = me.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  });
+</script>
+<script>
+(function(){
+  // Block back button — replace history so back goes nowhere useful
+  history.pushState(null, "", window.location.href);
+  window.addEventListener("popstate", function() {
+    history.pushState(null, "", window.location.href);
+  });
+  // If page is restored from browser cache (bfcache), verify session is still alive
+  window.addEventListener("pageshow", function(e) {
+    if (e.persisted) {
+      fetch("/api/session-check", { credentials: "include" })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
+    }
+  });
+})();
+</script>
+<script>
+(function(){
+  var toggle = document.getElementById('sidebarToggle');
+  var sidebar = document.querySelector('.admin-sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (!toggle || !sidebar) return;
+  function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); toggle.textContent='✕'; }
+  function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); toggle.textContent='☰'; }
+  toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+  overlay.addEventListener('click', closeSidebar);
+  // Close on nav item click (mobile)
+  document.querySelectorAll('.sa-nav-item').forEach(function(item){
+    item.addEventListener('click', function(){ if(window.innerWidth <= 920) closeSidebar(); });
+  });
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>

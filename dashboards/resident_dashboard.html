@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resident Dashboard</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    /* Details Modal */
+    .details-modal {
+      position:fixed;inset:0;z-index:999;
+      background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;
+      backdrop-filter:blur(4px);
+    }
+    .details-modal.open { display:flex; animation:dm-fade .2s ease both; }
+    @keyframes dm-fade { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+    .details-card {
+      background:#fff;border-radius:20px;
+      width:min(560px,100%);max-height:88vh;
+      display:flex;flex-direction:column;
+      box-shadow:0 24px 60px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .details-head {
+      padding:18px 22px;
+      background:linear-gradient(135deg,var(--primary),#ba616a);
+      color:#fff;display:flex;align-items:center;
+      justify-content:space-between;flex-shrink:0;
+    }
+    .details-head h2 { margin:0;font-size:17px; }
+    .details-close {
+      background:rgba(255,255,255,.2);border:none;color:#fff;
+      width:32px;height:32px;border-radius:50%;font-size:18px;
+      cursor:pointer;display:grid;place-items:center;transition:.2s;
+    }
+    .details-close:hover { background:rgba(255,255,255,.35); }
+    .details-body { padding:22px;overflow-y:auto;flex:1; }
+    .details-row {
+      display:flex;justify-content:space-between;gap:12px;
+      padding:10px 0;border-bottom:1px solid #f0e4e5;
+      font-size:14px;
+    }
+    .details-row:last-child { border-bottom:none; }
+    .details-row .dr-label { color:#9a7a7d;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0; }
+    .details-row .dr-val { color:#2d1518;font-weight:500;text-align:right;word-break:break-word; }
+    .details-foot {
+      padding:14px 22px;border-top:1px solid #f0e4e5;
+      display:flex;gap:10px;background:#fdf8f8;flex-shrink:0;
+    }
+    .btn-delete {
+      background:#fce8ea;color:#8b1a22;border:1.5px solid #f5c0c4;
+      border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;
+      cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;
+    }
+    .btn-delete:hover { background:#f5c0c4; }
+    .btn-view {
+      background:var(--primary);color:#fff;border:none;
+      border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;
+      cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;
+    }
+    .btn-view:hover { background:var(--primary-dark); }
+    /* Only show Actions column on pending */
+    .actions-col { white-space:nowrap; }
+
+    /* Declined filter card accent */
+    .filter-card--declined { border-color: #f5c0c4 !important; }
+    .filter-card--declined .filter-value { color: var(--danger, #dc2626); }
+    .filter-card--declined.active { border-color: var(--danger, #dc2626) !important; background: #fff5f5; }
+
+    /* Processing filter card accent */
+    .filter-card--processing { border-color: #a8c8f0 !important; }
+    .filter-card--processing .filter-value { color: #0f4fa8; }
+    .filter-card--processing.active { border-color: #0f4fa8 !important; background: #e7f2ff; }
+
+    /* Processing status pill */
+    .status-processing { background: #e7f2ff; color: #0f4fa8; }
+
+    /* Pending approval pill */
+    .status-pending { background: #fff1d8; color: #8a5a00; }
+  </style>
+</head>
+<body class="no-footer">
+
+  <!-- Request Details Modal -->
+  <div class="details-modal" id="detailsModal">
+    <div class="details-card">
+      <div class="details-head">
+        <h2>📄 Request Details</h2>
+        <button class="details-close" onclick="closeDetails()">✕</button>
+      </div>
+      <div class="details-body" id="detailsBody">
+        <p style="text-align:center;color:#9a7a7d">Loading…</p>
+      </div>
+      <div class="details-foot" id="detailsFoot"></div>
+    </div>
+  </div>
+
+  <div class="page-shell">
+    <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Resident Dashboard</div><small>Track your requests</small></div>
+      </div>
+      <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
+      <nav class="top-links" id="topNav">
+        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+        
+        <a href="/resident/dashboard">Dashboard</a>
+        <a href="/resident/request">Request Document</a>
+        <a href="/resident/inbox" style="position:relative">Messages <span class="notif-badge" id="inboxBadge" style="display:none">0</span></a>
+        <form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
+      </nav>
+    </header>
+    <main class="container content-area">
+      <div class="dashboard-header">
+        <div><h1>Hello, <span id="residentName">Resident</span></h1><p>View status, suggested release date, and latest notifications.</p></div>
+        <div class="notif-wrap">
+          <button type="button" class="icon-button" id="notifButton">🔔 <span class="notif-badge" id="notifCount">0</span></button>
+          <div class="notif-dropdown" id="notifDropdown">
+            <button class="notif-close-btn" style="width:100%;padding:10px;background:#fdf6f7;border:1px solid #f0e4e5;border-radius:10px;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:center" onclick="closeNotif()">✕ Close</button>
+            <div id="notifList"></div></div>
+        </div>
+      </div>
+      <div class="page-message" id="pageMessage"></div>
+
+      <!-- Re-upload ID banner — shown only when valid_id_path is missing -->
+      <div id="reuploadBanner" style="display:none;background:#fdf4dc;border:1px solid #e8d48a;border-radius:12px;padding:14px 18px;margin-bottom:1rem;display:none;">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <span style="font-size:1.4rem;">⚠️</span>
+          <div style="flex:1;">
+            <div style="font-weight:700;color:#7a5c00;margin-bottom:4px;">Your Valid ID needs to be re-uploaded</div>
+            <div style="font-size:0.87rem;color:#7a5c00;margin-bottom:10px;">Your previously uploaded ID was lost due to a server update. Please re-upload your valid ID so staff can verify your account.</div>
+            <label style="display:inline-block;cursor:pointer;">
+              <span id="reuploadBtn" style="background:#d4a843;color:#fff;border-radius:8px;padding:7px 16px;font-size:0.85rem;font-weight:700;cursor:pointer;">📎 Upload Valid ID</span>
+              <input type="file" id="reuploadFile" accept="image/*,.pdf" style="display:none;" onchange="submitReupload(this)" />
+            </label>
+            <span id="reuploadStatus" style="margin-left:10px;font-size:0.83rem;color:#7a5c00;"></span>
+          </div>
+        </div>
+      </div>
+      <section class="filter-grid">
+        <div class="filter-card active" data-status="all"><div class="filter-label">Total Requests</div><div class="filter-value" id="statTotal">0</div></div>
+        <div class="filter-card" data-status="pending"><div class="filter-label">Pending</div><div class="filter-value" id="statPending">0</div></div>
+        <div class="filter-card filter-card--processing" data-status="processing"><div class="filter-label">Processing</div><div class="filter-value" id="statProcessing">0</div></div>
+        <div class="filter-card" data-status="ready"><div class="filter-label">Ready for Pickup</div><div class="filter-value" id="statReady">0</div></div>
+        <div class="filter-card filter-card--declined" data-status="declined"><div class="filter-label">Declined</div><div class="filter-value" id="statDeclined">0</div></div>
+      </section>
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+          <h2 style="margin:0">My Requests</h2>
+          <a class="btn btn-small" href="/resident/request">+ Request a document</a>
+        </div>
+        <div class="table-wrap" style="margin-top:16px;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Transaction No.</th>
+                <th>Document</th>
+                <th>Price</th>
+                <th>Suggested Release</th>
+                <th>Release Date</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requestRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/assets/js/common.js"></script>
+  <script src="/assets/js/resident-dashboard.js"></script>
+  <script>
+    // ── Details Modal ──────────────────────────────────────────
+    function openDetails(requestId, isPending) {
+      document.getElementById('detailsModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('detailsBody').innerHTML = '<p style="text-align:center;padding:20px;color:#9a7a7d">Loading…</p>';
+      document.getElementById('detailsFoot').innerHTML = '';
+      fetch(`/api/resident/requests/${requestId}`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(data => renderDetails(data, isPending))
+        .catch(() => {
+          document.getElementById('detailsBody').innerHTML = '<p style="color:#dc2626;text-align:center">Failed to load details.</p>';
+        });
+    }
+
+    function renderDetails(d, isPending) {
+      const rawStatus = (d.status || '').trim();
+      const displayStatus = rawStatus.toLowerCase() === 'approved' ? 'Processing' : rawStatus;
+      const statusClass = displayStatus.toLowerCase().replace(/[^a-z]+/g,'-');
+      document.getElementById('detailsBody').innerHTML = `
+        <div class="details-row"><span class="dr-label">Transaction No.</span><span class="dr-val" style="font-family:monospace">${escapeHtml(d.transaction_no||'-')}</span></div>
+        <div class="details-row"><span class="dr-label">Document</span><span class="dr-val">${escapeHtml(d.document_name||'-')}</span></div>
+        <div class="details-row"><span class="dr-label">Status</span><span class="dr-val"><span class="status-pill status-${statusClass}">${escapeHtml(displayStatus)}</span></span></div>
+        <div class="details-row"><span class="dr-label">Price</span><span class="dr-val">${peso(d.price_at_request)}</span></div>
+        <div class="details-row"><span class="dr-label">Purpose</span><span class="dr-val">${escapeHtml(d.purpose||'-')}</span></div>
+        <div class="details-row"><span class="dr-label">Contact No.</span><span class="dr-val">${escapeHtml(d.contact_number||'-')}</span></div>
+        <div class="details-row"><span class="dr-label">Suggested Release</span><span class="dr-val">${formatDate(d.suggested_release_date)}</span></div>
+        <div class="details-row"><span class="dr-label">Release Date</span><span class="dr-val">${formatDate(d.release_date)}</span></div>
+        <div class="details-row"><span class="dr-label">Staff Notes</span><span class="dr-val">${escapeHtml(d.staff_notes||'None')}</span></div>
+        <div class="details-row"><span class="dr-label">Captain Notes</span><span class="dr-val">${escapeHtml(d.captain_notes||'None')}</span></div>
+        <div class="details-row"><span class="dr-label">Date Submitted</span><span class="dr-val">${formatDateTime(d.created_at)}</span></div>
+        <div class="details-row"><span class="dr-label">Last Updated</span><span class="dr-val">${formatDateTime(d.updated_at||d.created_at)}</span></div>
+      `;
+      const foot = document.getElementById('detailsFoot');
+      if (isPending) {
+        foot.innerHTML = `
+          <button class="btn-delete" onclick="deleteRequest(${d.request_id})">🗑 Delete Request</button>
+          <button class="btn-view" onclick="closeDetails()" style="margin-left:auto">Close</button>
+        `;
+      } else {
+        foot.innerHTML = `<button class="btn-view" style="width:100%;justify-content:center" onclick="closeDetails()">Close</button>`;
+      }
+    }
+
+    function closeDetails() {
+      document.getElementById('detailsModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    async function deleteRequest(requestId) {
+      if (!confirm('Are you sure you want to delete this pending request? This cannot be undone.')) return;
+      const res = await fetch(`/api/resident/requests/${requestId}`, {
+        method: 'DELETE', credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeDetails();
+        // Refresh dashboard
+        await loadResidentStats();
+        await loadResidentRequests();
+        const msg = document.getElementById('pageMessage');
+        msg.textContent = '✓ Request deleted successfully.';
+        msg.style.display = 'block';
+        setTimeout(() => { msg.style.display = 'none'; }, 4000);
+      } else {
+        alert(data.error || 'Could not delete request.');
+      }
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('detailsModal').addEventListener('click', function(e) {
+      if (e.target === this) closeDetails();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetails(); });
+  </script>
+  <script>
+  (function(){
+    history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", function() {
+      history.pushState(null, "", window.location.href);
+    });
+    window.addEventListener("pageshow", function(e) {
+      if (e.persisted) {
+        fetch("/api/session-check", { credentials: "include" })
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if (!d.ok) window.location.replace(d.redirect || "/resident/login"); })
+          .catch(function(){ window.location.replace("/resident/login"); });
+      }
+    });
+  })();
+  </script>
+<script>
+/* ── Mobile hamburger nav ── */
+function openNav() {
+  document.getElementById('topNav').classList.add('open');
+  document.getElementById('navOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeNav() {
+  var nav = document.getElementById('topNav');
+  var overlay = document.getElementById('navOverlay');
+  if (nav) nav.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeNotif() {
+  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
+    d.classList.remove('show');
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  // Close drawer when any nav link is tapped
+  document.querySelectorAll('.top-links a').forEach(function(a) {
+    a.addEventListener('click', closeNav);
+  });
+
+  // Check if resident's valid ID is missing and show re-upload banner
+  fetch('/api/resident/me')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.valid_id_path === 'missing:re-upload-required') {
+        document.getElementById('reuploadBanner').style.display = 'block';
+      }
+    })
+    .catch(() => {});
+});
+
+async function submitReupload(input) {
+  if (!input.files || !input.files[0]) return;
+  const statusEl = document.getElementById('reuploadStatus');
+  statusEl.textContent = 'Uploading...';
+
+  const formData = new FormData();
+  formData.append('valid_id', input.files[0]);
+
+  try {
+    const res = await fetch('/api/resident/reupload-id', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('reuploadBanner').style.display = 'none';
+      statusEl.textContent = '';
+      // Show success message
+      const msg = document.getElementById('pageMessage');
+      msg.textContent = '✅ Valid ID re-uploaded successfully. Thank you!';
+      msg.style.cssText = 'background:#e6f9ee;color:#1a7a3c;border:1px solid #a3d9b1;border-radius:10px;padding:10px 16px;margin-bottom:1rem;font-weight:600;';
+      setTimeout(() => { msg.textContent = ''; msg.style.cssText = ''; }, 5000);
+    } else {
+      statusEl.textContent = '❌ ' + (data.error || 'Upload failed. Try again.');
+    }
+  } catch (err) {
+    statusEl.textContent = '❌ Upload failed. Please try again.';
+  }
+}
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>

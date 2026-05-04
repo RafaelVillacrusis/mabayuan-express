@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resident Register — Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .pw-wrap { position:relative; }
+    .pw-wrap input { padding-right:44px; width:100%; box-sizing:border-box; }
+    .toggle-pw { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;padding:0;font-size:18px;line-height:1; }
+    .error-banner { background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:14px;display:none; }
+    .pw-strength { margin-top:6px;font-size:12px; }
+    .pw-rule { display:flex;align-items:center;gap:6px;color:#94a3b8;transition:color .2s; }
+    .pw-rule.met { color:#16a34a; }
+    .pw-rule::before { content:'○';font-size:10px; }
+    .pw-rule.met::before { content:'●'; }
+
+    /* Terms checkbox */
+    .terms-row {
+      display:flex;align-items:flex-start;gap:12px;
+      background:#fdf8f8;border:1.5px solid #e8d5d7;
+      border-radius:12px;padding:14px 16px;margin-bottom:4px;
+      cursor:pointer;transition:border-color .2s;
+    }
+    .terms-row:hover { border-color:var(--primary); }
+    .terms-row input[type="checkbox"] {
+      width:20px;height:20px;flex-shrink:0;cursor:pointer;
+      accent-color:var(--primary);margin-top:2px;
+    }
+    .terms-row label { cursor:pointer;font-size:14px;line-height:1.5;color:#374151; }
+    .terms-row label a { color:var(--primary);font-weight:700;text-decoration:underline; }
+
+    /* Modal */
+    .tc-modal {
+      position:fixed;inset:0;z-index:999;
+      background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;
+      backdrop-filter:blur(4px);
+    }
+    .tc-modal.open { display:flex;animation:fadeIn .2s ease both; }
+    .tc-modal-card {
+      background:#fff;border-radius:20px;
+      width:min(640px,100%);max-height:85vh;
+      display:flex;flex-direction:column;
+      box-shadow:0 24px 60px rgba(0,0,0,.25);
+      animation:scaleIn .25s cubic-bezier(0.4,0,0.2,1) both;
+      overflow:hidden;
+    }
+    .tc-modal-head {
+      padding:20px 24px;border-bottom:1px solid #f0e4e5;
+      display:flex;align-items:center;justify-content:space-between;
+      background:linear-gradient(135deg,var(--primary),#ba616a);color:#fff;
+      flex-shrink:0;
+    }
+    .tc-modal-head h2 { margin:0;font-size:18px; }
+    .tc-modal-close {
+      background:rgba(255,255,255,.2);border:none;color:#fff;
+      width:34px;height:34px;border-radius:50%;font-size:20px;
+      cursor:pointer;display:grid;place-items:center;transition:.2s;
+    }
+    .tc-modal-close:hover { background:rgba(255,255,255,.35); }
+    .tc-modal-body {
+      padding:24px;overflow-y:auto;flex:1;
+      line-height:1.7;font-size:14px;color:#374151;
+    }
+    .tc-modal-body h3 { color:var(--primary);margin:20px 0 8px;font-size:15px; }
+    .tc-modal-body h3:first-child { margin-top:0; }
+    .tc-modal-body ul { padding-left:20px;margin:8px 0; }
+    .tc-modal-body li { margin-bottom:6px; }
+    .tc-modal-foot {
+      padding:16px 24px;border-top:1px solid #f0e4e5;
+      display:flex;gap:10px;flex-shrink:0;background:#fdf8f8;
+    }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes scaleIn { from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)} }
+  
+  </style>
+</head>
+<body>
+  <!-- Terms & Conditions Modal -->
+  <div class="tc-modal" id="tcModal" role="dialog" aria-modal="true" aria-labelledby="tcTitle">
+    <div class="tc-modal-card">
+      <div class="tc-modal-head">
+        <h2 id="tcTitle">📋 Terms &amp; Conditions</h2>
+        <button class="tc-modal-close" onclick="closeTCModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="tc-modal-body">
+        <h3>1. Acceptance of Terms</h3>
+        <p>By registering and using Mabayuan Express, you agree to comply with and be bound by these Terms and Conditions. If you do not agree, please do not register.</p>
+
+        <h3>2. Accuracy of Information</h3>
+        <p>You agree to provide accurate, current, and complete personal information during registration. Submitting false, misleading, or incomplete information may result in:</p>
+        <ul>
+          <li>Rejection of your document requests</li>
+          <li>Suspension or termination of your account</li>
+          <li>Referral to appropriate barangay authorities</li>
+        </ul>
+
+        <h3>3. Valid ID Requirement</h3>
+        <p>You must upload a valid government-issued ID during registration. Accepted IDs include: PhilSys ID, Passport, Driver's License, SSS/GSIS ID, Voter's ID, and PRC ID. The ID must be clear, readable, and currently valid.</p>
+
+        <h3>4. Account Approval</h3>
+        <p>Your account is subject to approval by barangay staff. You will not be able to log in or submit requests until your account has been reviewed and approved. Approval is not guaranteed and is at the discretion of the barangay.</p>
+
+        <h3>5. Document Requests</h3>
+        <ul>
+          <li>You may only request documents for yourself unless authorized otherwise.</li>
+          <li>Processing times and fees are determined by the barangay and may change without notice.</li>
+          <li>Requests may be declined if submitted information does not match barangay records.</li>
+          <li>Approved documents must be claimed within the designated period.</li>
+        </ul>
+
+        <h3>6. Privacy &amp; Data Use</h3>
+        <p>Your personal information is collected solely for the purpose of processing barangay document requests in compliance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>. Your data will not be sold or shared with third parties without your consent, except as required by law.</p>
+
+        <h3>7. Account Security</h3>
+        <p>You are responsible for maintaining the confidentiality of your login credentials. You agree to notify the barangay office immediately of any unauthorized use of your account.</p>
+
+        <h3>8. Prohibited Activities</h3>
+        <ul>
+          <li>Creating multiple accounts for the same person</li>
+          <li>Attempting to access another resident's account or data</li>
+          <li>Submitting fraudulent documents or information</li>
+          <li>Using the system for any unlawful purpose</li>
+        </ul>
+
+        <h3>9. Modifications</h3>
+        <p>Barangay Mabayuan reserves the right to modify these terms at any time. Continued use of the system after changes constitutes acceptance of the updated terms.</p>
+
+        <h3>10. Contact</h3>
+        <p>For questions or concerns, please visit the Barangay Mabayuan Hall or contact the barangay secretary during office hours.</p>
+      </div>
+      <div class="tc-modal-foot">
+        <button class="btn" style="flex:1" onclick="acceptTerms()">✓ I Agree to the Terms</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="closeTCModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Barangay Resident Registration</div><small>Sign up for Mabayuan Express Documents</small></div>
+      </div>
+      <div class="top-links"><a class="btn btn-small btn-ghost" href="/">Back to home</a></div>
+      <a class="topbar-back-btn" href="/" onclick="if(history.length>1){event.preventDefault();history.back()}" aria-label="Go back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></a>
+    </header>
+    <main class="container auth-wrapper">
+      <section class="form-card" style="width:min(920px,100%);padding:24px;">
+        <div class="error-banner" id="errorBanner"></div>
+        <form action="/auth/resident/register" method="POST" enctype="multipart/form-data" id="regForm" autocomplete="off">
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Last name *</label>
+              <input class="input" name="last_name" required placeholder="Dela Cruz">
+            </div>
+            <div>
+              <label class="form-label">First name *</label>
+              <input class="input" name="first_name" required placeholder="Juan">
+            </div>
+            <div>
+              <label class="form-label">Middle name</label>
+              <input class="input" name="middle_name" placeholder="Santos">
+            </div>
+            <div>
+              <label class="form-label">Birth date</label>
+              <input class="input" type="date" name="birth_date">
+            </div>
+            <div class="full">
+              <label class="form-label">Email address *</label>
+              <input class="input" type="email" name="email" id="emailField" required autocomplete="off"
+                placeholder="juan@email.com"
+                oninput="validateEmail(this)"
+                onblur="validateEmail(this)">
+              <div class="field-hint" id="emailHint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px">
+                Please enter a valid email address (must contain @).
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:7px;margin-top:7px;background:#fdf4dc;border:1px solid #e8d48a;border-radius:8px;padding:8px 11px;box-sizing:border-box;width:100%;">
+                <span style="font-size:14px;line-height:1.5;flex-shrink:0;">⚠️</span>
+                <span style="font-size:12px;color:#7a5c00;line-height:1.6;word-break:break-word;">
+                  Use a <strong>verified Gmail account</strong> you have access to.
+                  Account approval and important notifications will be sent to this email.
+                </span>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Phone number *</label>
+              <input class="input" name="phone_number" id="phoneField" required
+                placeholder="09XXXXXXXXX" maxlength="11"
+                inputmode="numeric" pattern="09[0-9]{9}"
+                oninput="sanitizePhone(this)"
+                onblur="validatePhone(this)">
+              <div class="field-hint" id="phoneHint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px">
+                Phone number must be 11 digits and start with 09.
+              </div>
+            </div>
+            <div class="full">
+              <label class="form-label">Address *</label>
+              <input class="input" name="address" required placeholder="Street, Barangay Mabayuan, Olongapo City">
+            </div>
+            <div>
+              <label class="form-label">Suffix</label>
+              <input class="input" name="suffix" placeholder="Jr., Sr., III…">
+            </div>
+            <div>
+              <label class="form-label">Valid ID <span style="color:#64748b;font-size:12px">(image or PDF, max 5MB)</span> *</label>
+              <input class="input" type="file" name="valid_id" accept="image/*,.pdf" required>
+            </div>
+            <div>
+              <label class="form-label">Password *</label>
+              <div class="pw-wrap">
+                <input class="input" type="password" name="password" id="pwField" required autocomplete="new-password" oninput="checkStrength(this.value)" placeholder="Create a strong password">
+                <button class="toggle-pw" type="button" onclick="togglePw('pwField',this)">👁</button>
+              </div>
+              <div class="pw-strength">
+                <div class="pw-rule" id="rule-len">At least 6 characters</div>
+                <div class="pw-rule" id="rule-letter">Contains a letter</div>
+                <div class="pw-rule" id="rule-num">Contains a number</div>
+                <div class="pw-rule" id="rule-special">Contains a special character (!@#$%...)</div>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Confirm password *</label>
+              <div class="pw-wrap">
+                <input class="input" type="password" name="confirm_password" id="cpwField" required autocomplete="new-password" placeholder="Repeat your password">
+                <button class="toggle-pw" type="button" onclick="togglePw('cpwField',this)">👁</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terms & Conditions Checkbox -->
+          <div style="margin-top:20px;margin-bottom:8px">
+            <div class="terms-row" onclick="toggleTermsCheck(event)">
+              <input type="checkbox" id="termsCheck" name="terms" required onclick="event.stopPropagation();updateTermsState()">
+              <label for="termsCheck" onclick="event.stopPropagation()">
+                I have read and agree to the
+                <a href="#" onclick="event.preventDefault();event.stopPropagation();openTCModal()">Terms and Conditions</a>
+                of Mabayuan Express. I confirm that all information I provided is accurate and truthful.
+              </label>
+            </div>
+            <p style="font-size:12px;color:#9a7a7d;margin:6px 0 0 4px">You must read and accept the Terms and Conditions before registering.</p>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" style="width:100%" id="submitBtn" disabled>Create Account</button>
+          </div>
+          <p class="auth-note">Already registered? <a href="/resident/login" style="color:var(--primary)">Proceed to login</a></p>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="/assets/js/common.js"></script>
+  <script>
+    function togglePw(id, btn) {
+      const inp = document.getElementById(id);
+      const hidden = inp.type === 'password';
+      inp.type = hidden ? 'text' : 'password';
+      btn.textContent = hidden ? '🙈' : '👁';
+    }
+    function checkStrength(val) {
+      toggle('rule-len', val.length >= 6);
+      toggle('rule-letter', /[a-zA-Z]/.test(val));
+      toggle('rule-num', /[0-9]/.test(val));
+      toggle('rule-special', /[^a-zA-Z0-9]/.test(val));
+    }
+    function toggle(id, met) { document.getElementById(id).classList.toggle('met', met); }
+
+    // Terms modal
+    function openTCModal() {
+      document.getElementById('tcModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeTCModal() {
+      document.getElementById('tcModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function acceptTerms() {
+      document.getElementById('termsCheck').checked = true;
+      updateTermsState();
+      closeTCModal();
+    }
+    function toggleTermsCheck(e) {
+      const cb = document.getElementById('termsCheck');
+      if (e.target === cb) return;
+      cb.checked = !cb.checked;
+      updateTermsState();
+    }
+    function updateTermsState() {
+      const checked = document.getElementById('termsCheck').checked;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = !checked;
+      btn.style.opacity = checked ? '1' : '0.5';
+      btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('tcModal').addEventListener('click', function(e) {
+      if (e.target === this) closeTCModal();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeTCModal();
+    });
+
+    // Form submit validation
+    document.getElementById('regForm').addEventListener('submit', function(e) {
+      const pw = document.getElementById('pwField').value;
+      const cpw = document.getElementById('cpwField').value;
+      const banner = document.getElementById('errorBanner');
+      const terms = document.getElementById('termsCheck').checked;
+
+      // Phone check
+      const phone = document.getElementById('phoneField').value;
+      if (!/^09[0-9]{9}$/.test(phone)) {
+        e.preventDefault();
+        banner.textContent = 'Phone number must be 11 digits and start with 09.';
+        banner.style.display = 'block';
+        document.getElementById('phoneField').focus();
+        return;
+      }
+
+      // Email check
+      const email = document.getElementById('emailField').value.trim();
+      if (!email.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        e.preventDefault();
+        banner.textContent = 'Please enter a valid email address with @.';
+        banner.style.display = 'block';
+        document.getElementById('emailField').focus();
+        return;
+      }
+
+      if (!terms) {
+        e.preventDefault();
+        banner.textContent = 'You must accept the Terms and Conditions to register.';
+        banner.style.display = 'block';
+        return;
+      }
+      const strong = pw.length >= 6 && /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw) && /[^a-zA-Z0-9]/.test(pw);
+      if (!strong) {
+        e.preventDefault();
+        banner.textContent = 'Password must be at least 6 characters and include a letter, a number, and a special character.';
+        banner.style.display = 'block';
+        return;
+      }
+      if (pw !== cpw) {
+        e.preventDefault();
+        banner.textContent = 'Passwords do not match.';
+        banner.style.display = 'block';
+        return;
+      }
+    });
+
+    // ── Phone validation ──────────────────────────────
+    function sanitizePhone(inp) {
+      // Strip anything that is not a digit
+      inp.value = inp.value.replace(/[^0-9]/g, '');
+      // Enforce max 11 digits
+      if (inp.value.length > 11) inp.value = inp.value.slice(0, 11);
+      validatePhone(inp);
+    }
+    function validatePhone(inp) {
+      const val = inp.value;
+      const hint = document.getElementById('phoneHint');
+      const valid = /^09[0-9]{9}$/.test(val);
+      if (val.length === 0) {
+        inp.style.borderColor = '';
+        hint.style.display = 'none';
+      } else if (!valid) {
+        inp.style.borderColor = '#dc2626';
+        hint.style.display = 'block';
+        if (!val.startsWith('09')) hint.textContent = 'Philippine numbers must start with 09.';
+        else if (val.length < 11) hint.textContent = 'Phone number must be exactly 11 digits.';
+        else hint.textContent = 'Invalid phone number format.';
+      } else {
+        inp.style.borderColor = '#16a34a';
+        hint.style.display = 'none';
+      }
+    }
+
+    // ── Email validation ───────────────────────────────
+    function validateEmail(inp) {
+      const val = inp.value.trim();
+      const hint = document.getElementById('emailHint');
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      if (val.length === 0) {
+        inp.style.borderColor = '';
+        hint.style.display = 'none';
+      } else if (!val.includes('@')) {
+        inp.style.borderColor = '#dc2626';
+        hint.textContent = 'Email must contain the @ symbol.';
+        hint.style.display = 'block';
+      } else if (!valid) {
+        inp.style.borderColor = '#dc2626';
+        hint.textContent = 'Please enter a valid email address (e.g. juan@gmail.com).';
+        hint.style.display = 'block';
+      } else {
+        inp.style.borderColor = '#16a34a';
+        hint.style.display = 'none';
+      }
+    }
+
+    // Init button state
+    updateTermsState();
+
+    // Show server-side errors
+    (function() {
+      const error = new URLSearchParams(window.location.search).get('error');
+      if (error) {
+        const el = document.getElementById('errorBanner');
+        el.textContent = decodeURIComponent(error);
+        el.style.display = 'block';
+      }
+    })();
+  </script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>

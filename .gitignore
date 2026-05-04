@@ -1,0 +1,16 @@
+# Environment variables — NEVER push this to GitHub
+.env
+
+# Dependencies — reinstalled on deploy
+node_modules/
+
+# Uploaded files — stored in Supabase Storage now
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

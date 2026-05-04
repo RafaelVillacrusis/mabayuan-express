@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>terms-and-conditions</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document body -->
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <!-- Folded corner -->
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <!-- Lines representing text -->
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Checkmark circle badge -->
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <circle cx="26" cy="28" r="7" fill="none" stroke="rgba(139,33,49,0.15)" stroke-width="1"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Help page</small></div>
+      </div>
+      <nav class="top-links">
+        <a href="/">Home</a>
+        <a href="/resident/login">Resident Login</a>
+        
+      </nav>
+      <a class="topbar-back-btn" href="/" onclick="if(history.length>1){event.preventDefault();history.back()}" aria-label="Go back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></a>
+    </header>
+    <main class="container help-page">
+      <section class="panel">
+        <h1>Terms &amp; Conditions</h1>
+        <p>By using Mabayuan Express, residents agree to provide accurate personal information and valid supporting documents. Requests may be declined if submitted details are incomplete, false, or unverifiable.</p>
+        <p>Admins may update request statuses, assign release dates, and record notes for operational purposes. Continued use of the system means acceptance of these terms.</p>
+      </section>
+    </main>
+    
+  </div>
+  <script src="/assets/js/common.js"></script>
+  
+  <style>
+    @keyframes helpPageEnter {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .page-shell > main {
+      animation: helpPageEnter 0.4s cubic-bezier(0.4,0,0.2,1) both;
+    }
+    #fade-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #ffffff;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+    #fade-overlay.show { opacity: 1; }
+    .topbar-back-btn {
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .topbar-back-btn:hover {
+      transform: translateX(-4px);
+      opacity: 0.8;
+    }
+    .panel {
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .panel:hover {
+      box-shadow: 0 20px 40px rgba(68,29,34,.1);
+      transform: translateY(-2px);
+    }
+  </style>
+
+  <script>
+  (function () {
+    var overlay = document.createElement("div");
+    overlay.id = "fade-overlay";
+    document.body.appendChild(overlay);
+    function clearOverlay() { overlay.classList.remove("show"); }
+    clearOverlay();
+    window.addEventListener("pageshow", clearOverlay);
+    document.addEventListener("click", function (e) {
+      var anchor = e.target.closest("a[href]");
+      if (!anchor) return;
+      var href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("javascript") ||
+          anchor.target === "_blank" || href.startsWith("http")) return;
+      if (anchor.classList.contains("topbar-back-btn")) return;
+      e.preventDefault();
+      overlay.classList.add("show");
+      setTimeout(function () { window.location.href = href; }, 200);
+    });
+  })();
+  <\/script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>

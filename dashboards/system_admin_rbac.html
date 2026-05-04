@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RBAC — Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .rbac-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-bottom:24px; }
+    .role-card { background:#fff; border:1px solid #f0e4e5; border-radius:14px; padding:22px; position:relative; overflow:hidden; box-shadow:0 2px 8px rgba(139,61,70,.05); transition:box-shadow .2s,transform .2s; }
+    .role-card:hover { box-shadow:0 6px 20px rgba(139,61,70,.12); transform:translateY(-2px); }
+    .role-card::before { content:''; position:absolute; top:0;left:0;right:0; height:4px; }
+    .role-card.role-system_admin::before { background:#8b3d46; }
+    .role-card.role-captain::before { background:#1b74d1; }
+    .role-card.role-staff::before { background:#16a34a; }
+    .role-card.role-resident::before { background:#d97706; }
+    .role-card-title { font-size:15px; font-weight:700; margin:0 0 4px; display:flex; align-items:center; gap:8px; color:#2d1518; }
+    .role-badge { display:inline-block; font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:2px 8px; border-radius:20px; }
+    .role-badge.role-system_admin { background:#fce8ea; color:#8b3d46; }
+    .role-badge.role-captain { background:#e3eeff; color:#1b74d1; }
+    .role-badge.role-staff { background:#e4f4eb; color:#16a34a; }
+    .role-badge.role-resident { background:#fef3e2; color:#d97706; }
+    .role-perm-list { list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
+    .role-perm-list li { font-size:13px; display:flex; align-items:flex-start; gap:7px; color:#3d2326; }
+    .perm-yes { color:#16a34a; font-weight:700; }
+    .perm-no { color:#d1c0c2; font-weight:700; }
+    .inline-role-select { border:1px solid #e8c4c8; border-radius:8px; padding:5px 8px; font-size:12px; background:#fdf8f8; cursor:pointer; color:#2d1518; }
+    .user-role-chip { display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; padding:3px 10px; border-radius:20px; }
+    .user-role-chip.role-system_admin { background:#fce8ea; color:#8b3d46; }
+    .user-role-chip.role-captain { background:#e3eeff; color:#1b74d1; }
+    .user-role-chip.role-staff { background:#e4f4eb; color:#16a34a; }
+  </style>
+</head>
+<body>
+  <div class="sa-overlay" id="sidebarOverlay"></div>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <div class="sa-mark" style="background:transparent;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+      <h2>Mabayuan Express</h2>
+      <small>System Administrator</small>
+    </div>
+    <nav class="admin-sidebar-nav">
+      <div class="sa-nav-label">Overview</div>
+      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">📊</span> Dashboard</a>
+      <div class="sa-nav-label">Management</div>
+      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">📄</span> Documents</a>
+      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">👥</span> Personnel Users</a>
+      <div class="sa-nav-label">Tools</div>
+      <a class="sa-nav-item active" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
+      <a class="sa-nav-item" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
+      <a class="sa-nav-item" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Recent Requests</a>
+      <a class="sa-nav-item" href="/api/system-admin/backup"><span class="sa-icon">💾</span> Download Backup</a>
+    </nav>
+    <div class="admin-sidebar-footer">
+      <div class="sa-user" id="sidebarUser">System Administrator</div>
+      <form action="/auth/logout" method="POST">
+        <button class="sa-btn sa-btn-ghost" style="width:100%;justify-content:center">Logout</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <button class="sa-menu-toggle sa-menu-toggle--topbar" id="sidebarToggle" aria-label="Toggle menu">☰</button>
+      <div class="admin-topbar-title">
+        <div class="page-icon">🔐</div>
+        Role-Based Access Control
+      </div>
+      <div class="admin-topbar-right">
+        <div class="admin-topbar-user">
+          <div class="avatar" id="avatarInit">SA</div>
+          <span id="topbarUser">System Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-page-header">
+        <div>
+          <h1>Role-Based Access Control</h1>
+          <p>Manage permissions for all users and ensure secure system access.</p>
+        </div>
+        <a href="/system-admin/dashboard" class="sa-btn sa-btn-ghost sa-btn-sm">← Back to Dashboard</a>
+      </div>
+
+      <div class="sa-alert sa-alert-warning" id="alertBanner"></div>
+
+      <!-- Stats -->
+      <div class="sa-stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+        <div class="sa-stat-card"><div class="sa-stat-icon rose">👥</div><div><div class="sa-stat-val" id="statTotal">—</div><div class="sa-stat-label">Total Users</div></div></div>
+        <div class="sa-stat-card"><div class="sa-stat-icon wine">🔑</div><div><div class="sa-stat-val" id="statAdmin">—</div><div class="sa-stat-label">System Admins</div></div></div>
+        <div class="sa-stat-card"><div class="sa-stat-icon pink">⚓</div><div><div class="sa-stat-val" id="statCaptain">—</div><div class="sa-stat-label">Captains</div></div></div>
+        <div class="sa-stat-card"><div class="sa-stat-icon mauve">🗂️</div><div><div class="sa-stat-val" id="statStaff">—</div><div class="sa-stat-label">Staff</div></div></div>
+      </div>
+
+      <!-- Role cards -->
+      <div class="sa-panel" style="margin-bottom:20px;">
+        <div class="sa-panel-header"><h2>📋 Role Definitions & Permissions</h2></div>
+        <div class="sa-panel-body">
+          <div class="rbac-grid">
+            <div class="role-card role-system_admin">
+              <div class="role-card-title">System Admin <span class="role-badge role-system_admin">Highest Access</span></div>
+              <p style="font-size:12px;color:#9a7a7d;margin:4px 0 0">Full platform control.</p>
+              <ul class="role-perm-list">
+                <li><span class="perm-yes">✓</span> Manage all user accounts</li>
+                <li><span class="perm-yes">✓</span> Configure document types</li>
+                <li><span class="perm-yes">✓</span> Full audit trail access</li>
+                <li><span class="perm-yes">✓</span> Export system backup</li>
+                <li><span class="perm-yes">✓</span> RBAC control panel</li>
+              </ul>
+            </div>
+            <div class="role-card role-captain">
+              <div class="role-card-title">Captain <span class="role-badge role-captain">Elevated Access</span></div>
+              <p style="font-size:12px;color:#9a7a7d;margin:4px 0 0">Approves requests, views analytics.</p>
+              <ul class="role-perm-list">
+                <li><span class="perm-no">✗</span> Manage user accounts</li>
+                <li><span class="perm-yes">✓</span> Approve/reject requests</li>
+                <li><span class="perm-yes">✓</span> View analytics dashboard</li>
+                <li><span class="perm-yes">✓</span> Captain-scoped audit trail</li>
+                <li><span class="perm-no">✗</span> Export system backup</li>
+              </ul>
+            </div>
+            <div class="role-card role-staff">
+              <div class="role-card-title">Staff <span class="role-badge role-staff">Standard Access</span></div>
+              <p style="font-size:12px;color:#9a7a7d;margin:4px 0 0">Day-to-day document processing.</p>
+              <ul class="role-perm-list">
+                <li><span class="perm-no">✗</span> Manage user accounts</li>
+                <li><span class="perm-yes">✓</span> Process document requests</li>
+                <li><span class="perm-yes">✓</span> Approve resident registrations</li>
+                <li><span class="perm-no">✗</span> View audit trail</li>
+                <li><span class="perm-no">✗</span> Export system backup</li>
+              </ul>
+            </div>
+            <div class="role-card role-resident">
+              <div class="role-card-title">Resident <span class="role-badge role-resident">Limited Access</span></div>
+              <p style="font-size:12px;color:#9a7a7d;margin:4px 0 0">Submit and track document requests.</p>
+              <ul class="role-perm-list">
+                <li><span class="perm-no">✗</span> Access admin portal</li>
+                <li><span class="perm-yes">✓</span> Submit document requests</li>
+                <li><span class="perm-yes">✓</span> Track own request status</li>
+                <li><span class="perm-no">✗</span> View other residents' data</li>
+                <li><span class="perm-no">✗</span> Manage any accounts</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User table -->
+      <div class="sa-panel">
+        <div class="sa-panel-header">
+          <h2>👤 Personnel User Access Management</h2>
+          <a href="/system-admin/dashboard" class="sa-btn sa-btn-primary sa-btn-sm">+ Add New User</a>
+        </div>
+        <div class="sa-panel-body">
+          <div class="sa-filter-bar">
+            <span style="font-size:12px;font-weight:600;color:#9a7a7d">Filter:</span>
+            <button class="sa-pill-btn active" data-filter="all">All</button>
+            <button class="sa-pill-btn" data-filter="system_admin">System Admin</button>
+            <button class="sa-pill-btn" data-filter="captain">Captain</button>
+            <button class="sa-pill-btn" data-filter="staff">Staff</button>
+          </div>
+          <div class="table-wrap">
+            <table class="sa-table" id="rbacTable">
+              <thead><tr><th>#</th><th>Full Name</th><th>Email</th><th>Current Role</th><th>Change Role</th><th>Action</th></tr></thead>
+              <tbody id="rbacRows"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Policy -->
+      <div class="sa-panel">
+        <div class="sa-panel-header"><h2>🛡️ Security & Access Policy</h2></div>
+        <div class="sa-panel-body">
+          <ul style="font-size:13px;color:#3d2326;line-height:1.8;padding-left:18px;margin:0;">
+            <li>Every API endpoint is protected by <code>requireRole()</code> middleware — unauthorized access returns <strong>403 Forbidden</strong>.</li>
+            <li>Session-based authentication: roles are validated on every request against the active session.</li>
+            <li>A System Admin cannot remove their own admin role or delete their own account.</li>
+            <li>All role changes are written to the <strong>Audit Trail</strong> with actor, timestamp, and old/new role.</li>
+            <li>Residents authenticate via a separate portal and can never access personnel dashboards.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common.js"></script>
+<script>
+  let currentAdminId = null, allUsers = [], activeFilter = 'all';
+
+  async function init() {
+    const me = await fetch('/api/system-admin/me').then(r=>r.json());
+    currentAdminId = me.user_id;
+    document.getElementById('sidebarUser').textContent = me.full_name;
+    document.getElementById('topbarUser').textContent = me.full_name;
+    document.getElementById('avatarInit').textContent = me.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    await loadUsers();
+  }
+
+  async function loadUsers() {
+    allUsers = await fetch('/api/system-admin/users').then(r=>r.json());
+    document.getElementById('statTotal').textContent = allUsers.length;
+    document.getElementById('statAdmin').textContent = allUsers.filter(u=>u.role==='system_admin').length;
+    document.getElementById('statCaptain').textContent = allUsers.filter(u=>u.role==='captain').length;
+    document.getElementById('statStaff').textContent = allUsers.filter(u=>u.role==='staff').length;
+    renderTable();
+  }
+
+  function renderTable() {
+    const filtered = activeFilter==='all' ? allUsers : allUsers.filter(u=>u.role===activeFilter);
+    const roleLabel = {system_admin:'System Admin',captain:'Captain',staff:'Staff'};
+    document.getElementById('rbacRows').innerHTML = filtered.map((u,i) => {
+      const isSelf = Number(u.user_id)===Number(currentAdminId);
+      return `<tr>
+        <td style="color:#9a7a7d;font-size:12px">${i+1}</td>
+        <td><strong>${escapeHtml(u.full_name)}</strong>${isSelf?' <span style="color:#9a7a7d;font-size:11px">(you)</span>':''}</td>
+        <td style="color:#7a5a5d;font-size:13px">${escapeHtml(u.email)}</td>
+        <td><span class="user-role-chip role-${u.role}">${roleLabel[u.role]||u.role}</span></td>
+        <td>${isSelf?'<span style="color:#9a7a7d;font-size:12px">Cannot self-modify</span>':`<select class="inline-role-select" onchange="changeRole(${u.user_id},this.value,this)"><option value="staff" ${u.role==='staff'?'selected':''}>Staff</option><option value="captain" ${u.role==='captain'?'selected':''}>Captain</option><option value="system_admin" ${u.role==='system_admin'?'selected':''}>System Admin</option></select>`}</td>
+        <td>${isSelf?'<span style="color:#9a7a7d">—</span>':`<button class="sa-btn sa-btn-danger sa-btn-sm" onclick="deleteUser(${u.user_id},'${escapeHtml(u.full_name)}')">Delete</button>`}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" class="empty-state">No users found.</td></tr>';
+  }
+
+  async function changeRole(id, newRole, sel) {
+    const u = allUsers.find(x=>x.user_id===id);
+    if (!u || newRole===u.role) return;
+    if (!confirm(`Change ${u.full_name}'s role to "${newRole}"?`)) { sel.value=u.role; return; }
+    const res = await fetch(`/api/system-admin/users/${id}/update-role`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:newRole})});
+    showAlert(res.ok?`Role updated for ${u.full_name}.`:'Could not update role.', res.ok?'success':'error');
+    await loadUsers();
+  }
+
+  async function deleteUser(id, name) {
+    if (!confirm(`Delete account for "${name}"? This cannot be undone.`)) return;
+    const res = await fetch(`/api/system-admin/users/${id}/delete`,{method:'POST'});
+    showAlert(res.ok?`"${name}" deleted.`:'Could not delete user.', res.ok?'success':'error');
+    await loadUsers();
+  }
+
+  function showAlert(msg, type='warning') {
+    const el = document.getElementById('alertBanner');
+    el.textContent = msg;
+    el.className = `sa-alert sa-alert-${type} show`;
+    setTimeout(()=>el.classList.remove('show'), 4000);
+  }
+
+  document.querySelectorAll('.sa-pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sa-pill-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderTable();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+<script>
+(function(){
+  // Block back button — replace history so back goes nowhere useful
+  history.pushState(null, "", window.location.href);
+  window.addEventListener("popstate", function() {
+    history.pushState(null, "", window.location.href);
+  });
+  // If page is restored from browser cache (bfcache), verify session is still alive
+  window.addEventListener("pageshow", function(e) {
+    if (e.persisted) {
+      fetch("/api/session-check", { credentials: "include" })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
+    }
+  });
+})();
+</script>
+<script>
+(function(){
+  var toggle = document.getElementById('sidebarToggle');
+  var sidebar = document.querySelector('.admin-sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (!toggle || !sidebar) return;
+  function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); toggle.textContent='✕'; }
+  function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); toggle.textContent='☰'; }
+  toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+  overlay.addEventListener('click', closeSidebar);
+  // Close on nav item click (mobile)
+  document.querySelectorAll('.sa-nav-item').forEach(function(item){
+    item.addEventListener('click', function(){ if(window.innerWidth <= 920) closeSidebar(); });
+  });
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Captain Messages</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .msg-form { background: var(--surface, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 10px; padding: 24px; margin-bottom: 28px; }
+    .msg-form h2 { margin: 0 0 16px; font-size: 1.1rem; }
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text-muted, #6b7280); }
+    .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border, #d1d5db); border-radius: 6px; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; }
+    .form-row textarea { resize: vertical; min-height: 90px; }
+    .audience-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .audience-pill { padding: 7px 18px; border-radius: 20px; border: 2px solid var(--border, #d1d5db); background: #f9fafb; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all .15s; user-select: none; }
+    .audience-pill.selected[data-val="resident"] { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .audience-pill.selected[data-val="staff"] { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+    .audience-pill.selected[data-val="all"] { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+    .send-btn { margin-top: 4px; }
+    .msg-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 16px; margin-bottom: 16px; display: none; font-size: 0.9rem; }
+    .msg-log-list { display: flex; flex-direction: column; gap: 12px; }
+    .msg-log-item { background: var(--surface, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 8px; padding: 16px; }
+    .msg-log-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+    .msg-log-subject { font-weight: 700; font-size: 0.95rem; flex: 1; }
+    .audience-badge { font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .audience-badge.resident { background: #eff6ff; color: #1d4ed8; }
+    .audience-badge.staff { background: #f5f3ff; color: #6d28d9; }
+    .audience-badge.all { background: #ecfdf5; color: #065f46; }
+    .msg-log-body { font-size: 0.88rem; color: var(--text, #374151); margin-bottom: 6px; white-space: pre-wrap; }
+    .msg-log-meta { font-size: 0.78rem; color: var(--text-muted, #9ca3af); }
+    .empty-log { text-align: center; color: var(--text-muted, #9ca3af); padding: 32px; }
+  
+  </style>
+</head>
+<body>
+<div class="page-shell">
+  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+    <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+      <div class="brand-copy">
+        <div>Captain Messages</div>
+        <small>Send announcements to residents, staff, or everyone</small>
+      </div>
+    </div>
+    <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
+      <nav class="top-links" id="topNav">
+        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+        
+      <a href="/captain/dashboard">Dashboard</a>
+      <a href="/captain/messages" class="active">Messages</a>
+      <a href="/captain/audit-trail">Audit Trail</a>
+      <form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
+    </nav>
+  </header>
+
+  <main class="container content-area">
+    <div class="dashboard-header">
+      <div>
+        <h1>Send a Message</h1>
+        <p>Broadcast announcements directly to residents, staff, or the whole community. Messages appear as real-time notifications.</p>
+      </div>
+    </div>
+
+    <!-- Compose Form -->
+    <div class="msg-form">
+      <h2>📢 Compose Announcement</h2>
+      <div id="sendSuccess" class="msg-success">Message sent successfully!</div>
+
+      <div class="form-row">
+        <label>Send To</label>
+        <div class="audience-pills">
+          <div class="audience-pill selected" data-val="resident">Residents</div>
+          <div class="audience-pill" data-val="staff">Staff</div>
+          <div class="audience-pill" data-val="all">Everyone</div>
+        </div>
+        <input type="hidden" id="targetAudience" value="resident" />
+      </div>
+
+      <div class="form-row">
+        <label for="msgSubject">Subject</label>
+        <input type="text" id="msgSubject" placeholder="e.g. Office Closure Notice" maxlength="200" />
+      </div>
+
+      <div class="form-row">
+        <label for="msgBody">Message</label>
+        <textarea id="msgBody" placeholder="Write your announcement here…" maxlength="2000"></textarea>
+      </div>
+
+      <button class="btn send-btn" id="sendBtn" onclick="sendMessage()">Send Message</button>
+    </div>
+
+    <!-- Message History -->
+    <section class="panel">
+      <h2 style="margin-top:0">Message History</h2>
+      <div id="msgLogList" class="msg-log-list">
+        <div class="empty-log">Loading…</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common.js"></script>
+<script>
+  // Audience pill selection
+  document.querySelectorAll('.audience-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.audience-pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      document.getElementById('targetAudience').value = pill.dataset.val;
+    });
+  });
+
+  async function sendMessage() {
+    const target = document.getElementById('targetAudience').value;
+    const subject = document.getElementById('msgSubject').value.trim();
+    const body = document.getElementById('msgBody').value.trim();
+
+    if (!subject) { alert('Please enter a subject.'); return; }
+    if (!body) { alert('Please enter a message body.'); return; }
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch('/api/captain/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_audience: target, subject, body })
+      });
+
+      if (!res.ok) { const err = await res.json(); alert(err.error || 'Could not send message.'); return; }
+
+      document.getElementById('msgSubject').value = '';
+      document.getElementById('msgBody').value = '';
+      const succ = document.getElementById('sendSuccess');
+      succ.style.display = 'block';
+      setTimeout(() => { succ.style.display = 'none'; }, 4000);
+      await loadMessages();
+    } catch (e) {
+      alert('Network error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Message';
+    }
+  }
+
+  function audienceBadge(audience) {
+    const labels = { resident: 'Residents', staff: 'Staff', all: 'Everyone' };
+    return `<span class="audience-badge ${audience}">${labels[audience] || audience}</span>`;
+  }
+
+  async function loadMessages() {
+    const res = await fetch('/api/captain/messages');
+    const msgs = await res.json();
+    const list = document.getElementById('msgLogList');
+    if (!msgs.length) {
+      list.innerHTML = '<div class="empty-log">No messages sent yet.</div>';
+      return;
+    }
+    list.innerHTML = msgs.map(m => `
+      <div class="msg-log-item">
+        <div class="msg-log-header">
+          <span class="msg-log-subject">${escapeHtml(m.subject)}</span>
+          ${audienceBadge(m.target_audience)}
+        </div>
+        <div class="msg-log-body">${escapeHtml(m.body)}</div>
+        <div class="msg-log-meta">Sent by ${escapeHtml(m.captain_name || 'Captain')} · ${formatDateTime(m.created_at)}</div>
+      </div>`).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', loadMessages);
+</script>
+<script>
+(function(){
+  // Block back button — replace history so back goes nowhere useful
+  history.pushState(null, "", window.location.href);
+  window.addEventListener("popstate", function() {
+    history.pushState(null, "", window.location.href);
+  });
+  // If page is restored from browser cache (bfcache), verify session is still alive
+  window.addEventListener("pageshow", function(e) {
+    if (e.persisted) {
+      fetch("/api/session-check", { credentials: "include" })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
+    }
+  });
+})();
+</script>
+<script>
+/* ── Mobile hamburger nav ── */
+function openNav() {
+  document.getElementById('topNav').classList.add('open');
+  document.getElementById('navOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeNav() {
+  var nav = document.getElementById('topNav');
+  var overlay = document.getElementById('navOverlay');
+  if (nav) nav.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeNotif() {
+  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
+    d.classList.remove('show');
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  // Close drawer when any nav link is tapped
+  document.querySelectorAll('.top-links a').forEach(function(a) {
+    a.addEventListener('click', closeNav);
+  });
+});
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>

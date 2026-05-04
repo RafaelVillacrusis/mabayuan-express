@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document body -->
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <!-- Folded corner -->
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <!-- Lines representing text -->
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Checkmark circle badge -->
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <circle cx="26" cy="28" r="7" fill="none" stroke="rgba(139,33,49,0.15)" stroke-width="1"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>MABAYUAN EXPRESS</div><small>Document Request Portal</small></div>
+      </div>
+      <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
+      <nav class="top-links" id="topNav">
+        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+        
+        <a href="/">Home</a>
+        <a href="/help/about">About</a>
+        <a href="/resident/login" class="btn btn-small btn-ghost">Login</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="hero-art">
+          <div class="logo-stack">
+            <div class="big-logo" style="border:none;background:transparent;"><svg width="88" height="88" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document body -->
+  <rect x="8" y="4" width="34" height="44" rx="5" fill="var(--primary, #8b2131)" opacity="0.08"/>
+  <rect x="8" y="4" width="34" height="44" rx="5" stroke="var(--primary, #8b2131)" stroke-width="2" fill="none"/>
+  <!-- Folded corner -->
+  <path d="M32 4 L42 14 L32 14 Z" fill="var(--primary, #8b2131)" opacity="0.12"/>
+  <path d="M32 4 L32 14 L42 14" stroke="var(--primary, #8b2131)" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <!-- Text lines -->
+  <line x1="14" y1="22" x2="36" y2="22" stroke="var(--primary, #8b2131)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="14" y1="29" x2="36" y2="29" stroke="var(--primary, #8b2131)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="14" y1="36" x2="26" y2="36" stroke="var(--primary, #8b2131)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <!-- Checkmark badge -->
+  <circle cx="44" cy="46" r="12" fill="var(--primary, #8b2131)"/>
+  <polyline points="38.5,46 42.5,50 50,41" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+            <h2 style="margin:0">MABAYUAN EXPRESS</h2>
+            <p style="margin:8px 0 0;color:#736a6b;letter-spacing:2px;">REQUEST • TRACK • RELEASE</p>
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>Barangay document requests with clear approval and release tracking</h1>
+          <p>Residents can request documents online, the captain can approve or decline requests, staff can set release dates and mark claims, and the system admin can manage users, residents, and document settings.</p>
+          <div class="button-row">
+            <a class="btn" href="/resident/register">Create resident account</a>
+            <a class="btn btn-ghost" href="/resident/login">Resident login</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="services-section">
+        <h2 class="section-title" style="font-size:22px; text-align:center;">Available Services</h2>
+        <p class="services-hint">Tap a service to preview a sample document</p>
+        <div class="services-grid">
+
+          <!-- Barangay Clearance -->
+          <div class="scw" onclick="toggleDoc(this)">
+            <div class="service-chip">
+              <span class="chip-icon">📄</span>
+              <span class="chip-label">Barangay Clearance</span>
+              <span class="chip-arrow">›</span>
+            </div>
+            <div class="doc-preview">
+              <div class="doc-preview-inner">
+                <div class="doc-header">
+                  <div class="doc-seal">🏛️</div>
+                  <div>
+                    <div class="doc-office">Republic of the Philippines</div>
+                    <div class="doc-office">Barangay Mabayuan</div>
+                    <div class="doc-title">BARANGAY CLEARANCE</div>
+                  </div>
+                </div>
+                <div class="doc-body">
+                  <p>This is to certify that <strong>Juan dela Cruz</strong>, of legal age, Filipino, and a resident of <strong>Barangay Mabayuan</strong>, is known to be a person of good moral character and has no derogatory record in this barangay.</p>
+                  <p>Issued this <strong>4th day of May, 2025</strong> at Barangay Mabayuan.</p>
+                </div>
+                <div class="doc-footer">
+                  <div class="doc-sig-line">Punong Barangay</div>
+                  <div class="doc-badge">✅ For local employment, NBI, and government transactions</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Certificate of Residency -->
+          <div class="scw" onclick="toggleDoc(this)">
+            <div class="service-chip">
+              <span class="chip-icon">🏠</span>
+              <span class="chip-label">Certificate of Residency</span>
+              <span class="chip-arrow">›</span>
+            </div>
+            <div class="doc-preview">
+              <div class="doc-preview-inner">
+                <div class="doc-header">
+                  <div class="doc-seal">🏛️</div>
+                  <div>
+                    <div class="doc-office">Republic of the Philippines</div>
+                    <div class="doc-office">Barangay Mabayuan</div>
+                    <div class="doc-title">CERTIFICATE OF RESIDENCY</div>
+                  </div>
+                </div>
+                <div class="doc-body">
+                  <p>This is to certify that <strong>Maria Santos</strong> is a bonafide resident of <strong>Barangay Mabayuan</strong> for <strong>5 years</strong> and her address is duly recorded in the barangay records.</p>
+                  <p>Issued upon request of the above-named person for whatever legal purpose it may serve.</p>
+                </div>
+                <div class="doc-footer">
+                  <div class="doc-sig-line">Punong Barangay</div>
+                  <div class="doc-badge">✅ For school enrollment, bank accounts & utilities</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Certificate of Indigency -->
+          <div class="scw" onclick="toggleDoc(this)">
+            <div class="service-chip">
+              <span class="chip-icon">🤝</span>
+              <span class="chip-label">Certificate of Indigency</span>
+              <span class="chip-arrow">›</span>
+            </div>
+            <div class="doc-preview">
+              <div class="doc-preview-inner">
+                <div class="doc-header">
+                  <div class="doc-seal">🏛️</div>
+                  <div>
+                    <div class="doc-office">Republic of the Philippines</div>
+                    <div class="doc-office">Barangay Mabayuan</div>
+                    <div class="doc-title">CERTIFICATE OF INDIGENCY</div>
+                  </div>
+                </div>
+                <div class="doc-body">
+                  <p>This is to certify that <strong>Pedro Reyes</strong> and his family are classified as <strong>indigent residents</strong> of Barangay Mabayuan, belonging to the low-income sector of the community.</p>
+                  <p>Issued for purposes of availing government assistance and medical benefits.</p>
+                </div>
+                <div class="doc-footer">
+                  <div class="doc-sig-line">Punong Barangay</div>
+                  <div class="doc-badge">✅ For medical, legal aid & scholarship assistance</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Business Permit -->
+          <div class="scw" onclick="toggleDoc(this)">
+            <div class="service-chip">
+              <span class="chip-icon">🏪</span>
+              <span class="chip-label">Business Permit</span>
+              <span class="chip-arrow">›</span>
+            </div>
+            <div class="doc-preview">
+              <div class="doc-preview-inner">
+                <div class="doc-header">
+                  <div class="doc-seal">🏛️</div>
+                  <div>
+                    <div class="doc-office">Republic of the Philippines</div>
+                    <div class="doc-office">Barangay Mabayuan</div>
+                    <div class="doc-title">BARANGAY BUSINESS PERMIT</div>
+                  </div>
+                </div>
+                <div class="doc-body">
+                  <p>This is to certify that <strong>Santos Sari-Sari Store</strong>, owned and operated by <strong>Ana Santos</strong>, located at <strong>Blk 3 Lot 5, Barangay Mabayuan</strong>, is hereby granted permission to operate within the barangay.</p>
+                  <p>Valid for the current calendar year. Subject to renewal every January.</p>
+                </div>
+                <div class="doc-footer">
+                  <div class="doc-sig-line">Punong Barangay</div>
+                  <div class="doc-badge">✅ Required before applying for Mayor's business permit</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <style>
+        /* ── Services section ── */
+        .services-section { margin: 0 0 2rem; }
+
+        .services-hint {
+          text-align: center;
+          color: #736a6b;
+          font-size: 0.85rem;
+          margin: -0.3rem 0 1.2rem;
+        }
+
+        /* 4-col on desktop, 2-col on tablet, 1-col on mobile */
+        .services-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin: 0;
+        }
+        @media (max-width: 860px) {
+          .services-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+          .services-grid { grid-template-columns: 1fr; gap: 8px; }
+          .services-hint::before { content: "Tap"; }
+          .services-hint { font-size: 0.82rem; }
+        }
+
+        /* ── Chip wrapper ── */
+        .scw {
+          position: relative;
+          cursor: pointer;
+          /* On desktop: hover triggers via CSS */
+        }
+
+        /* ── Chip button ── */
+        .service-chip {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          background: #fff;
+          border: 1.5px solid var(--border, #e4d6d8);
+          border-radius: 14px;
+          padding: 14px 14px;
+          box-shadow: 0 4px 12px rgba(0,0,0,.04);
+          transition: transform 0.22s cubic-bezier(0.4,0,0.2,1),
+                      box-shadow 0.22s ease,
+                      border-color 0.22s ease,
+                      background 0.22s ease;
+          width: 100%;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .chip-icon { font-size: 1.1rem; flex-shrink: 0; }
+        .chip-label { flex: 1; font-size: 0.9rem; font-weight: 600; color: #2b1a1c; text-align: left; line-height: 1.3; }
+        .chip-arrow {
+          font-size: 1.1rem;
+          color: #a64d57;
+          font-weight: 700;
+          transition: transform 0.22s ease;
+          flex-shrink: 0;
+        }
+
+        /* Active / open state */
+        .scw.open .service-chip,
+        .scw:hover .service-chip {
+          transform: translateY(-4px) scale(1.02);
+          box-shadow: 0 12px 28px rgba(139,61,70,.15);
+          border-color: var(--primary, #a64d57);
+          background: #fdf3f4;
+        }
+        .scw.open .chip-arrow { transform: rotate(90deg); }
+
+        /* ── Floating preview (desktop hover) ── */
+        .doc-preview {
+          position: absolute;
+          bottom: calc(100% + 12px);
+          left: 50%;
+          transform: translateX(-50%) translateY(10px);
+          width: 280px;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4,0,0.2,1);
+          z-index: 999;
+          filter: drop-shadow(0 10px 28px rgba(68,29,34,.2));
+        }
+        .doc-preview::after {
+          content: '';
+          position: absolute;
+          top: 100%; left: 50%;
+          transform: translateX(-50%);
+          border: 8px solid transparent;
+          border-top-color: #fff;
+        }
+
+        /* Desktop: show on hover */
+        @media (hover: hover) {
+          .scw:hover .doc-preview {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+
+        /* Mobile: inline expand (not floating) */
+        @media (hover: none), (max-width: 600px) {
+          .doc-preview {
+            position: static;
+            transform: none !important;
+            width: 100%;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            filter: none;
+            transition: opacity 0.25s ease, max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: none;
+            margin-top: 0;
+          }
+          .doc-preview::after { display: none; }
+          .scw.open .doc-preview {
+            opacity: 1;
+            max-height: 500px;
+            pointer-events: auto;
+            margin-top: 6px;
+          }
+        }
+
+        /* ── Preview card inner ── */
+        .doc-preview-inner {
+          background: #fff;
+          border: 1.5px solid #e8d5d7;
+          border-radius: 14px;
+          padding: 1rem 1.1rem 0.9rem;
+          font-size: 0.78rem;
+          color: #2b1a1c;
+          line-height: 1.55;
+        }
+        .doc-header {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          border-bottom: 1.5px solid #f0e0e2;
+          padding-bottom: 0.6rem;
+          margin-bottom: 0.65rem;
+        }
+        .doc-seal { font-size: 1.8rem; flex-shrink: 0; }
+        .doc-office { font-size: 0.67rem; color: #736a6b; line-height: 1.3; }
+        .doc-title { font-weight: 800; font-size: 0.78rem; color: #8b2131; letter-spacing: 0.03em; margin-top: 2px; }
+        .doc-body { color: #3d2427; margin-bottom: 0.65rem; }
+        .doc-body p { margin: 0 0 0.4rem; }
+        .doc-body strong { color: #2b1a1c; font-weight: 700; }
+        .doc-footer {
+          border-top: 1.5px solid #f0e0e2;
+          padding-top: 0.55rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+        .doc-sig-line {
+          font-size: 0.72rem; font-weight: 700; color: #8b2131;
+          text-align: center; border-top: 1px solid #ccc;
+          padding-top: 0.3rem; margin: 0 1.5rem;
+        }
+        .doc-badge {
+          font-size: 0.68rem; color: #4a7a4a;
+          background: #f0faf0; border: 1px solid #c8e6c8;
+          border-radius: 6px; padding: 3px 7px; text-align: center;
+        }
+      </style>
+
+      <script>
+        function toggleDoc(el) {
+          // Only toggle on touch/mobile (no hover support)
+          if (window.matchMedia('(hover: hover)').matches && window.innerWidth > 600) return;
+          const isOpen = el.classList.contains('open');
+          // Close all others
+          document.querySelectorAll('.scw.open').forEach(function(c) { c.classList.remove('open'); });
+          if (!isOpen) el.classList.add('open');
+        }
+      </script>
+
+      <!-- Philippine Holidays Calendar -->
+      <section id="ph-holidays-section" style="margin-top:2.5rem;margin-bottom:3.5rem;">
+        <div style="background:#fff;border:1px solid #ddd2d3;border-radius:20px;box-shadow:0 8px 28px rgba(68,29,34,.08);padding:2rem 2rem 1.75rem;max-width:520px;margin:0 auto;">
+
+          <h2 class="section-title" style="font-size:20px;text-align:center;margin-bottom:0.25rem;">Philippine Holidays</h2>
+          <p style="text-align:center;color:#736a6b;margin-top:0.25rem;margin-bottom:1.25rem;font-size:0.88rem;">Official regular and special non-working holidays</p>
+
+          <!-- Month nav -->
+          <div id="cal-nav" style="display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-bottom:1.1rem;flex-wrap:wrap;">
+            <button id="cal-prev" onclick="calPrev()" aria-label="Previous month" style="background:var(--primary,#a64d57);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:1.1rem;cursor:pointer;line-height:1;">&#8249;</button>
+            <span id="cal-month-label" style="font-weight:700;font-size:1rem;min-width:150px;text-align:center;color:#2b1a1c;"></span>
+            <button id="cal-next" onclick="calNext()" aria-label="Next month" style="background:var(--primary,#a64d57);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:1.1rem;cursor:pointer;line-height:1;">&#8250;</button>
+          </div>
+
+          <!-- Calendar grid -->
+          <div id="cal-wrapper" style="max-width:420px;margin:0 auto;overflow-x:auto;">
+            <table id="cal-table" style="width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed;">
+              <thead>
+                <tr id="cal-head"></tr>
+              </thead>
+              <tbody id="cal-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Holiday list for selected month -->
+          <div id="cal-holiday-list" style="max-width:420px;margin:1rem auto 0;"></div>
+
+          <!-- Legend -->
+          <div style="display:flex;justify-content:center;gap:1.1rem;margin-top:1.1rem;flex-wrap:wrap;font-size:0.78rem;color:#555;padding-top:0.75rem;border-top:1px solid #f0e8e9;">
+            <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#8b2131;vertical-align:middle;margin-right:4px;"></span>Regular Holiday</span>
+            <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#d4a843;vertical-align:middle;margin-right:4px;"></span>Special Non-Working</span>
+            
+          </div>
+
+        </div>
+      </section>
+
+      <style>
+        #cal-table th {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #736a6b;
+          text-align: center;
+          padding: 3px 2px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        #cal-table td {
+          text-align: center;
+          vertical-align: top;
+          padding: 0;
+          border-radius: 6px;
+          aspect-ratio: 1;
+          min-width: 28px;
+        }
+        .cal-day-cell {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          height: 36px;
+          cursor: default;
+          transition: background 0.15s;
+          position: relative;
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: #2b1a1c;
+        }
+        .cal-day-cell.today {
+          outline: 2px solid #8b2131;
+          outline-offset: -2px;
+        }
+        .cal-day-cell.holiday-regular {
+          background: #f5e0e3;
+          color: #8b2131;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .cal-day-cell.holiday-special {
+          background: #fdf4dc;
+          color: #b07d10;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .cal-day-cell.holiday-working {
+          background: #dceffe;
+          color: #1a4fa0;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .cal-day-cell:hover.holiday-regular { background: #f0c6cc; }
+        .cal-day-cell:hover.holiday-special  { background: #f7e8b0; }
+        .cal-day-cell:hover.holiday-working  { background: #b8d9f8; }
+        .cal-dot {
+          width: 5px; height: 5px; border-radius: 50%; margin-top: 2px;
+        }
+        .cal-empty { background: transparent; }
+        .cal-holiday-item {
+          display: flex; align-items: flex-start; gap: 10px;
+          padding: 9px 12px; border-radius: 8px; margin-bottom: 7px;
+          font-size: 0.88rem;
+        }
+        .cal-holiday-item.regular { background: #fdf0f2; border-left: 4px solid #8b2131; }
+        .cal-holiday-item.special { background: #fdf9ec; border-left: 4px solid #d4a843; }
+        .cal-holiday-item.working { background: #edf5ff; border-left: 4px solid #3a7bd5; }
+        .cal-holiday-date { font-weight: 700; color: #555; min-width: 38px; }
+        .cal-holiday-name { color: #2b1a1c; font-weight: 600; }
+        .cal-holiday-type { font-size:0.75rem; color:#888; margin-top:1px; }
+        #cal-no-holidays { text-align:center; color:#aaa; font-size:0.9rem; padding:1rem 0; }
+        @media (max-width: 480px) {
+          .cal-day-cell { height: 30px; font-size: 0.72rem; }
+          #cal-table th { font-size: 0.6rem; }
+          #cal-holiday-list { padding: 0 4px; }
+        }
+      </style>
+
+      <script>
+      (function() {
+        var HOLIDAYS = {
+          2026: [
+            // Regular Holidays
+            { month:0,  day:1,  name:"New Year's Day",              type:"regular" },
+            { month:3,  day:9,  name:"Araw ng Kagitingan",          type:"regular" },
+            { month:3,  day:2,  name:"Maundy Thursday",             type:"regular" },
+            { month:3,  day:3,  name:"Good Friday",                 type:"regular" },
+            { month:4,  day:1,  name:"Labor Day",                   type:"regular" },
+            { month:5,  day:12, name:"Independence Day",            type:"regular" },
+            // Eid'l Fitr & Eid'l Adha (approximate 2026)
+            { month:2,  day:20, name:"Eid'l Fitr",                  type:"regular" },
+            { month:4,  day:27, name:"Eid'l Adha",                  type:"regular" },
+            { month:7,  day:21, name:"Ninoy Aquino Day",            type:"regular" },
+            { month:7,  day:31, name:"National Heroes Day",         type:"regular" },
+            { month:10, day:1,  name:"All Saints' Day",             type:"regular" },
+            { month:10, day:30, name:"Bonifacio Day",               type:"regular" },
+            { month:11, day:25, name:"Christmas Day",               type:"regular" },
+            { month:11, day:30, name:"Rizal Day",                   type:"regular" },
+            // Special Non-Working Holidays
+            { month:0,  day:2,  name:"Day After New Year's Day",    type:"special" },
+            { month:1,  day:14, name:"Valentine's Day",             type:"special" },
+            { month:1,  day:17, name:"Chinese New Year (Year of the Snake)", type:"special" },
+            { month:3,  day:4,  name:"Black Saturday",              type:"special" },
+            { month:7,  day:21, name:"Ninoy Aquino Day",            type:"special" },
+            { month:10, day:2,  name:"All Souls' Day",              type:"special" },
+            { month:10, day:31, name:"All Saints' Day Eve",         type:"special" },
+            { month:11, day:8,  name:"Immaculate Conception",       type:"special" },
+            { month:11, day:24, name:"Christmas Eve",               type:"special" },
+            { month:11, day:31, name:"New Year's Eve",              type:"special" },
+          ]
+        };
+
+        var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        var DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+        var today = new Date();
+        var curYear  = today.getFullYear();
+        var curMonth = today.getMonth();
+        var viewYear  = curYear;
+        var viewMonth = curMonth;
+
+        function getHolidaysForMonth(y, m) {
+          var list = HOLIDAYS[y] || HOLIDAYS[2026] || [];
+          return list.filter(function(h){ return h.month === m; });
+        }
+
+        function renderCalendar() {
+          var label = document.getElementById('cal-month-label');
+          label.textContent = MONTHS[viewMonth] + ' ' + viewYear;
+
+          // Head row
+          var head = document.getElementById('cal-head');
+          head.innerHTML = '';
+          DAYS.forEach(function(d){
+            var th = document.createElement('th');
+            th.textContent = d;
+            head.appendChild(th);
+          });
+
+          // Build cells
+          var body = document.getElementById('cal-body');
+          body.innerHTML = '';
+
+          var firstDay  = new Date(viewYear, viewMonth, 1).getDay();
+          var daysInMon = new Date(viewYear, viewMonth + 1, 0).getDate();
+          var holidays  = getHolidaysForMonth(viewYear, viewMonth);
+
+          function holidayOn(day) {
+            return holidays.find(function(h){ return h.day === day; });
+          }
+
+          var row = document.createElement('tr');
+          // Empty cells before first day
+          for (var i = 0; i < firstDay; i++) {
+            var td = document.createElement('td');
+            td.innerHTML = '<div class="cal-day-cell cal-empty"></div>';
+            row.appendChild(td);
+          }
+
+          for (var day = 1; day <= daysInMon; day++) {
+            if ((firstDay + day - 1) % 7 === 0 && day !== 1) {
+              body.appendChild(row);
+              row = document.createElement('tr');
+            }
+            var td = document.createElement('td');
+            var h = holidayOn(day);
+            var isToday = (day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear());
+            var cls = 'cal-day-cell';
+            var dotColor = '';
+            if (h) {
+              if (h.type === 'regular') { cls += ' holiday-regular'; dotColor = '#8b2131'; }
+              else if (h.type === 'working') { cls += ' holiday-working'; dotColor = '#3a7bd5'; }
+              else { cls += ' holiday-special'; dotColor = '#d4a843'; }
+            }
+            if (isToday) cls += ' today';
+            var dot = h ? '<div class="cal-dot" style="background:' + dotColor + '"></div>' : '';
+            td.innerHTML = '<div class="' + cls + '" title="' + (h ? h.name : '') + '">' + day + dot + '</div>';
+            row.appendChild(td);
+          }
+          // Fill remaining cells
+          var lastDayOfWeek = (firstDay + daysInMon - 1) % 7;
+          for (var j = lastDayOfWeek + 1; j < 7; j++) {
+            var td2 = document.createElement('td');
+            td2.innerHTML = '<div class="cal-day-cell cal-empty"></div>';
+            row.appendChild(td2);
+          }
+          body.appendChild(row);
+
+          renderHolidayList(holidays);
+        }
+
+        function renderHolidayList(holidays) {
+          var el = document.getElementById('cal-holiday-list');
+          if (!holidays || holidays.length === 0) {
+            el.innerHTML = '<p id="cal-no-holidays">No holidays this month.</p>';
+            return;
+          }
+          var sorted = holidays.slice().sort(function(a,b){ return a.day - b.day; });
+          var html = '';
+          sorted.forEach(function(h){
+            var date = new Date(viewYear, viewMonth, h.day);
+            var dayName = DAYS[date.getDay()];
+            var cls = h.type === 'regular' ? 'regular' : (h.type === 'working' ? 'working' : 'special');
+            var typeLabel = h.type === 'regular' ? 'Regular Holiday' : 'Special Non-Working';
+            html += '<div class="cal-holiday-item ' + cls + '">' +
+              '<div><div class="cal-holiday-date">' + MONTHS[viewMonth].substring(0,3) + ' ' + h.day + '</div><div style="font-size:0.73rem;color:#aaa;">' + dayName + '</div></div>' +
+              '<div><div class="cal-holiday-name">' + h.name + '</div><div class="cal-holiday-type">' + typeLabel + '</div></div>' +
+            '</div>';
+          });
+          el.innerHTML = html;
+        }
+
+        window.calPrev = function() {
+          viewMonth--;
+          if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+          renderCalendar();
+        };
+        window.calNext = function() {
+          viewMonth++;
+          if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+          renderCalendar();
+        };
+
+        document.addEventListener('DOMContentLoaded', renderCalendar);
+        // Also try immediately in case DOM is ready
+        if (document.readyState !== 'loading') renderCalendar();
+      })();
+      </script>
+    </main>
+
+    <div id="footerMount"></div>
+
+
+  </div>
+  <script src="/assets/js/common.js"></script>
+  <script src="/assets/js/landing.js"></script>
+
+  <!-- Page transition styles & effects -->
+  <style>
+    /* Page enter animation */
+    @keyframes pageEnter {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pageExit {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0; transform: translateY(-10px) scale(0.98); }
+    }
+    @keyframes rippleOut {
+      from { transform: scale(0); opacity: 0.35; }
+      to   { transform: scale(4); opacity: 0; }
+    }
+
+    /* Full-page transition overlay */
+    #page-transition-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #ffffff;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+    #page-transition-overlay.fade-in {
+      opacity: 1; pointer-events: none;
+    }
+
+    /* Main content enters smoothly */
+    .page-shell > main,
+    .page-shell > .container {
+      animation: pageEnter 0.4s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    /* Ripple on all interactive links & buttons */
+    .ripple-host {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple-circle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+      width: 80px; height: 80px;
+      margin-top: -40px; margin-left: -40px;
+      animation: rippleOut 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* Nav links hover underline slide */
+    .top-links a:not(.btn) {
+      position: relative;
+      transition: background .18s, color .18s, opacity .18s;
+    }
+    .top-links a:not(.btn)::after {
+      content: '';
+      position: absolute; bottom: 4px; left: 14px; right: 14px;
+      height: 2px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 2px;
+      width: 0;
+      transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    .top-links a:not(.btn):hover::after { width: calc(100% - 28px); }
+
+    /* Service chip styles moved to inline section style block */
+
+    /* Hero art card tilt on hover */
+    .hero-art {
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1),
+                  box-shadow 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .hero-art:hover {
+      transform: translateY(-4px) rotate(-0.5deg);
+      box-shadow: 0 24px 48px rgba(68,29,34,.16);
+    }
+
+    /* Calendar nav buttons pulse on hover */
+    #cal-prev, #cal-next {
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease !important;
+    }
+    #cal-prev:hover, #cal-next:hover {
+      transform: scale(1.12) !important;
+      box-shadow: 0 4px 14px rgba(139,33,49,.35) !important;
+    }
+    #cal-prev:active, #cal-next:active {
+      transform: scale(0.96) !important;
+    }
+  
+  </style>
+
+  <script>
+  (function () {
+    /* ── Overlay element ── */
+    var overlay = document.createElement('div');
+    overlay.id = 'page-transition-overlay';
+    document.body.appendChild(overlay);
+
+    /* Safety net: always clear overlay after 800ms no matter what */
+    function scheduleOverlayClear() {
+      setTimeout(function () {
+        overlay.classList.remove('fade-in');
+      }, 800);
+    }
+
+    /* ── Ripple helper ── */
+    function addRipple(el, e) {
+      var rect = el.getBoundingClientRect();
+      var circle = document.createElement('span');
+      circle.className = 'ripple-circle';
+      circle.style.top  = (e.clientY - rect.top)  + 'px';
+      circle.style.left = (e.clientX - rect.left) + 'px';
+      el.appendChild(circle);
+      circle.addEventListener('animationend', function () { circle.remove(); });
+    }
+
+    /* ── Apply ripple to buttons & nav links ── */
+    function applyRipples() {
+      var targets = document.querySelectorAll('.btn, .top-links a');
+      targets.forEach(function (el) {
+        if (el.dataset.ripple) return;
+        el.dataset.ripple = '1';
+        el.classList.add('ripple-host');
+        el.addEventListener('mousedown', function (e) { addRipple(el, e); });
+      });
+    }
+
+    /* ── Page-exit transition for internal links ── */
+    function handleLinkClick(e) {
+      var anchor = e.currentTarget;
+      var href = anchor.getAttribute('href');
+      /* Skip: external, hash-only, new tab, js: */
+      if (!href || href.startsWith('#') || href.startsWith('javascript') ||
+          anchor.target === '_blank' || href.startsWith('http')) return;
+
+      e.preventDefault();
+
+      /* Brief subtle flash then navigate — never blocks */
+      overlay.classList.add('fade-in');
+      scheduleOverlayClear();
+
+      setTimeout(function () {
+        window.location.href = href;
+      }, 180);
+    }
+
+    function applyPageTransitions() {
+      var links = document.querySelectorAll('a[href]');
+      links.forEach(function (a) {
+        if (a.dataset.transition) return;
+        a.dataset.transition = '1';
+        a.addEventListener('click', handleLinkClick);
+      });
+    }
+
+    /* ── Run on DOM ready ── */
+    function init() {
+      /* Always clear overlay immediately on load (handles back-button stuck) */
+      overlay.classList.remove('fade-in');
+      applyRipples();
+      applyPageTransitions();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    /* Re-apply after dynamic content (e.g. footer mount) */
+    setTimeout(init, 600);
+
+    /* Clear overlay on pageshow (back/forward cache) */
+    window.addEventListener('pageshow', function () {
+      overlay.classList.remove('fade-in');
+    });
+  })();
+  </script>
+<script>
+/* ── Mobile hamburger nav ── */
+function openNav() {
+  document.getElementById('topNav').classList.add('open');
+  document.getElementById('navOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeNav() {
+  var nav = document.getElementById('topNav');
+  var overlay = document.getElementById('navOverlay');
+  if (nav) nav.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeNotif() {
+  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
+    d.classList.remove('show');
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  // Close drawer when any nav link is tapped
+  document.querySelectorAll('.top-links a').forEach(function(a) {
+    a.addEventListener('click', closeNav);
+  });
+});
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/assets/sw.js");
+    });
+  }
+</script>
+</body>
+</html>
