@@ -70,8 +70,10 @@
                 placeholder="09XXXXXXXXX"
                 pattern="09[0-9]{9}"
                 title="Must be 11 digits starting with 09"
+                oninput="phPhoneInput(this)"
+                onblur="phPhoneValidate(this)"
                 required>
-              <small id="contactError" style="color:#dc2626;font-size:12px;display:none;margin-top:4px;">Must be 11 digits and start with 09</small>
+              <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
             </div>
             <div class="full">
               <label class="form-label">Purpose</label>
@@ -139,51 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
       navigator.serviceWorker.register("/assets/sw.js");
     });
   }
-</script>
-<script>
-  const contactInput = document.getElementById('contactNumber');
-  const contactError = document.getElementById('contactError');
-
-  // Block non-numeric keystrokes
-  contactInput.addEventListener('keydown', function(e) {
-    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
-    if (allowed.includes(e.key)) return;
-    if (!/^[0-9]$/.test(e.key)) e.preventDefault();
-  });
-
-  // Block paste of non-numeric content
-  contactInput.addEventListener('paste', function(e) {
-    e.preventDefault();
-    const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-    const pos = this.selectionStart;
-    const current = this.value;
-    this.value = (current.slice(0, pos) + pasted + current.slice(this.selectionEnd)).slice(0, 11);
-  });
-
-  // Validate on input — must start with 09
-  contactInput.addEventListener('input', function() {
-    // Strip non-digits
-    this.value = this.value.replace(/\D/g, '');
-
-    const val = this.value;
-    const valid = /^09[0-9]{9}$/.test(val);
-    const tooShort = val.length > 0 && val.length < 11;
-    const badPrefix = val.length >= 2 && !val.startsWith('09');
-
-    if (badPrefix || (val.length === 11 && !valid)) {
-      contactError.style.display = 'block';
-      this.setCustomValidity('Must be 11 digits starting with 09');
-    } else if (tooShort) {
-      contactError.style.display = 'none';
-      this.setCustomValidity('Must be 11 digits starting with 09');
-    } else if (valid) {
-      contactError.style.display = 'none';
-      this.setCustomValidity('');
-    } else {
-      contactError.style.display = 'none';
-      this.setCustomValidity('');
-    }
-  });
 </script>
 </body>
 </html>

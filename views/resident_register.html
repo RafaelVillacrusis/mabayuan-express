@@ -183,7 +183,7 @@
             </div>
             <div>
               <label class="form-label">Birth date</label>
-              <input class="input" type="date" name="birth_date">
+              <input class="input" type="date" name="birth_date" max="9999-12-31">
             </div>
             <div class="full">
               <label class="form-label">Email address *</label>
@@ -207,10 +207,10 @@
               <input class="input" name="phone_number" id="phoneField" required
                 placeholder="09XXXXXXXXX" maxlength="11"
                 inputmode="numeric" pattern="09[0-9]{9}"
-                oninput="sanitizePhone(this)"
-                onblur="validatePhone(this)">
-              <div class="field-hint" id="phoneHint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px">
-                Phone number must be 11 digits and start with 09.
+                oninput="phPhoneInput(this)"
+                onblur="phPhoneValidate(this)">
+              <div class="ph-phone-hint field-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px">
+                Philippine numbers must start with 09.
               </div>
             </div>
             <div class="full">

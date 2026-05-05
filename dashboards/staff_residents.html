@@ -170,11 +170,16 @@
         </div>
         <div>
           <label class="form-label">Phone Number</label>
-          <input class="input" id="editPhone" name="phone_number" />
+          <input class="input" id="editPhone" name="phone_number"
+            placeholder="09XXXXXXXXX" maxlength="11"
+            inputmode="numeric" pattern="09[0-9]{9}"
+            oninput="phPhoneInput(this)"
+            onblur="phPhoneValidate(this)" />
+          <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
         </div>
         <div>
           <label class="form-label">Birth Date</label>
-          <input class="input" type="date" id="editBirth" name="birth_date" />
+          <input class="input" type="date" id="editBirth" name="birth_date" max="9999-12-31" />
         </div>
         <div class="full">
           <label class="form-label">Address</label>
