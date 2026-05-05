@@ -58,36 +58,78 @@ async function updateUserRole(id, role) {
 }
 
 async function deleteUser(id) {
-  if (!confirm('Delete this user account? This cannot be undone.')) return;
-  const res = await fetch(`/api/system-admin/users/${id}/delete`, { method:'POST' });
-  if (!res.ok) { const d = await res.json().catch(()=>({})); alert(d.error || 'Could not delete user.'); }
-  await refreshAll();
+  showDeleteModal({
+    title: '🗑 Delete User',
+    message: 'Delete this user account?',
+    onConfirm: async () => {
+      const res = await fetch(`/api/system-admin/users/${id}/delete`, { method:'POST' });
+      if (!res.ok) { const d = await res.json().catch(()=>({})); alert(d.error || 'Could not delete user.'); }
+      await refreshAll();
+    }
+  });
 }
 
 function editDocument(id, name, description, price, days, active) {
-  const newName = prompt('Document name', decodeHtml(name));
-  if (newName === null || !newName.trim()) return;
-  const newDescription = prompt('Description', decodeHtml(description || ''));
-  if (newDescription === null) return;
-  const newPrice = prompt('Price (₱)', price);
-  if (newPrice === null) return;
-  const newDays = prompt('Processing days', days);
-  if (newDays === null) return;
-  const newActive = confirm('Set as Active? (Cancel = Inactive)') ? 1 : 0;
+  // Populate modal fields
+  document.getElementById('editDocName').value = decodeHtml(name);
+  document.getElementById('editDocDesc').value = decodeHtml(description || '');
+  document.getElementById('editDocPrice').value = price;
+  document.getElementById('editDocDays').value = days;
+  document.getElementById('editDocActive').value = active ? '1' : '0';
+  document.getElementById('editDocError').style.display = 'none';
+
+  // Store the id for submission
+  document.getElementById('editDocModal').dataset.docId = id;
+  document.getElementById('editDocModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditDocModal() {
+  document.getElementById('editDocModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function submitEditDoc() {
+  const id = document.getElementById('editDocModal').dataset.docId;
+  const name = document.getElementById('editDocName').value.trim();
+  const description = document.getElementById('editDocDesc').value.trim();
+  const price = document.getElementById('editDocPrice').value;
+  const days = document.getElementById('editDocDays').value;
+  const is_active = document.getElementById('editDocActive').value;
+  const errorEl = document.getElementById('editDocError');
+
+  if (!name || !price || !days) {
+    errorEl.textContent = 'Document name, price, and processing days are required.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = `/api/system-admin/documents/${id}/update`;
-  [['document_name',newName],['description',newDescription],['price',newPrice],['processing_days',newDays],['is_active',newActive]].forEach(([k,v]) => {
-    const inp = document.createElement('input'); inp.type='hidden'; inp.name=k; inp.value=v; form.appendChild(inp);
+  [['document_name', name], ['description', description], ['price', price], ['processing_days', days], ['is_active', is_active]].forEach(([k, v]) => {
+    const inp = document.createElement('input'); inp.type = 'hidden'; inp.name = k; inp.value = v; form.appendChild(inp);
   });
   document.body.appendChild(form);
   form.submit();
 }
 
+// Close modal on backdrop click
+document.addEventListener('DOMContentLoaded', function () {
+  const modal = document.getElementById('editDocModal');
+  if (modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target === this) closeEditDocModal();
+    });
+  }
+});
+
 function decodeHtml(v) { const t = document.createElement('textarea'); t.innerHTML = v; return t.value; }
 window.updateUserRole = updateUserRole;
 window.deleteUser = deleteUser;
 window.editDocument = editDocument;
+window.closeEditDocModal = closeEditDocModal;
+window.submitEditDoc = submitEditDoc;
 
 async function refreshAll() { await Promise.all([loadCounts(), loadDocuments(), loadUsers()]); }
 

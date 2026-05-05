@@ -226,6 +226,8 @@
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/delete-modal.js"></script>
+
 <script>
   let currentAdminId = null, allUsers = [], activeFilter = 'all';
 
@@ -266,17 +268,31 @@
   async function changeRole(id, newRole, sel) {
     const u = allUsers.find(x=>x.user_id===id);
     if (!u || newRole===u.role) return;
-    if (!confirm(`Change ${u.full_name}'s role to "${newRole}"?`)) { sel.value=u.role; return; }
-    const res = await fetch(`/api/system-admin/users/${id}/update-role`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:newRole})});
-    showAlert(res.ok?`Role updated for ${u.full_name}.`:'Could not update role.', res.ok?'success':'error');
-    await loadUsers();
+    showDeleteModal({
+      title: '🔄 Change Role',
+      message: `Change ${u.full_name}'s role to "${newRole}"?`,
+      onConfirm: async () => {
+        const res = await fetch(`/api/system-admin/users/${id}/update-role`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:newRole})});
+        showAlert(res.ok?`Role updated for ${u.full_name}.`:'Could not update role.', res.ok?'success':'error');
+        await loadUsers();
+      }
+    });
+    if (!sel) return;
+    // Revert dropdown visually until confirmed
+    const original = u.role;
+    sel.value = original;
   }
 
   async function deleteUser(id, name) {
-    if (!confirm(`Delete account for "${name}"? This cannot be undone.`)) return;
-    const res = await fetch(`/api/system-admin/users/${id}/delete`,{method:'POST'});
-    showAlert(res.ok?`"${name}" deleted.`:'Could not delete user.', res.ok?'success':'error');
-    await loadUsers();
+    showDeleteModal({
+      title: '🗑 Delete User',
+      message: `Delete account for "${name}"?`,
+      onConfirm: async () => {
+        const res = await fetch(`/api/system-admin/users/${id}/delete`,{method:'POST'});
+        showAlert(res.ok?`"${name}" deleted.`:'Could not delete user.', res.ok?'success':'error');
+        await loadUsers();
+      }
+    });
   }
 
   function showAlert(msg, type='warning') {
