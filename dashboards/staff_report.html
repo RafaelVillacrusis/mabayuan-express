@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <title>Summary Report — Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    /* ── Report page specific styles ── */
+    .report-hero {
+      background: linear-gradient(135deg, #4a1e24 0%, #8b2131 60%, #b03040 100%);
+      color: #fff;
+      padding: 28px 32px 24px;
+      border-radius: 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .report-hero h1 { margin: 0; font-size: 22px; font-weight: 800; }
+    .report-hero p  { margin: 4px 0 0; font-size: 13px; opacity: .82; }
+
+    /* Filter bar */
+    .report-filters {
+      background: #fff;
+      border: 1px solid #e8d5d7;
+      border-radius: 16px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 860px) {
+      .report-filters { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 500px) {
+      .report-filters { grid-template-columns: 1fr; }
+      .report-hero { padding: 20px 18px; }
+      .report-hero h1 { font-size: 18px; }
+    }
+
+    /* Summary stat cards */
+    .report-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 700px) { .report-stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 380px) { .report-stats { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: #fff;
+      border: 1.5px solid #e8d5d7;
+      border-radius: 14px;
+      padding: 16px 18px;
+      text-align: center;
+    }
+    .stat-card .stat-val { font-size: 28px; font-weight: 800; color: #2d1518; line-height: 1; margin-bottom: 4px; }
+    .stat-card .stat-lbl { font-size: 12px; color: #9a7a7d; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .stat-card.s-green  { border-color: #c8e6c8; } .stat-card.s-green  .stat-val { color: #16a34a; }
+    .stat-card.s-blue   { border-color: #a8c8f0; } .stat-card.s-blue   .stat-val { color: #0f4fa8; }
+    .stat-card.s-red    { border-color: #f5c0c4; } .stat-card.s-red    .stat-val { color: #dc2626; }
+    .stat-card.s-amber  { border-color: #f5d98a; } .stat-card.s-amber  .stat-val { color: #b45309; }
+
+    /* Table */
+    .report-panel {
+      background: #fff;
+      border: 1px solid #e8d5d7;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .report-panel-head {
+      padding: 16px 22px;
+      border-bottom: 1px solid #f0e4e5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .report-panel-head h2 { margin: 0; font-size: 15px; }
+    .report-count { font-size: 12px; color: #9a7a7d; }
+
+    .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .report-table thead tr { background: #8b2131; color: #fff; }
+    .report-table thead th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    .report-table tbody tr { border-bottom: 1px solid #f5edef; transition: background .15s; }
+    .report-table tbody tr:hover { background: #fdf8f8; }
+    .report-table tbody td { padding: 11px 14px; color: #2d1518; vertical-align: middle; }
+    .report-table tbody tr:last-child { border-bottom: none; }
+    .report-table .mono { font-family: monospace; font-size: 11px; }
+    .report-table .empty-state { text-align: center; color: #9a7a7d; padding: 32px; font-style: italic; }
+
+    /* Print styles */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff !important; }
+      .report-hero { background: #8b2131 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .report-table thead tr { background: #8b2131 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .report-panel { border: 1px solid #ccc; box-shadow: none; }
+      .topbar, header { display: none !important; }
+      .content-area { padding: 0 !important; }
+    }
+  </style>
+</head>
+<body class="no-footer">
+
+<div class="page-shell">
+  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+          <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+          <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+          <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="26" cy="28" r="7" fill="#fff"/>
+          <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <div>Staff Dashboard</div>
+        <small>Summary Report</small>
+      </div>
+    </div>
+    <button class="nav-toggle no-print" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
+    <nav class="top-links" id="topNav">
+      <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+      <a href="/staff/dashboard">Dashboard</a>
+      <a href="/staff/residents">Resident Records</a>
+      <a href="/staff/report" style="font-weight:700;">Report</a>
+      <a href="/staff/inbox" style="position:relative">Messages</a>
+      <form action="/auth/logout" method="POST">
+        <button class="btn btn-small btn-ghost">Logout</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="container content-area">
+
+    <!-- Hero -->
+    <div class="report-hero no-print-hide">
+      <div>
+        <h1>📊 Summary Report</h1>
+        <p>Document requests overview — Barangay Mabayuan</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;" class="no-print">
+        <button onclick="window.print()" class="btn btn-small" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);">🖨 Print / Save PDF</button>
+        <a href="/staff/dashboard" class="btn btn-small" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3);">← Back</a>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="report-filters no-print">
+      <div>
+        <label class="form-label">Date From</label>
+        <input class="input" type="date" id="dateFrom" max="9999-12-31" />
+      </div>
+      <div>
+        <label class="form-label">Date To</label>
+        <input class="input" type="date" id="dateTo" max="9999-12-31" />
+      </div>
+      <div>
+        <label class="form-label">Status</label>
+        <select class="select" id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="Approved">Processing</option>
+          <option value="Ready for Pickup">Ready for Pickup</option>
+          <option value="Claimed">Claimed</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Document</label>
+        <select class="select" id="docFilter">
+          <option value="all">All documents</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <button class="btn btn-small" onclick="applyFilters()">Apply</button>
+        <button class="btn btn-small btn-ghost" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="report-stats" id="reportStats">
+      <div class="stat-card"><div class="stat-val" id="sTotal">—</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-card s-blue"><div class="stat-val" id="sProcessing">—</div><div class="stat-lbl">Processing</div></div>
+      <div class="stat-card s-green"><div class="stat-val" id="sReady">—</div><div class="stat-lbl">Ready for Pickup</div></div>
+      <div class="stat-card s-amber"><div class="stat-val" id="sClaimed">—</div><div class="stat-lbl">Claimed</div></div>
+    </div>
+
+    <!-- Table -->
+    <div class="report-panel">
+      <div class="report-panel-head">
+        <h2>📋 Request Records</h2>
+        <span class="report-count" id="reportCount"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Transaction No.</th>
+              <th>Resident</th>
+              <th>Document</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Suggested Release</th>
+              <th>Release Date</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="reportRows">
+            <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/assets/js/common.js"></script>
+<script src="/assets/js/delete-modal.js"></script>
+<script>
+  let allRows = [];
+
+  async function loadReport() {
+    const res = await fetch('/api/staff/report');
+    allRows = await res.json();
+
+    // Populate document filter
+    const docs = [...new Set(allRows.map(r => r.document_name))].sort();
+    const docSel = document.getElementById('docFilter');
+    docs.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d;
+      docSel.appendChild(o);
+    });
+
+    renderRows(allRows);
+  }
+
+  function applyFilters() {
+    const from   = document.getElementById('dateFrom').value;
+    const to     = document.getElementById('dateTo').value;
+    const status = document.getElementById('statusFilter').value;
+    const doc    = document.getElementById('docFilter').value;
+
+    const filtered = allRows.filter(r => {
+      const updated = r.updated_at ? r.updated_at.slice(0, 10) : '';
+      if (from && updated < from) return false;
+      if (to   && updated > to)   return false;
+      if (status !== 'all' && r.status !== status) return false;
+      if (doc    !== 'all' && r.document_name !== doc) return false;
+      return true;
+    });
+    renderRows(filtered);
+  }
+
+  function resetFilters() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('statusFilter').value = 'all';
+    document.getElementById('docFilter').value = 'all';
+    renderRows(allRows);
+  }
+
+  function renderRows(rows) {
+    // Stats
+    document.getElementById('sTotal').textContent      = rows.length;
+    document.getElementById('sProcessing').textContent = rows.filter(r => r.status === 'Approved').length;
+    document.getElementById('sReady').textContent      = rows.filter(r => r.status === 'Ready for Pickup').length;
+    document.getElementById('sClaimed').textContent    = rows.filter(r => r.status === 'Claimed').length;
+    document.getElementById('reportCount').textContent = `${rows.length} record${rows.length !== 1 ? 's' : ''}`;
+
+    const statusDisplay = s => s === 'Approved' ? 'Processing' : s;
+    const statusClass   = s => (statusDisplay(s)).toLowerCase().replace(/[^a-z]+/g, '-');
+
+    document.getElementById('reportRows').innerHTML = rows.length
+      ? rows.map(r => `
+        <tr>
+          <td class="mono">${escapeHtml(r.transaction_no || '—')}</td>
+          <td>${escapeHtml(r.resident_name || '—')}</td>
+          <td>${escapeHtml(r.document_name || '—')}</td>
+          <td>₱${Number(r.price_at_request || 0).toFixed(2)}</td>
+          <td><span class="status-pill status-${statusClass(r.status)}">${escapeHtml(statusDisplay(r.status))}</span></td>
+          <td>${formatDate(r.suggested_release_date)}</td>
+          <td>${formatDate(r.release_date)}</td>
+          <td>${formatDate(r.updated_at)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="8" class="empty-state">No records found for the selected filters.</td></tr>`;
+  }
+
+  document.addEventListener('DOMContentLoaded', loadReport);
+
+  /* ── Mobile nav ── */
+  function openNav()  { document.getElementById('topNav').classList.add('open'); document.getElementById('navOverlay').classList.add('open'); }
+  function closeNav() { document.getElementById('topNav').classList.remove('open'); document.getElementById('navOverlay').classList.remove('open'); }
+  document.querySelectorAll('.top-links a').forEach(a => a.addEventListener('click', () => { if (window.innerWidth <= 680) closeNav(); }));
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => { navigator.serviceWorker.register("/assets/sw.js"); });
+  }
+</script>
+</body>
+</html>
