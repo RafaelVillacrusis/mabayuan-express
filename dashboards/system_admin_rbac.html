@@ -179,7 +179,14 @@
             </select>
           </div>
           <div><label class="form-label">Email</label><input class="input" type="email" id="newEmail" placeholder="user@example.com" /></div>
-          <div><label class="form-label">Password</label><input class="input" type="password" id="newPassword" placeholder="Min. 6 characters" /></div>
+          <div>
+            <label class="form-label">Password</label>
+            <div style="position:relative;">
+              <input class="input" type="password" id="newPassword" placeholder="Min. 6 characters" style="padding-right:44px;" />
+              <button type="button" onclick="togglePwd('newPassword','newPwdEye')" id="newPwdEye"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:#9a7a7d;line-height:1;padding:0;">👁</button>
+            </div>
+          </div>
         </div>
         <div style="display:flex;gap:10px;">
           <button class="sa-btn sa-btn-primary sa-btn-sm" id="addUserSubmitBtn" onclick="submitAddUser()">Create User</button>
@@ -359,6 +366,18 @@
 
 
 <script>
+  function togglePwd(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁';
+    }
+  }
+
   function openAddUserModal() {
     const panel = document.getElementById('addUserInline');
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
@@ -367,6 +386,8 @@
       document.getElementById('newFullName').value = '';
       document.getElementById('newEmail').value = '';
       document.getElementById('newPassword').value = '';
+      document.getElementById('newPassword').type = 'password';
+      document.getElementById('newPwdEye').textContent = '👁';
       document.getElementById('newRole').value = '';
       document.getElementById('newFullName').focus();
     }
