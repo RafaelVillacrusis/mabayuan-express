@@ -97,6 +97,29 @@ router.post('/api/system-admin/documents/:id/update', requireRole('system_admin'
   res.redirect('/system-admin/dashboard?saved=1');
 });
 
+router.post('/api/system-admin/documents/:id/delete', requireRole('system_admin'), async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT document_name FROM documents WHERE document_id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Document not found.' });
+    const name = rows[0].document_name;
+    await pool.query('DELETE FROM documents WHERE document_id = $1', [req.params.id]);
+    await createAuditLog({
+      actorUserId: req.session.user.user_id,
+      actorRole: 'system_admin',
+      targetType: 'document',
+      targetId: req.params.id,
+      action: 'DOCUMENT_DELETED',
+      description: `System admin deleted document type "${name}".`,
+      metadata: { document_name: name }
+    });
+    refreshRoleDashboards('system_admin', 'resident', 'staff', 'captain');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not delete document. It may be linked to existing requests.' });
+  }
+});
+
 router.get('/api/system-admin/users', requireRole('system_admin'), async (req, res) => {
   const { rows } = await pool.query(`SELECT user_id, full_name, email, role, created_at FROM users ORDER BY created_at DESC`);
   res.json(rows);

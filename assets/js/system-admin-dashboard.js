@@ -26,7 +26,10 @@ async function loadDocuments() {
       <td>₱${Number(row.price).toFixed(2)}</td>
       <td>${row.processing_days} day${row.processing_days !== 1 ? 's' : ''}</td>
       <td><span class="badge ${row.is_active ? 'badge-green' : 'badge-gray'}">${row.is_active ? 'Active' : 'Inactive'}</span></td>
-      <td><button class="btn btn-small btn-ghost" onclick="editDocument(${row.document_id},'${escapeHtml(row.document_name).replace(/'/g,"&#39;")}','${escapeHtml(row.description||'').replace(/'/g,"&#39;")}','${row.price}','${row.processing_days}','${row.is_active}')">Edit</button></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-small btn-ghost" onclick="editDocument(${row.document_id},'${escapeHtml(row.document_name).replace(/'/g,"&#39;")}','${escapeHtml(row.description||'').replace(/'/g,"&#39;")}','${row.price}','${row.processing_days}','${row.is_active}')">Edit</button>
+        <button class="btn btn-small btn-danger" onclick="deleteDocument(${row.document_id},'${escapeHtml(row.document_name).replace(/'/g,"&#39;")}')">Delete</button>
+      </td>
     </tr>`).join('') || `<tr><td colspan="5" class="empty-state">No documents yet.</td></tr>`;
 }
 
@@ -125,9 +128,27 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function decodeHtml(v) { const t = document.createElement('textarea'); t.innerHTML = v; return t.value; }
+
+async function deleteDocument(id, name) {
+  showDeleteModal({
+    title: '🗑 Delete Document',
+    message: `Delete "${name}" from document types?`,
+    onConfirm: async () => {
+      const res = await fetch(`/api/system-admin/documents/${id}/delete`, { method: 'POST' });
+      if (res.ok) {
+        await refreshAll();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Could not delete document.');
+      }
+    }
+  });
+}
+
 window.updateUserRole = updateUserRole;
 window.deleteUser = deleteUser;
 window.editDocument = editDocument;
+window.deleteDocument = deleteDocument;
 window.closeEditDocModal = closeEditDocModal;
 window.submitEditDoc = submitEditDoc;
 
