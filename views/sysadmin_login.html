@@ -31,8 +31,6 @@
     .pw-wrap { position:relative; }
     .pw-wrap .input { padding-right:44px; }
     .toggle-pw { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9a7a7d;padding:0;font-size:17px;line-height:1; }
-    .forgot-row { text-align:right;margin:6px 0 18px; }
-    .forgot-row a { font-size:12px;color:#8b3d46;font-weight:600;text-decoration:none; }
     .btn-auth { width:100%;padding:13px;background:linear-gradient(135deg,#4a1e24,#8b3d46);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(74,30,36,.4);letter-spacing:.3px; }
     .btn-auth:hover { background:linear-gradient(135deg,#3a1620,#6b2d35);box-shadow:0 6px 20px rgba(74,30,36,.45);transform:translateY(-1px); }
     .auth-footer { text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid #f5eded; }
@@ -74,7 +72,6 @@
           <input class="input" type="password" name="password" id="pwField" required autocomplete="new-password" placeholder="Enter your password">
           <button class="toggle-pw" type="button" onclick="togglePw()">👁</button>
         </div>
-        <div class="forgot-row"><a href="/forgot-password?type=portal">Forgot password?</a></div>
         <button class="btn-auth" type="submit">Login</button>
       </form>
       <div class="auth-footer">
