@@ -178,7 +178,7 @@
               <option value="system_admin">System Admin</option>
             </select>
           </div>
-          <div><label class="form-label">Email</label><input class="input" type="email" id="newEmail" placeholder="user@example.com" /></div>
+          <div><label class="form-label">Email</label><input class="input" type="email" id="newEmail" placeholder="user@example.com" oninput="validateEmail(this)" /></div>
           <div>
             <label class="form-label">Password</label>
             <div style="position:relative;">
@@ -366,6 +366,11 @@
 
 
 <script>
+  function validateEmail(input) {
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+    input.style.borderColor = input.value && !valid ? '#dc2626' : '';
+  }
+
   function togglePwd(inputId, btnId) {
     const input = document.getElementById(inputId);
     const btn = document.getElementById(btnId);
@@ -405,8 +410,18 @@
     const errorEl = document.getElementById('addUserError');
     const btn = document.getElementById('addUserSubmitBtn');
 
-    if (!full_name || !email || !password) {
+    if (!full_name || !email || !password || !role) {
       errorEl.textContent = 'All fields are required.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errorEl.textContent = 'Please enter a valid email address (must include @).';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (password.length < 6) {
+      errorEl.textContent = 'Password must be at least 6 characters.';
       errorEl.style.display = 'block';
       return;
     }

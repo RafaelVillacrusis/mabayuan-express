@@ -84,6 +84,23 @@
         <div class="sa-panel-header">
           <h2>📋 Request Activity</h2>
         </div>
+
+        <!-- Search filter -->
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border,#e8d5d7);display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input class="input" id="reqSearch" placeholder="Search transaction, resident, or document…"
+            style="flex:2;min-width:200px;max-width:420px;"
+            oninput="filterRequests()" />
+          <select class="select" id="reqStatus" style="flex:1;min-width:140px;max-width:200px;" onchange="filterRequests()">
+            <option value="">All statuses</option>
+            <option value="Pending Approval">Pending Approval</option>
+            <option value="Approved">Processing</option>
+            <option value="Ready for Pickup">Ready for Pickup</option>
+            <option value="Claimed">Claimed</option>
+            <option value="Declined">Declined</option>
+          </select>
+          <button class="sa-btn sa-btn-ghost sa-btn-sm" onclick="clearReqFilter()">Reset</button>
+        </div>
+
         <div class="table-wrap">
           <table class="sa-table">
             <thead>
@@ -99,6 +116,7 @@
               <tr><td colspan="5" class="empty-state">Loading requests…</td></tr>
             </tbody>
           </table>
+          <div id="reqCount" style="padding:10px 16px;font-size:12px;color:var(--muted,#9a7a7d);"></div>
         </div>
       </div>
     </div>
