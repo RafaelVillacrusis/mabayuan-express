@@ -339,4 +339,209 @@ async function sendRegistrationReceivedEmail({ firstName, lastName, email }) {
   }
 }
 
-module.exports = { sendAccountApprovedEmail, sendAccountDeclinedEmail, sendRegistrationReceivedEmail };
+module.exports = { sendAccountApprovedEmail, sendAccountDeclinedEmail, sendRegistrationReceivedEmail, sendReadyForPickupEmail, sendRequestApprovedEmail, sendRequestDeclinedEmail };
+
+async function sendReadyForPickupEmail({ firstName, lastName, email, documentName, releaseDate, transactionNo }) {
+  const fullName = `${firstName} ${lastName}`;
+  try {
+    await sendBrevoEmail({
+      to: email,
+      subject: `📦 Your ${documentName} is Ready for Pickup`,
+      html: `<!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+        <body style="margin:0;padding:0;background:#f5f0f1;font-family:'Segoe UI',Arial,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0f1;padding:32px 0;">
+            <tr><td align="center">
+              <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(68,29,34,.10);max-width:560px;width:100%;">
+                <tr>
+                  <td style="background:#8b2131;padding:28px 32px;text-align:center;">
+                    <div style="color:#fff;font-size:18px;font-weight:700;">Mabayuan Express</div>
+                    <div style="color:rgba(255,255,255,0.75);font-size:11px;letter-spacing:.05em;">DOCUMENT REQUEST PORTAL</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:36px 32px 28px;">
+                    <div style="text-align:center;margin-bottom:24px;">
+                      <div style="display:inline-block;background:#e8f5ee;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;text-align:center;">📦</div>
+                    </div>
+                    <h1 style="margin:0 0 8px;font-size:22px;color:#2b1a1c;text-align:center;">Your Document is Ready!</h1>
+                    <p style="margin:0 0 24px;color:#736a6b;font-size:14px;text-align:center;">Please visit the barangay office to claim your document.</p>
+                    <p style="margin:0 0 20px;font-size:15px;color:#2b1a1c;">Hi <strong>${fullName}</strong>,</p>
+                    <p style="margin:0 0 20px;font-size:14px;color:#555;line-height:1.7;">
+                      Great news! Your <strong>${documentName}</strong> is now ready for pickup at the Barangay Mabayuan office.
+                    </p>
+                    <div style="background:#fdf6f7;border-left:4px solid #8b2131;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Transaction No.</td></tr>
+                        <tr><td style="font-size:14px;color:#2b1a1c;font-family:monospace;padding-bottom:14px;">${transactionNo}</td></tr>
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Document</td></tr>
+                        <tr><td style="font-size:14px;color:#2b1a1c;padding-bottom:14px;">${documentName}</td></tr>
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Scheduled Release Date</td></tr>
+                        <tr><td style="font-size:16px;font-weight:700;color:#8b2131;">${releaseDate}</td></tr>
+                      </table>
+                    </div>
+                    <div style="background:#e8f5ee;border-radius:8px;padding:14px 18px;margin-bottom:24px;font-size:13px;color:#2e5e2e;line-height:1.6;">
+                      📍 Please bring a valid ID when claiming your document at the <strong>Barangay Mabayuan Office</strong>.
+                    </div>
+                    <p style="margin:0;font-size:13px;color:#aaa;text-align:center;">
+                      If you have questions, please contact the barangay office directly.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#fdf6f7;border-top:1px solid #f0e4e5;padding:18px 32px;text-align:center;">
+                    <p style="margin:0;font-size:12px;color:#aaa;">
+                      © ${new Date().getFullYear()} Mabayuan Express · Barangay Document Request Portal
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </body>
+        </html>`
+    });
+    console.log(`✅ Ready for pickup email sent to ${email}`);
+    return true;
+  } catch (err) {
+    console.error(`❌ Failed to send ready for pickup email to ${email}:`, err.message);
+    return false;
+  }
+}
+
+async function sendRequestApprovedEmail({ firstName, lastName, email, documentName, transactionNo }) {
+  const fullName = `${firstName} ${lastName}`;
+  try {
+    await sendBrevoEmail({
+      to: email,
+      subject: `✅ Your ${documentName} Request Has Been Approved`,
+      html: `<!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+        <body style="margin:0;padding:0;background:#f5f0f1;font-family:'Segoe UI',Arial,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0f1;padding:32px 0;">
+            <tr><td align="center">
+              <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(68,29,34,.10);max-width:560px;width:100%;">
+                <tr>
+                  <td style="background:#8b2131;padding:28px 32px;text-align:center;">
+                    <div style="color:#fff;font-size:18px;font-weight:700;">Mabayuan Express</div>
+                    <div style="color:rgba(255,255,255,0.75);font-size:11px;letter-spacing:.05em;">DOCUMENT REQUEST PORTAL</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:36px 32px 28px;">
+                    <div style="text-align:center;margin-bottom:24px;">
+                      <div style="display:inline-block;background:#e8f5ee;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;text-align:center;">✅</div>
+                    </div>
+                    <h1 style="margin:0 0 8px;font-size:22px;color:#2b1a1c;text-align:center;">Request Approved!</h1>
+                    <p style="margin:0 0 24px;color:#736a6b;font-size:14px;text-align:center;">Your document request has been approved by the Barangay Captain.</p>
+                    <p style="margin:0 0 20px;font-size:15px;color:#2b1a1c;">Hi <strong>${fullName}</strong>,</p>
+                    <p style="margin:0 0 20px;font-size:14px;color:#555;line-height:1.7;">
+                      Your request for <strong>${documentName}</strong> has been <strong style="color:#16a34a;">approved</strong> by the Barangay Captain and is now being processed by our staff. We will notify you once your document is ready for pickup.
+                    </p>
+                    <div style="background:#fdf6f7;border-left:4px solid #8b2131;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Transaction No.</td></tr>
+                        <tr><td style="font-size:14px;font-family:monospace;color:#2b1a1c;padding-bottom:14px;">${transactionNo}</td></tr>
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Document</td></tr>
+                        <tr><td style="font-size:14px;color:#2b1a1c;">${documentName}</td></tr>
+                      </table>
+                    </div>
+                    <p style="margin:0;font-size:13px;color:#aaa;text-align:center;">
+                      You can track your request status anytime on your dashboard.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#fdf6f7;border-top:1px solid #f0e4e5;padding:18px 32px;text-align:center;">
+                    <p style="margin:0;font-size:12px;color:#aaa;">
+                      © ${new Date().getFullYear()} Mabayuan Express · Barangay Document Request Portal
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </body>
+        </html>`
+    });
+    console.log(`✅ Request approved email sent to ${email}`);
+    return true;
+  } catch (err) {
+    console.error(`❌ Failed to send request approved email to ${email}:`, err.message);
+    return false;
+  }
+}
+
+async function sendRequestDeclinedEmail({ firstName, lastName, email, documentName, transactionNo, captainNotes }) {
+  const fullName = `${firstName} ${lastName}`;
+  try {
+    await sendBrevoEmail({
+      to: email,
+      subject: `❌ Your ${documentName} Request Was Declined`,
+      html: `<!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+        <body style="margin:0;padding:0;background:#f5f0f1;font-family:'Segoe UI',Arial,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0f1;padding:32px 0;">
+            <tr><td align="center">
+              <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(68,29,34,.10);max-width:560px;width:100%;">
+                <tr>
+                  <td style="background:#8b2131;padding:28px 32px;text-align:center;">
+                    <div style="color:#fff;font-size:18px;font-weight:700;">Mabayuan Express</div>
+                    <div style="color:rgba(255,255,255,0.75);font-size:11px;letter-spacing:.05em;">DOCUMENT REQUEST PORTAL</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:36px 32px 28px;">
+                    <div style="text-align:center;margin-bottom:24px;">
+                      <div style="display:inline-block;background:#fdeaea;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;text-align:center;">❌</div>
+                    </div>
+                    <h1 style="margin:0 0 8px;font-size:22px;color:#2b1a1c;text-align:center;">Request Declined</h1>
+                    <p style="margin:0 0 24px;color:#736a6b;font-size:14px;text-align:center;">Your document request was not approved by the Barangay Captain.</p>
+                    <p style="margin:0 0 20px;font-size:15px;color:#2b1a1c;">Hi <strong>${fullName}</strong>,</p>
+                    <p style="margin:0 0 20px;font-size:14px;color:#555;line-height:1.7;">
+                      Unfortunately, your request for <strong>${documentName}</strong> has been <strong style="color:#dc2626;">declined</strong> by the Barangay Captain.
+                    </p>
+                    <div style="background:#fdf6f7;border-left:4px solid #8b2131;border-radius:8px;padding:16px 20px;margin-bottom:${captainNotes ? '16px' : '24px'};">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Transaction No.</td></tr>
+                        <tr><td style="font-size:14px;font-family:monospace;color:#2b1a1c;padding-bottom:14px;">${transactionNo}</td></tr>
+                        <tr><td style="font-size:12px;color:#9a7a7d;font-weight:700;text-transform:uppercase;padding-bottom:4px;">Document</td></tr>
+                        <tr><td style="font-size:14px;color:#2b1a1c;">${documentName}</td></tr>
+                      </table>
+                    </div>
+                    ${captainNotes ? `
+                    <div style="background:#fdf6f7;border-left:4px solid #dc2626;border-radius:8px;padding:14px 18px;margin-bottom:24px;">
+                      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#9a7a7d;text-transform:uppercase;">Captain's Notes</p>
+                      <p style="margin:0;font-size:14px;color:#2b1a1c;line-height:1.6;">${captainNotes}</p>
+                    </div>` : ''}
+                    <p style="margin:0 0 12px;font-size:14px;color:#555;line-height:1.7;">
+                      If you believe this was an error or have questions, please visit or contact the Barangay Mabayuan office.
+                    </p>
+                    <p style="margin:0;font-size:13px;color:#aaa;text-align:center;">
+                      You may submit a new request once the issue has been resolved.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#fdf6f7;border-top:1px solid #f0e4e5;padding:18px 32px;text-align:center;">
+                    <p style="margin:0;font-size:12px;color:#aaa;">
+                      © ${new Date().getFullYear()} Mabayuan Express · Barangay Document Request Portal
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </body>
+        </html>`
+    });
+    console.log(`✅ Request declined email sent to ${email}`);
+    return true;
+  } catch (err) {
+    console.error(`❌ Failed to send request declined email to ${email}:`, err.message);
+    return false;
+  }
+}

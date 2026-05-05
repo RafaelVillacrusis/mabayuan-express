@@ -16,6 +16,7 @@ const {
   getCaptainMessages
 } = require('../actions/notification.actions');
 const { getFilteredAuditLogs } = require('../actions/audit.actions');
+const { sendRequestApprovedEmail, sendRequestDeclinedEmail } = require('../actions/email.actions');
 
 const router = express.Router();
 
@@ -105,6 +106,26 @@ router.post('/api/captain/requests/:id/decision', requireRole('captain'), async 
           : 'declined by the captain'
       }.`
     });
+
+    // Send email to resident
+    if (decision === 'approve') {
+      await sendRequestApprovedEmail({
+        firstName: request.first_name,
+        lastName: request.last_name,
+        email: request.email,
+        documentName: request.document_name,
+        transactionNo: request.transaction_no
+      });
+    } else {
+      await sendRequestDeclinedEmail({
+        firstName: request.first_name,
+        lastName: request.last_name,
+        email: request.email,
+        documentName: request.document_name,
+        transactionNo: request.transaction_no,
+        captainNotes: captain_notes || null
+      });
+    }
 
     refreshRoleDashboards('captain', 'staff', 'system_admin');
     res.redirect(`/captain/request/${requestId}?saved=1`);

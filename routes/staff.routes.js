@@ -14,7 +14,7 @@ const {
 } = require('../actions/resident.actions');
 const { createResidentNotification, refreshRoleDashboards, getInboxMessages } = require('../actions/notification.actions');
 const { createAuditLog } = require('../actions/audit.actions');
-const { sendAccountApprovedEmail, sendAccountDeclinedEmail } = require('../actions/email.actions');
+const { sendAccountApprovedEmail, sendAccountDeclinedEmail, sendReadyForPickupEmail } = require('../actions/email.actions');
 
 const router = express.Router();
 
@@ -297,6 +297,16 @@ router.post('/api/staff/requests/:id/set-release', requireRole('staff'), async (
       actorRole: 'staff',
       eventType: 'SET_RELEASE_DATE_NOTIFICATION',
       auditMeta: { old_release_date: request.release_date, new_release_date: release_date }
+    });
+
+    // Send email notification to resident
+    await sendReadyForPickupEmail({
+      firstName: request.first_name,
+      lastName: request.last_name,
+      email: request.email,
+      documentName: request.document_name,
+      releaseDate: release_date,
+      transactionNo: request.transaction_no
     });
 
     await createAuditLog({
