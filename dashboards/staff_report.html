@@ -11,7 +11,7 @@
   <style>
     /* ── Report page specific styles ── */
     .report-hero {
-      background: linear-gradient(135deg, #4a1e24 0%, #8b2131 60%, #b03040 100%);
+      background: linear-gradient(135deg, #7a2130 0%, #a64d57 60%, #ba616a 100%);
       color: #fff;
       padding: 28px 32px 24px;
       border-radius: 18px;
@@ -33,7 +33,7 @@
       padding: 18px 22px;
       margin-bottom: 20px;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto auto;
+      grid-template-columns: 1fr 1fr 1fr 1fr auto;
       gap: 12px;
       align-items: end;
     }
@@ -91,7 +91,7 @@
     .report-count { font-size: 12px; color: #9a7a7d; }
 
     .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .report-table thead tr { background: #8b2131; color: #fff; }
+    .report-table thead tr { background: #a64d57; color: #fff; }
     .report-table thead th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
     .report-table tbody tr { border-bottom: 1px solid #f5edef; transition: background .15s; }
     .report-table tbody tr:hover { background: #fdf8f8; }
@@ -100,16 +100,93 @@
     .report-table .mono { font-family: monospace; font-size: 11px; }
     .report-table .empty-state { text-align: center; color: #9a7a7d; padding: 32px; font-style: italic; }
 
-    /* Print styles */
+    /* ── Print styles — proper A4 document layout ── */
     @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
       .no-print { display: none !important; }
-      body { background: #fff !important; }
-      .report-hero { background: #8b2131 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .report-table thead tr { background: #8b2131 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .report-panel { border: 1px solid #ccc; box-shadow: none; }
-      .topbar, header { display: none !important; }
-      .content-area { padding: 0 !important; }
+      header.topbar { display: none !important; }
+
+      body { background: #fff !important; margin: 0; padding: 0; font-size: 11pt; }
+      .page-shell { display: block; }
+      main.container { padding: 0 !important; max-width: 100% !important; }
+
+      /* Official document header */
+      .print-header { border-bottom: 3px solid #a64d57; }
+      .print-header .org-info .org-name { color: #2d1518; }
+      .print-header .doc-title h2 { color: #a64d57; }
+      .report-table thead tr { background: #a64d57 !important; }
+      .print-header .ph-seal { font-size: 40px; }
+      .print-header .org-info { flex: 1; }
+      .print-header .org-info .org-name { font-size: 14pt; font-weight: 800; color: #2d1518; margin: 0; }
+      .print-header .org-info .org-sub  { font-size: 9pt; color: #666; margin: 2px 0 0; }
+      .print-header .doc-title { text-align: right; }
+      .print-header .doc-title h2 { font-size: 13pt; font-weight: 800; color: #8b2131; margin: 0; }
+      .print-header .doc-title .doc-date { font-size: 9pt; color: #666; margin-top: 2px; }
+
+      /* Hide web hero, show print header */
+      .report-hero { display: none !important; }
+      .report-filters { display: none !important; }
+      .print-header { display: flex !important; }
+
+      /* Stats row for print */
+      .report-stats {
+        display: flex !important;
+        gap: 10px;
+        margin-bottom: 14px;
+        page-break-inside: avoid;
+      }
+      .stat-card {
+        flex: 1;
+        padding: 10px 12px !important;
+        border-radius: 8px !important;
+        border: 1.5px solid #e8d5d7 !important;
+      }
+      .stat-card .stat-val { font-size: 18px !important; }
+      .stat-card .stat-lbl { font-size: 9px !important; }
+
+      /* Table */
+      .report-panel {
+        border: 1.5px solid #ddd !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        page-break-inside: auto;
+      }
+      .report-panel-head {
+        padding: 10px 16px !important;
+        background: #fdf8f8;
+        border-bottom: 1.5px solid #e8d5d7 !important;
+      }
+      .report-panel-head h2 { font-size: 11pt !important; }
+      .report-count { font-size: 9pt !important; }
+
+      .report-table { font-size: 9pt !important; }
+      .report-table thead th { padding: 8px 10px !important; font-size: 8pt !important; }
+      .report-table tbody td { padding: 7px 10px !important; }
+      .report-table tbody tr { page-break-inside: avoid; }
+
+      .status-pill { font-size: 8pt !important; padding: 2px 7px !important; }
+
+      /* Print footer */
+      .print-footer {
+        display: block !important;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+        font-size: 8pt;
+        color: #888;
+        text-align: center;
+      }
+
+      @page {
+        size: A4 landscape;
+        margin: 15mm 12mm;
+      }
     }
+
+    /* Hidden on screen, shown only on print */
+    .print-header { display: none; }
+    .print-footer { display: none; }
   </style>
 </head>
 <body class="no-footer">
@@ -150,7 +227,21 @@
 
   <main class="container content-area">
 
-    <!-- Hero -->
+    <!-- Print-only official document header -->
+    <div class="print-header">
+      <div class="ph-seal">🏛️</div>
+      <div class="org-info">
+        <p class="org-name">Barangay Mabayuan</p>
+        <p class="org-sub">Olongapo City, Zambales · Republic of the Philippines</p>
+        <p class="org-sub">Mabayuan Express — Web-Based Document Request System</p>
+      </div>
+      <div class="doc-title">
+        <h2>SUMMARY REPORT</h2>
+        <div class="doc-date" id="printDate"></div>
+      </div>
+    </div>
+
+    <!-- Web Hero -->
     <div class="report-hero no-print-hide">
       <div>
         <h1>📊 Summary Report</h1>
@@ -228,6 +319,9 @@
       </div>
     </div>
 
+    <!-- Print footer -->
+    <div class="print-footer" id="printFooter"></div>
+
   </main>
 </div>
 
@@ -303,7 +397,14 @@
       : `<tr><td colspan="8" class="empty-state">No records found for the selected filters.</td></tr>`;
   }
 
-  document.addEventListener('DOMContentLoaded', loadReport);
+  document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const el = document.getElementById('printDate');
+    if (el) el.textContent = `Generated: ${now}`;
+    const footer = document.getElementById('printFooter');
+    if (footer) footer.textContent = `This report was generated on ${now} by Barangay Mabayuan Staff via Mabayuan Express. For official use only.`;
+    loadReport();
+  });
 
   /* ── Mobile nav ── */
   function openNav()  { document.getElementById('topNav').classList.add('open'); document.getElementById('navOverlay').classList.add('open'); }
