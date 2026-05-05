@@ -236,7 +236,10 @@ async function loadResidents() {
           <td>${fmtDate(r.created_at)}</td>
           <td style="text-align:center;">${r.total_requests}</td>
           <td>${badgeHtml(r.status)}</td>
-          <td><button class="btn btn-small resident-action-btn" onclick="openModal(${r.resident_id})">View / Edit</button></td>
+          <td>${r.status && r.status.toLowerCase() === 'pending'
+            ? '<span style="font-size:12px;color:#9a7a7d;font-style:italic;">Awaiting approval</span>'
+            : `<button class="btn btn-small resident-action-btn" onclick="openModal(${r.resident_id})">View / Edit</button>`
+          }</td>
         </tr>`).join('')
     : `<tr><td colspan="8" class="empty-state">No residents found.</td></tr>`;
 }
