@@ -39,8 +39,6 @@ router.get('/api/captain/counts', requireRole('captain'), async (req, res) =>
 router.get('/api/captain/requests', requireRole('captain'), async (req, res) => {
   const status = req.query.status || 'all';
   const search = (req.query.search || '').trim().toLowerCase();
-  const date_from = req.query.date_from || '';
-  const date_to   = req.query.date_to   || '';
   let rows = await getRequestsByRole('captain', status);
   if (search) {
     rows = rows.filter(r =>
@@ -49,8 +47,6 @@ router.get('/api/captain/requests', requireRole('captain'), async (req, res) => 
       (r.document_name || '').toLowerCase().includes(search)
     );
   }
-  if (date_from) rows = rows.filter(r => r.created_at && r.created_at.slice(0,10) >= date_from);
-  if (date_to)   rows = rows.filter(r => r.created_at && r.created_at.slice(0,10) <= date_to);
   res.json(rows);
 });
 
