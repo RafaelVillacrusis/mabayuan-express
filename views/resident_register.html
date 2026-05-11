@@ -204,14 +204,15 @@
             </div>
             <div>
               <label class="form-label">Phone number *</label>
-              <input class="input" name="phone_number" id="phoneField" required
-                placeholder="09XXXXXXXXX" maxlength="11"
-                inputmode="numeric" pattern="09[0-9]{9}"
-                oninput="phPhoneInput(this)"
-                onblur="phPhoneValidate(this)">
-              <div class="ph-phone-hint field-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px">
-                Philippine numbers must start with 09.
+              <div class="ph-phone-wrap">
+                <div class="ph-phone-prefix">🇵🇭 +63</div>
+                <input class="input" name="phone_number" id="phoneField" required
+                  placeholder="9XXXXXXXXX" maxlength="10"
+                  inputmode="numeric" pattern="9[0-9]{9}"
+                  oninput="phPhoneInput(this)"
+                  onblur="phPhoneValidate(this)">
               </div>
+              <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
             </div>
             <div class="full">
               <label class="form-label">Address *</label>
@@ -330,15 +331,18 @@
       const banner = document.getElementById('errorBanner');
       const terms = document.getElementById('termsCheck').checked;
 
-      // Phone check
-      const phone = document.getElementById('phoneField').value;
-      if (!/^09[0-9]{9}$/.test(phone)) {
+      // Phone check — input now stores 9XXXXXXXXX, prepend 0 for DB
+      const phoneInp = document.getElementById('phoneField');
+      const phone = phoneInp.value;
+      if (!/^9[0-9]{9}$/.test(phone)) {
         e.preventDefault();
-        banner.textContent = 'Phone number must be 11 digits and start with 09.';
+        banner.textContent = 'Phone number must be 10 digits starting with 9 (e.g. 9171234567).';
         banner.style.display = 'block';
-        document.getElementById('phoneField').focus();
+        phoneInp.focus();
         return;
       }
+      // Prepend 0 so DB stores 09XXXXXXXXX format
+      phoneInp.value = '0' + phone;
 
       // Email check
       const email = document.getElementById('emailField').value.trim();
@@ -356,7 +360,7 @@
         banner.style.display = 'block';
         return;
       }
-      const strong = pw.length >= 6 && /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw) && /[^a-zA-Z0-9]/.test(pw);
+      const strong = pw.length >= 8 && /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw) && /[^a-zA-Z0-9]/.test(pw);
       if (!strong) {
         e.preventDefault();
         banner.textContent = 'Password must be at least 8 characters and include a letter, a number, and a special character.';

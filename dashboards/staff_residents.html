@@ -171,11 +171,14 @@
         </div>
         <div>
           <label class="form-label">Phone Number</label>
-          <input class="input" id="editPhone" name="phone_number"
-            placeholder="09XXXXXXXXX" maxlength="11"
-            inputmode="numeric" pattern="09[0-9]{9}"
-            oninput="phPhoneInput(this)"
-            onblur="phPhoneValidate(this)" />
+          <div class="ph-phone-wrap">
+            <div class="ph-phone-prefix">🇵🇭 +63</div>
+            <input class="input" id="editPhone" name="phone_number"
+              placeholder="9XXXXXXXXX" maxlength="10"
+              inputmode="numeric" pattern="9[0-9]{9}"
+              oninput="phPhoneInput(this)"
+              onblur="phPhoneValidate(this)" />
+          </div>
           <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
         </div>
         <div>
@@ -285,7 +288,9 @@ async function openModal(residentId) {
   document.getElementById('editMiddleName').value = resident.middle_name || '';
   document.getElementById('editLastName').value   = resident.last_name   || '';
   document.getElementById('editSuffix').value     = resident.suffix      || '';
-  document.getElementById('editPhone').value      = resident.phone_number || '';
+  // Strip leading 0 for display (stored as 09XXXXXXXXX, display as 9XXXXXXXXX after +63)
+  const rawPhone = resident.phone_number || '';
+  document.getElementById('editPhone').value = rawPhone.startsWith('0') ? rawPhone.slice(1) : rawPhone;
   document.getElementById('editAddress').value    = resident.address     || '';
   document.getElementById('editBirth').value      = resident.birth_date
     ? resident.birth_date.slice(0, 10) : '';
@@ -313,7 +318,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       middle_name:  document.getElementById('editMiddleName').value,
       last_name:    document.getElementById('editLastName').value,
       suffix:       document.getElementById('editSuffix').value,
-      phone_number: document.getElementById('editPhone').value,
+      const phoneVal = document.getElementById('editPhone').value;
+      phone_number: phoneVal ? '0' + phoneVal : '',
       address:      document.getElementById('editAddress').value,
       birth_date:   document.getElementById('editBirth').value
     });

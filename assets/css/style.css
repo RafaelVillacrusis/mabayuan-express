@@ -1200,3 +1200,41 @@ label.form-label { display:block; font-size:13px; font-weight:700; margin-bottom
 
 /* ── Prevent year from exceeding 4 digits on date inputs ── */
 input[type="date"] { max-width: 100%; }
+
+/* ── Philippine phone number input with +63 prefix ── */
+.ph-phone-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border, #e4d6d8);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.ph-phone-wrap:focus-within { border-color: var(--primary, #a64d57); }
+.ph-phone-prefix {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  background: #f8f3f4;
+  border-right: 1.5px solid var(--border, #e4d6d8);
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d1518;
+  white-space: nowrap;
+  height: 100%;
+  min-height: 44px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.ph-phone-wrap .input {
+  border: none !important;
+  border-radius: 0 !important;
+  flex: 1;
+  min-width: 0;
+  box-shadow: none !important;
+  outline: none;
+  min-height: 44px;
+}
+.ph-phone-wrap .input:focus { border: none !important; box-shadow: none !important; }

@@ -90,8 +90,11 @@ router.post('/api/resident/requests', requireResident, async (req, res) => {
     const { document_id, contact_number, purpose, purpose_details } = req.body;
 
     // Validate contact number — must be 11 digits starting with 09
-    if (contact_number && !/^09[0-9]{9}$/.test(contact_number.trim())) {
-      return res.status(400).send('Invalid contact number. Must be 11 digits starting with 09.');
+    if (contact_number) {
+      const cleaned = contact_number.startsWith('0') ? contact_number : '0' + contact_number;
+      if (!/^09[0-9]{9}$/.test(cleaned)) {
+        return res.status(400).send('Invalid contact number format.');
+      }
     }
 
     // Document

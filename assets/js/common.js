@@ -158,19 +158,18 @@ function showErrorFromQuery(bannerId) {
 function phPhoneInput(inp) {
   // Strip non-digits
   let v = inp.value.replace(/\D/g, '');
-  // Force start with 09
-  if (v.length >= 1 && v[0] !== '0') v = '0' + v;
-  if (v.length >= 2 && v[1] !== '9') v = '09' + v.replace(/^0*9*/, '');
-  // Cap at 11
-  if (v.length > 11) v = v.slice(0, 11);
+  // Must start with 9 (since +63 is the prefix, first digit is 9)
+  if (v.length >= 1 && v[0] !== '9') v = '9' + v.replace(/^9*/, '');
+  // Cap at 10 digits (9XXXXXXXXX)
+  if (v.length > 10) v = v.slice(0, 10);
   inp.value = v;
   phPhoneValidate(inp);
 }
 
 function phPhoneValidate(inp) {
   const v = inp.value;
-  const hint = inp.nextElementSibling;
-  const valid = /^09[0-9]{9}$/.test(v);
+  const hint = inp.closest('.ph-phone-wrap') ? inp.closest('.ph-phone-wrap').nextElementSibling : inp.nextElementSibling;
+  const valid = /^9[0-9]{9}$/.test(v);
   if (!v) {
     inp.style.borderColor = '';
     if (hint && hint.classList.contains('ph-phone-hint')) hint.style.display = 'none';
@@ -178,12 +177,17 @@ function phPhoneValidate(inp) {
     inp.style.borderColor = '#dc2626';
     if (hint && hint.classList.contains('ph-phone-hint')) {
       hint.style.display = 'block';
-      hint.textContent = !v.startsWith('09') ? 'Philippine numbers must start with 09.'
-        : v.length < 11 ? 'Must be exactly 11 digits.'
+      hint.textContent = !v.startsWith('9') ? 'Number must start with 9 (e.g. 9171234567).'
+        : v.length < 10 ? 'Must be exactly 10 digits after +63.'
         : 'Invalid phone number.';
     }
   } else {
     inp.style.borderColor = '#16a34a';
     if (hint && hint.classList.contains('ph-phone-hint')) hint.style.display = 'none';
   }
+}
+
+// Get full phone number with +63 prefix for storage (returns 09XXXXXXXXX format)
+function phPhoneFullValue(inp) {
+  return inp.value ? '0' + inp.value : '';
 }

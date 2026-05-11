@@ -63,16 +63,16 @@
             </div>
             <div>
               <label class="form-label">Contact number</label>
-              <input class="input" name="contact_number" id="contactNumber"
-                type="tel"
-                inputmode="numeric"
-                maxlength="11"
-                placeholder="09XXXXXXXXX"
-                pattern="09[0-9]{9}"
-                title="Must be 11 digits starting with 09"
-                oninput="phPhoneInput(this)"
-                onblur="phPhoneValidate(this)"
-                required>
+              <div class="ph-phone-wrap">
+                <div class="ph-phone-prefix">🇵🇭 +63</div>
+                <input class="input" name="contact_number" id="contactNumber"
+                  type="tel" inputmode="numeric" maxlength="10"
+                  placeholder="9XXXXXXXXX" pattern="9[0-9]{9}"
+                  title="Must be 10 digits starting with 9"
+                  oninput="phPhoneInput(this)"
+                  onblur="phPhoneValidate(this)"
+                  required>
+              </div>
               <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
             </div>
             <div class="full">
