@@ -312,13 +312,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ── save ── */
   document.getElementById('editForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const id   = document.getElementById('editResidentId').value;
+    const id = document.getElementById('editResidentId').value;
+    const phoneVal = document.getElementById('editPhone').value;
     const body = new URLSearchParams({
       first_name:   document.getElementById('editFirstName').value,
       middle_name:  document.getElementById('editMiddleName').value,
       last_name:    document.getElementById('editLastName').value,
       suffix:       document.getElementById('editSuffix').value,
-      const phoneVal = document.getElementById('editPhone').value;
       phone_number: phoneVal ? '0' + phoneVal : '',
       address:      document.getElementById('editAddress').value,
       birth_date:   document.getElementById('editBirth').value
