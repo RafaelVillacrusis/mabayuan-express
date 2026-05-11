@@ -451,8 +451,17 @@ router.post('/api/staff/residents/:id/update', requireRole('staff'), async (req,
     const existing = await getResidentById(residentId);
     if (!existing) return res.status(404).json({ error: 'Resident not found.' });
 
-    const { first_name, middle_name, last_name, suffix, phone_number, address, birth_date } = req.body;
-    await updateResidentRecord(residentId, { first_name, middle_name, last_name, suffix, phone_number, address, birth_date });
+    const { email, phone_number, address } = req.body;
+    await updateResidentRecord(residentId, {
+      first_name: existing.first_name,
+      middle_name: existing.middle_name,
+      last_name: existing.last_name,
+      suffix: existing.suffix,
+      birth_date: existing.birth_date,
+      email: email || existing.email,
+      phone_number: phone_number || existing.phone_number,
+      address: address || existing.address
+    });
 
     await createAuditLog({
       actorUserId: req.session.user.user_id,
@@ -461,7 +470,7 @@ router.post('/api/staff/residents/:id/update', requireRole('staff'), async (req,
       targetId: residentId,
       action: 'RESIDENT_RECORD_UPDATED',
       description: `Staff updated record for resident ${existing.first_name} ${existing.last_name}.`,
-      metadata: { email: existing.email, fields_updated: Object.keys(req.body).filter(k => req.body[k] !== undefined) }
+      metadata: { fields_updated: ['email', 'phone_number', 'address'] }
     });
 
     refreshRoleDashboards('staff', 'system_admin');

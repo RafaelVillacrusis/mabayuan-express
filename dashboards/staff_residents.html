@@ -154,20 +154,20 @@
       <input type="hidden" id="editResidentId" />
       <div class="form-grid2">
         <div>
-          <label class="form-label">First Name *</label>
-          <input class="input" id="editFirstName" name="first_name" required />
+          <label class="form-label">First Name</label>
+          <div class="input" id="editFirstName" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
         </div>
         <div>
           <label class="form-label">Middle Name</label>
-          <input class="input" id="editMiddleName" name="middle_name" />
+          <div class="input" id="editMiddleName" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
         </div>
         <div>
-          <label class="form-label">Last Name *</label>
-          <input class="input" id="editLastName" name="last_name" required />
+          <label class="form-label">Last Name</label>
+          <div class="input" id="editLastName" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
         </div>
         <div>
           <label class="form-label">Suffix</label>
-          <input class="input" id="editSuffix" name="suffix" placeholder="Jr., Sr., III…" />
+          <div class="input" id="editSuffix" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;">—</div>
         </div>
         <div>
           <label class="form-label">Phone Number</label>
@@ -183,7 +183,11 @@
         </div>
         <div>
           <label class="form-label">Birth Date</label>
-          <input class="input" type="date" id="editBirth" name="birth_date" max="9999-12-31" />
+          <div class="input" id="editBirth" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
+        </div>
+        <div>
+          <label class="form-label">Email *</label>
+          <input class="input" type="email" id="editEmail" name="email" placeholder="email@example.com" required />
         </div>
         <div class="full">
           <label class="form-label">Address</label>
@@ -284,16 +288,19 @@ async function openModal(residentId) {
 
   // Populate editable fields
   document.getElementById('editResidentId').value = resident.resident_id;
-  document.getElementById('editFirstName').value  = resident.first_name  || '';
-  document.getElementById('editMiddleName').value = resident.middle_name || '';
-  document.getElementById('editLastName').value   = resident.last_name   || '';
-  document.getElementById('editSuffix').value     = resident.suffix      || '';
+  document.getElementById('editFirstName').textContent  = resident.first_name  || '—';
+  document.getElementById('editMiddleName').textContent = resident.middle_name || '—';
+  document.getElementById('editLastName').textContent   = resident.last_name   || '—';
+  document.getElementById('editSuffix').textContent     = resident.suffix      || '—';
+  document.getElementById('editEmail').value            = resident.email       || '';
   // Strip leading 0 for display (stored as 09XXXXXXXXX, display as 9XXXXXXXXX after +63)
   const rawPhone = resident.phone_number || '';
   document.getElementById('editPhone').value = rawPhone.startsWith('0') ? rawPhone.slice(1) : rawPhone;
   document.getElementById('editAddress').value    = resident.address     || '';
-  document.getElementById('editBirth').value      = resident.birth_date
-    ? resident.birth_date.slice(0, 10) : '';
+  document.getElementById('editBirth').textContent = resident.birth_date
+    ? new Date(resident.birth_date).toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' })
+    : '—';
+
 
   document.getElementById('saveMsg').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('open');
@@ -315,10 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const id = document.getElementById('editResidentId').value;
     const phoneVal = document.getElementById('editPhone').value;
     const body = new URLSearchParams({
-      first_name:   document.getElementById('editFirstName').value,
-      middle_name:  document.getElementById('editMiddleName').value,
-      last_name:    document.getElementById('editLastName').value,
-      suffix:       document.getElementById('editSuffix').value,
+      email:        document.getElementById('editEmail').value,
       phone_number: phoneVal ? '0' + phoneVal : '',
       address:      document.getElementById('editAddress').value,
       birth_date:   document.getElementById('editBirth').value
