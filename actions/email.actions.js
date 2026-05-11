@@ -147,8 +147,9 @@ async function sendAccountApprovedEmail({ firstName, lastName, email }) {
 /**
  * Send account declined email to resident
  */
-async function sendAccountDeclinedEmail({ firstName, lastName, email }) {
+async function sendAccountDeclinedEmail({ firstName, lastName, email, reason }) {
   const fullName = `${firstName} ${lastName}`;
+  const declineReason = reason || 'No specific reason provided. Please contact the barangay office for assistance.';
   try {
     await sendBrevoEmail({
       to: email,
@@ -172,15 +173,15 @@ async function sendAccountDeclinedEmail({ firstName, lastName, email }) {
                     <p style="margin:0 0 24px;color:#736a6b;font-size:14px;text-align:center;">Unfortunately your registration was not approved at this time.</p>
                     <p style="margin:0 0 20px;font-size:15px;color:#2b1a1c;">Hi <strong>${fullName}</strong>,</p>
                     <p style="margin:0 0 20px;font-size:14px;color:#555;line-height:1.7;">
-                      We regret to inform you that your Mabayuan Express resident account registration was <strong>declined</strong>.
-                      This may be due to an issue with your submitted valid ID or account details.
+                      We regret to inform you that your Mabayuan Express resident account registration has been <strong style="color:#dc2626;">declined</strong> by the barangay staff.
                     </p>
+                    <div style="background:#fdeaea;border-left:4px solid #dc2626;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+                      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#9a7a7d;text-transform:uppercase;">Reason for Declining</p>
+                      <p style="margin:0;font-size:14px;color:#2b1a1c;line-height:1.7;">${declineReason}</p>
+                    </div>
                     <div style="background:#fdf6f7;border-left:4px solid #8b2131;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
                       <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
-                        Please visit or contact the <strong>Mabayuan Barangay Office</strong> for assistance,
-                        or send an email to
-                        <a href="mailto:${process.env.BREVO_FROM || process.env.BREVO_USER}" style="color:#8b2131;">${process.env.BREVO_FROM || process.env.BREVO_USER}</a>
-                        if you believe this was a mistake.
+                        If you believe this was a mistake or have questions, please visit or contact the <strong>Mabayuan Barangay Office</strong> directly.
                       </p>
                     </div>
                     <p style="margin:0;font-size:13px;color:#aaa;text-align:center;">

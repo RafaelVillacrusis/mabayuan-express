@@ -215,16 +215,19 @@ router.post('/api/staff/residents/:id/approve', requireRole('staff'), async (req
 router.post('/api/staff/residents/:id/decline', requireRole('staff'), async (req, res) => {
   try {
     const residentId = req.params.id;
+    const { reason } = req.body;
     const result = await pool.query(`SELECT * FROM residents WHERE resident_id = $1 LIMIT 1`, [residentId]);
-    const resident = result.rows[0];  // Correctly access the first row
+    const resident = result.rows[0];
     if (!resident) return res.status(404).json({ error: 'Resident not found.' });
+
+    const declineReason = reason || 'No reason provided. Please contact the barangay office for assistance.';
 
     await pool.query(`UPDATE residents SET status = 'Declined' WHERE resident_id = $1`, [residentId]);
 
     await createResidentNotification({
       residentId,
       title: 'Account declined',
-      message: 'Your resident account was declined. Please contact the barangay office for assistance.',
+      message: `Your resident account was declined. Reason: ${declineReason}`,
       actorUserId: req.session.user.user_id,
       actorRole: 'staff',
       eventType: 'RESIDENT_DECLINED_NOTIFICATION'
@@ -236,15 +239,16 @@ router.post('/api/staff/residents/:id/decline', requireRole('staff'), async (req
       targetType: 'resident',
       targetId: residentId,
       action: 'RESIDENT_DECLINED',
-      description: `Staff declined resident registration for ${resident.first_name} ${resident.last_name}.`,
-      metadata: { resident_email: resident.email }
+      description: `Staff declined resident registration for ${resident.first_name} ${resident.last_name}. Reason: ${declineReason}`,
+      metadata: { resident_email: resident.email, reason: declineReason }
     });
 
-    // Send declined email notification
+    // Send declined email with reason
     await sendAccountDeclinedEmail({
       firstName: resident.first_name,
       lastName: resident.last_name,
-      email: resident.email
+      email: resident.email,
+      reason: declineReason
     });
 
     refreshRoleDashboards('staff', 'system_admin');
