@@ -20,13 +20,19 @@ const rows = result.rows;
  * @param {string} [opts.status]   'all' | 'Pending' | 'Approved' | 'Declined'
  * @param {string} [opts.search]   free-text search across name / email / address
  */
-async function getAllResidents({ status = 'all', search = '' } = {}) {
+async function getAllResidents({ status = 'all', search = '', archived = false } = {}) {
   const conditions = [];
   const params = [];
 
-  if (status && status !== 'all') {
-    params.push(status);
-    conditions.push(`r.status = $${params.length}`);
+  // By default exclude archived residents; show only archived when explicitly requested
+  if (archived) {
+    conditions.push(`r.is_archived = TRUE`);
+  } else {
+    conditions.push(`r.is_archived = FALSE`);
+    if (status && status !== 'all') {
+      params.push(status);
+      conditions.push(`r.status = $${params.length}`);
+    }
   }
 
   if (search && search.trim()) {
@@ -44,7 +50,7 @@ async function getAllResidents({ status = 'all', search = '' } = {}) {
   const result = await pool.query(
     `SELECT r.resident_id, r.first_name, r.middle_name, r.last_name, r.suffix,
             r.email, r.phone_number, r.address, r.birth_date,
-            r.status, r.valid_id_path, r.created_at,
+            r.status, r.is_archived, r.valid_id_path, r.created_at,
             COUNT(req.request_id)::int AS total_requests
      FROM residents r
      LEFT JOIN requests req ON req.resident_id = r.resident_id
@@ -78,18 +84,19 @@ async function getResidentById(residentId) {
 /**
  * Update resident fields that staff are allowed to modify.
  */
-async function updateResidentRecord(residentId, { first_name, middle_name, last_name, suffix, phone_number, address, birth_date }) {
+async function updateResidentRecord(residentId, { first_name, middle_name, last_name, suffix, email, phone_number, address, birth_date }) {
   await pool.query(
     `UPDATE residents
      SET first_name   = COALESCE($1, first_name),
          middle_name  = $2,
          last_name    = COALESCE($3, last_name),
          suffix       = $4,
-         phone_number = $5,
-         address      = $6,
-         birth_date   = $7
-     WHERE resident_id = $8`,
-    [first_name, middle_name || null, last_name, suffix || null, phone_number || null, address || null, birth_date || null, residentId]
+         email        = COALESCE($5, email),
+         phone_number = $6,
+         address      = $7,
+         birth_date   = $8
+     WHERE resident_id = $9`,
+    [first_name, middle_name || null, last_name, suffix || null, email || null, phone_number || null, address || null, birth_date || null, residentId]
   );
 }
 
@@ -99,10 +106,11 @@ async function updateResidentRecord(residentId, { first_name, middle_name, last_
 async function getResidentRecordCounts() {
   const { rows } = await pool.query(
     `SELECT
-       COUNT(*)                                        AS total,
-       COUNT(*) FILTER (WHERE status = 'Pending')     AS pending,
-       COUNT(*) FILTER (WHERE status = 'Approved')    AS approved,
-       COUNT(*) FILTER (WHERE status = 'Declined')    AS declined
+       COUNT(*) FILTER (WHERE is_archived = FALSE)                          AS total,
+       COUNT(*) FILTER (WHERE status = 'Pending'  AND is_archived = FALSE)  AS pending,
+       COUNT(*) FILTER (WHERE status = 'Approved' AND is_archived = FALSE)  AS approved,
+       COUNT(*) FILTER (WHERE status = 'Declined' AND is_archived = FALSE)  AS declined,
+       COUNT(*) FILTER (WHERE is_archived = TRUE)                           AS archived
      FROM residents`
   );
   return rows[0];

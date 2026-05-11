@@ -142,6 +142,7 @@ router.post('/auth/resident/login', async (req, res) => {
     if (!valid) return redirectWithError(res, '/resident/login', 'Incorrect password. Please try again.');
     if (resident.status === 'Pending') return redirectWithError(res, '/resident/login', 'Your account is still pending staff approval.');
     if (resident.status === 'Declined') return redirectWithError(res, '/resident/login', 'Your account was declined. Please contact the barangay office.');
+    if (resident.is_archived) return redirectWithError(res, '/resident/login', 'Your account has been archived. Please contact the barangay office.');
     req.session.resident = { resident_id:resident.resident_id, first_name:resident.first_name, last_name:resident.last_name, email:resident.email };
     delete req.session.user;
     res.redirect('/resident/dashboard');

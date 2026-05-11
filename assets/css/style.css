@@ -1238,3 +1238,8 @@ input[type="date"] { max-width: 100%; }
   min-height: 44px;
 }
 .ph-phone-wrap .input:focus { border: none !important; box-shadow: none !important; }
+
+/* Archived filter card */
+.filter-card--archived { border-color: #c4b9c4 !important; }
+.filter-card--archived .filter-value { color: #6b5b6e; }
+.filter-card--archived.active { border-color: #6b5b6e !important; background: #f5f0f5; }

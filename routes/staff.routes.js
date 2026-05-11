@@ -169,6 +169,62 @@ router.get('/api/staff/pending-residents', requireRole('staff'), async (req, res
   }
 });
 
+// Archive a resident
+router.post('/api/staff/residents/:id/archive', requireRole('staff'), async (req, res) => {
+  try {
+    const residentId = req.params.id;
+    const result = await pool.query(`SELECT * FROM residents WHERE resident_id = $1 LIMIT 1`, [residentId]);
+    const resident = result.rows[0];
+    if (!resident) return res.status(404).json({ error: 'Resident not found.' });
+
+    await pool.query(`UPDATE residents SET is_archived = TRUE WHERE resident_id = $1`, [residentId]);
+
+    await createAuditLog({
+      actorUserId: req.session.user.user_id,
+      actorRole: 'staff',
+      targetType: 'resident',
+      targetId: residentId,
+      action: 'RESIDENT_ARCHIVED',
+      description: `Staff archived resident ${resident.first_name} ${resident.last_name}.`,
+      metadata: { resident_email: resident.email }
+    });
+
+    refreshRoleDashboards('staff', 'system_admin');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not archive resident.' });
+  }
+});
+
+// Unarchive a resident
+router.post('/api/staff/residents/:id/unarchive', requireRole('staff'), async (req, res) => {
+  try {
+    const residentId = req.params.id;
+    const result = await pool.query(`SELECT * FROM residents WHERE resident_id = $1 LIMIT 1`, [residentId]);
+    const resident = result.rows[0];
+    if (!resident) return res.status(404).json({ error: 'Resident not found.' });
+
+    await pool.query(`UPDATE residents SET is_archived = FALSE WHERE resident_id = $1`, [residentId]);
+
+    await createAuditLog({
+      actorUserId: req.session.user.user_id,
+      actorRole: 'staff',
+      targetType: 'resident',
+      targetId: residentId,
+      action: 'RESIDENT_UNARCHIVED',
+      description: `Staff unarchived resident ${resident.first_name} ${resident.last_name}.`,
+      metadata: { resident_email: resident.email }
+    });
+
+    refreshRoleDashboards('staff', 'system_admin');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not unarchive resident.' });
+  }
+});
+
 router.post('/api/staff/residents/:id/approve', requireRole('staff'), async (req, res) => {
   try {
     const residentId = req.params.id;
@@ -418,12 +474,13 @@ router.get('/api/staff/residents/counts', requireRole('staff'), async (req, res)
   }
 });
 
-// List all residents (with optional ?status= and ?search= filters)
+// List all residents (with optional ?status= and ?search= and ?archived= filters)
 router.get('/api/staff/residents', requireRole('staff'), async (req, res) => {
   try {
     const rows = await getAllResidents({
       status: req.query.status || 'all',
-      search: req.query.search || ''
+      search: req.query.search || '',
+      archived: req.query.archived === 'true'
     });
     res.json(rows);
   } catch (err) {
