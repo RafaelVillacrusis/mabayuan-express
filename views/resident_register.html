@@ -182,8 +182,9 @@
               <input class="input" name="middle_name" placeholder="Santos">
             </div>
             <div>
-              <label class="form-label">Birth date</label>
-              <input class="input" type="date" name="birth_date" max="9999-12-31">
+              <label class="form-label">Birth date *</label>
+              <input class="input" type="date" name="birth_date" id="birthField" required max="9999-12-31">
+              <div id="birthHint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;">You must be at least 18 years old to register.</div>
             </div>
             <div class="full">
               <label class="form-label">Email address *</label>
@@ -331,6 +332,26 @@
       const banner = document.getElementById('errorBanner');
       const terms = document.getElementById('termsCheck').checked;
 
+      // Age check — must be 18+
+      const birthVal = document.getElementById('birthField').value;
+      if (!birthVal) {
+        e.preventDefault();
+        banner.textContent = 'Please enter your birth date.';
+        banner.style.display = 'block';
+        document.getElementById('birthField').focus();
+        return;
+      }
+      const birthDate = new Date(birthVal);
+      const today18 = new Date();
+      const age18Date = new Date(birthDate.getFullYear() + 18, birthDate.getMonth(), birthDate.getDate());
+      if (age18Date > today18) {
+        e.preventDefault();
+        banner.textContent = 'You must be at least 18 years old to register.';
+        banner.style.display = 'block';
+        document.getElementById('birthField').focus();
+        return;
+      }
+
       // Phone check — input now stores 9XXXXXXXXX, prepend 0 for DB
       const phoneInp = document.getElementById('phoneField');
       const phone = phoneInp.value;
@@ -443,6 +464,33 @@
       navigator.serviceWorker.register("/assets/sw.js");
     });
   }
+</script>
+<script>
+  // Set max birth date to exactly 18 years ago
+  (function() {
+    const birthField = document.getElementById('birthField');
+    const today = new Date();
+    const max18 = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const maxStr = max18.toISOString().slice(0, 10);
+    birthField.max = maxStr;
+
+    function validateAge() {
+      const hint = document.getElementById('birthHint');
+      const val = birthField.value;
+      if (!val) { hint.style.display = 'none'; birthField.style.borderColor = ''; return; }
+      const birth = new Date(val);
+      const age18 = new Date(birth.getFullYear() + 18, birth.getMonth(), birth.getDate());
+      if (age18 > today) {
+        birthField.style.borderColor = '#dc2626';
+        hint.style.display = 'block';
+      } else {
+        birthField.style.borderColor = '#16a34a';
+        hint.style.display = 'none';
+      }
+    }
+    birthField.addEventListener('change', validateAge);
+    birthField.addEventListener('input', validateAge);
+  })();
 </script>
 </body>
 </html>

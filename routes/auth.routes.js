@@ -87,6 +87,16 @@ router.post('/auth/resident/register', upload.single('valid_id'), async (req, re
     if (!req.file) return redirectWithError(res, '/resident/register', 'Valid ID is required.');
     if (password !== confirm_password) return redirectWithError(res, '/resident/register', 'Passwords do not match.');
     if (!isStrongPassword(password)) return redirectWithError(res, '/resident/register', 'Password must be at least 8 characters and include a letter, a number, and a special character.');
+
+    // Age validation — must be 18+
+    if (birth_date) {
+      const birth = new Date(birth_date);
+      const today = new Date();
+      const age18 = new Date(birth.getFullYear() + 18, birth.getMonth(), birth.getDate());
+      if (age18 > today) return redirectWithError(res, '/resident/register', 'You must be at least 18 years old to register.');
+    } else {
+      return redirectWithError(res, '/resident/register', 'Please enter your birth date.');
+    }
     const { rows: existing } = await pool.query('SELECT resident_id FROM residents WHERE email=$1', [email]);
     if (existing.length) return redirectWithError(res, '/resident/register', 'Email already exists.');
     const hash = await bcrypt.hash(password, 10);
