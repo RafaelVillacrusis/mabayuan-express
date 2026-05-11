@@ -109,6 +109,7 @@
           <option value="Approved">Approved</option>
           <option value="Pending">Pending</option>
           <option value="Declined">Declined</option>
+          <option value="archived">Archived</option>
         </select>
         <button class="btn" id="searchBtn">Search</button>
       </div>
@@ -210,6 +211,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/delete-modal.js"></script>
 <script>
 /* ── helpers ──────────────────────────────────────────────────────── */
 function badgeHtml(status) {
@@ -350,6 +352,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* expose openModal to inline onclick handlers */
   window.openModal = openModal;
+  window.archiveResident = archiveResident;
+  window.unarchiveResident = unarchiveResident;
 
   /* ── save ── */
   document.getElementById('editForm').addEventListener('submit', async (e) => {
