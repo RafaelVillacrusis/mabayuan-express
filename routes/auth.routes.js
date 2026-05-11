@@ -15,7 +15,7 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 function isStrongPassword(p) {
-  return p.length >= 6 && /[a-zA-Z]/.test(p) && /[0-9]/.test(p) && /[^a-zA-Z0-9]/.test(p);
+  return p.length >= 8 && /[a-zA-Z]/.test(p) && /[0-9]/.test(p) && /[^a-zA-Z0-9]/.test(p);
 }
 function redirectWithError(res, page, msg) {
   return res.redirect(`${page}?error=${encodeURIComponent(msg)}`);
@@ -86,7 +86,7 @@ router.post('/auth/resident/register', upload.single('valid_id'), async (req, re
     const { first_name, middle_name, last_name, suffix, birth_date, phone_number, address, email, password, confirm_password } = req.body;
     if (!req.file) return redirectWithError(res, '/resident/register', 'Valid ID is required.');
     if (password !== confirm_password) return redirectWithError(res, '/resident/register', 'Passwords do not match.');
-    if (!isStrongPassword(password)) return redirectWithError(res, '/resident/register', 'Password must be at least 6 characters and include a letter, a number, and a special character.');
+    if (!isStrongPassword(password)) return redirectWithError(res, '/resident/register', 'Password must be at least 8 characters and include a letter, a number, and a special character.');
     const { rows: existing } = await pool.query('SELECT resident_id FROM residents WHERE email=$1', [email]);
     if (existing.length) return redirectWithError(res, '/resident/register', 'Email already exists.');
     const hash = await bcrypt.hash(password, 10);
@@ -181,7 +181,7 @@ router.post('/auth/forgot-password/reset', async (req, res) => {
   try {
     const { email, otp, new_password, confirm_password, account_type } = req.body;
     if (new_password !== confirm_password) return res.json({ ok:false, message:'Passwords do not match.' });
-    if (!isStrongPassword(new_password)) return res.json({ ok:false, message:'Password must be at least 6 characters and include a letter, a number, and a special character.' });
+    if (!isStrongPassword(new_password)) return res.json({ ok:false, message:'Password must be at least 8 characters and include a letter, a number, and a special character.' });
     const result = verifyOTP(email, otp);
     if (!result.valid) return res.json({ ok:false, message:result.reason });
     const hash = await bcrypt.hash(new_password, 10);
