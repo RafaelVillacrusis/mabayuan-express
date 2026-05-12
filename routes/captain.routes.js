@@ -49,8 +49,8 @@ router.get('/api/captain/requests', requireRole('captain'), async (req, res) => 
       (r.document_name  || '').toLowerCase().includes(search)
     );
   }
-  if (date_from) rows = rows.filter(r => r.created_at && r.created_at.slice(0,10) >= date_from);
-  if (date_to)   rows = rows.filter(r => r.created_at && r.created_at.slice(0,10) <= date_to);
+  if (date_from) rows = rows.filter(r => r.created_at && new Date(r.created_at).toISOString().slice(0,10) >= date_from);
+  if (date_to)   rows = rows.filter(r => r.created_at && new Date(r.created_at).toISOString().slice(0,10) <= date_to);
   res.json(rows);
 });
 
