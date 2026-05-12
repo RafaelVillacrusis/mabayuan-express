@@ -75,5 +75,5 @@
   }
 
   /* ── Page size ── */
-  @page { size: A4 landscape; margin: 15mm 12mm; }
+  @page { size: A4 portrait; margin: 15mm 12mm; }
 }

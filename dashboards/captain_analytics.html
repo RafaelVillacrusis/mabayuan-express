@@ -135,28 +135,29 @@
 
     /* Extra print overrides for analytics */
     @media print {
+      .analytics-header { padding: 0 0 8px !important; }
       .analytics-header p, .analytics-header h1 { display: block !important; }
       .date-filter, #applyFilter, #resetFilter, .no-print { display: none !important; }
-      .charts-grid { grid-template-columns: 1fr 1fr !important; page-break-inside: avoid; }
-      .chart-wrap { height: 200px !important; }
-      .chart-card.wide .chart-wrap { height: 220px !important; }
-      .chart-card { page-break-inside: avoid; }
-      .kpi-strip { page-break-inside: avoid; margin-bottom: 14px; }
+      .kpi-strip { margin-bottom: 8px !important; page-break-inside: avoid; }
+      .kpi-card { padding: 8px 10px !important; }
+      .kpi-card .kpi-val { font-size: 1.2rem !important; }
+      .kpi-card .kpi-lbl { font-size: 0.6rem !important; }
+      .charts-grid { grid-template-columns: 1fr !important; gap: 8px !important; margin-bottom: 8px !important; }
+      .chart-card { padding: 10px 12px !important; page-break-inside: avoid; }
+      .chart-card.wide { grid-column: 1 !important; }
+      .chart-wrap { height: 180px !important; }
+      .chart-card.wide .chart-wrap { height: 200px !important; }
       .print-doc-footer {
         display: block !important;
-        position: fixed;
-        bottom: 8mm;
-        left: 12mm;
-        right: 12mm;
+        margin-top: 12px;
         padding-top: 6px;
         border-top: 1px solid #e8d5d7;
         font-size: 8pt;
         color: #888;
         text-align: center;
         font-style: italic;
-        background: #fff;
-        z-index: 9999;
       }
+      @page { size: A4 portrait; margin: 15mm 12mm; }
     }
 
     /* Data table styles */
