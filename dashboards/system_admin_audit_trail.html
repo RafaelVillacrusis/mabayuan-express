@@ -85,11 +85,11 @@
             <div class="audit-filter-grid">
               <div>
                 <label class="form-label" style="font-size:11px;color:#9a7a7d;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Actor / Role</label>
-                <input class="input" type="text" id="actorFilter" placeholder="Name or role…" autocomplete="off">
+                <input class="input" type="text" id="actorFilter" placeholder="Name or role…">
               </div>
               <div>
                 <label class="form-label" style="font-size:11px;color:#9a7a7d;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Action</label>
-                <input class="input" type="text" id="actionFilter" placeholder="e.g. REQUEST_SUBMITTED" autocomplete="off">
+                <input class="input" type="text" id="actionFilter" placeholder="e.g. REQUEST_SUBMITTED">
               </div>
               <div>
                 <label class="form-label" style="font-size:11px;color:#9a7a7d;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Target Type</label>
@@ -178,8 +178,8 @@
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
     }
   });
 })();

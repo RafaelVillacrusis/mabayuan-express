@@ -82,7 +82,7 @@
       <nav class="top-links" id="topNav">
         <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
         <a href="/captain/dashboard">Dashboard</a><a href="/captain/analytics">Analytics</a><a href="/captain/messages">Messages</a><a href="/captain/audit-trail">Audit Trail</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form></nav></header><main class="container content-area"><div class="dashboard-header"><div><h1>Welcome, <span id="captainName">Captain</span></h1><p>Review resident requests before they proceed to staff processing.</p></div></div><section class="filter-grid"><div class="filter-card active" data-status="all"><div class="filter-label">Total</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Pending Approval"><div class="filter-label">Pending Approval</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Approved"><div class="filter-label">Approved</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Declined"><div class="filter-label">Declined</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Ready for Pickup"><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Claimed"><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></section><section class="panel"><h2 style="margin-top:0">Requests for Captain Review</h2><div class="audit-filter-grid" id="dashFilterForm">
-  <input class="input" type="text" id="captainSearch" placeholder="Search transaction, resident, or document…" autocomplete="off" />
+  <input class="input" type="text" id="captainSearch" placeholder="Search transaction, resident, or document…" />
   <select class="select" id="statusDropdown">
     <option value="all">All Statuses</option>
     <option value="Pending Approval">Pending Approval</option>
@@ -129,8 +129,8 @@
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
     }
   });
 })();

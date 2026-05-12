@@ -48,7 +48,7 @@
 
     <section class="panel">
       <div class="audit-filter-grid" id="auditFilterForm">
-        <input class="input" type="text" id="searchFilter" placeholder="Search transaction, resident, or document…" autocomplete="off" />
+        <input class="input" type="text" id="searchFilter" placeholder="Search transaction, resident, or document…" />
         <select class="select" id="actionFilter">
           <option value="">All actions</option>
           <option value="SET_RELEASE_DATE">Set Release Date</option>
@@ -103,8 +103,8 @@
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
     }
   });
 })();

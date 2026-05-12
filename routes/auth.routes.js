@@ -77,7 +77,7 @@ router.get('/api/session-check', (req, res) => {
   // Return appropriate login page based on referer
   const referer = req.headers.referer || '';
   const isResident = referer.includes('/resident/');
-  res.json({ ok: false, redirect: '/login' });
+  res.json({ ok: false, redirect: isResident ? '/resident/login' : '/portal/login' });
 });
 
 // ── Resident Register ─────────────────────────────────────────────────────────
@@ -136,13 +136,13 @@ router.post('/auth/resident/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const { rows } = await pool.query('SELECT * FROM residents WHERE email=$1 LIMIT 1', [email]);
-    if (!rows.length) return redirectWithError(res, '/login', 'No account found with that email address.');
+    if (!rows.length) return redirectWithError(res, '/resident/login', 'No account found with that email address.');
     const resident = rows[0];
     const valid = await bcrypt.compare(password, resident.password_hash);
-    if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
-    if (resident.status === 'Pending') return redirectWithError(res, '/login', 'Your account is still pending staff approval.');
-    if (resident.status === 'Declined') return redirectWithError(res, '/login', 'Your account was declined. Please contact the barangay office.');
-    if (resident.is_archived) return redirectWithError(res, '/login', 'Your account has been archived. Please contact the barangay office.');
+    if (!valid) return redirectWithError(res, '/resident/login', 'Incorrect password. Please try again.');
+    if (resident.status === 'Pending') return redirectWithError(res, '/resident/login', 'Your account is still pending staff approval.');
+    if (resident.status === 'Declined') return redirectWithError(res, '/resident/login', 'Your account was declined. Please contact the barangay office.');
+    if (resident.is_archived) return redirectWithError(res, '/resident/login', 'Your account has been archived. Please contact the barangay office.');
     req.session.resident = { resident_id:resident.resident_id, first_name:resident.first_name, last_name:resident.last_name, email:resident.email };
     delete req.session.user;
     res.redirect('/resident/dashboard');
@@ -154,57 +154,20 @@ router.post('/auth/portal/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const { rows } = await pool.query('SELECT * FROM users WHERE email=$1 LIMIT 1', [email]);
-    if (!rows.length) return redirectWithError(res, '/login?tab=personnel', 'No account found with that email address.');
+    if (!rows.length) return redirectWithError(res, '/portal/login', 'No account found with that email address.');
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return redirectWithError(res, '/login?tab=personnel', 'Incorrect password. Please try again.');
+    if (!valid) return redirectWithError(res, '/portal/login', 'Incorrect password. Please try again.');
 
     // Set session and route based on role automatically
     req.session.user = { user_id:user.user_id, full_name:user.full_name, email:user.email, role:user.role };
     delete req.session.resident;
 
     const dashboard = ROLE_DASHBOARD[user.role];
-    if (!dashboard) return redirectWithError(res, '/login?tab=personnel', 'Your account role is not recognized. Please contact the administrator.');
+    if (!dashboard) return redirectWithError(res, '/portal/login', 'Your account role is not recognized. Please contact the administrator.');
 
     res.redirect(dashboard);
   } catch(e) { console.error(e); redirectWithError(res, '/portal/login', 'Login failed. Please try again.'); }
-});
-
-// ── Unified Login — checks residents first, then users (personnel) ────────────
-router.post('/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // 1. Check residents table first
-    const { rows: residents } = await pool.query('SELECT * FROM residents WHERE email=$1 LIMIT 1', [email]);
-    if (residents.length) {
-      const resident = residents[0];
-      const valid = await bcrypt.compare(password, resident.password_hash);
-      if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
-      if (resident.status === 'Pending')   return redirectWithError(res, '/login', 'Your account is still pending staff approval.');
-      if (resident.status === 'Declined')  return redirectWithError(res, '/login', 'Your account was declined. Please contact the barangay office.');
-      if (resident.is_archived)            return redirectWithError(res, '/login', 'Your account has been archived. Please contact the barangay office.');
-      req.session.resident = { resident_id: resident.resident_id, full_name: `${resident.first_name} ${resident.last_name}`, email: resident.email };
-      delete req.session.user;
-      return res.redirect('/resident/dashboard');
-    }
-
-    // 2. Check users (personnel) table
-    const { rows: users } = await pool.query('SELECT * FROM users WHERE email=$1 LIMIT 1', [email]);
-    if (users.length) {
-      const user = users[0];
-      const valid = await bcrypt.compare(password, user.password_hash);
-      if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
-      req.session.user = { user_id: user.user_id, full_name: user.full_name, email: user.email, role: user.role };
-      delete req.session.resident;
-      const dashboard = ROLE_DASHBOARD[user.role];
-      if (!dashboard) return redirectWithError(res, '/login', 'Your account role is not recognized. Please contact the administrator.');
-      return res.redirect(dashboard);
-    }
-
-    // 3. No account found in either table
-    return redirectWithError(res, '/login', 'No account found with that email address.');
-  } catch(e) { console.error(e); redirectWithError(res, '/login', 'Login failed. Please try again.'); }
 });
 
 // ── Forgot Password ───────────────────────────────────────────────────────────
@@ -212,14 +175,12 @@ router.post('/auth/forgot-password/send-otp', async (req, res) => {
   try {
     const { email, account_type } = req.body;
     let found = false;
-    // Auto-detect account type if not specified
-    if (!account_type || account_type === 'resident') {
+    if (account_type === 'resident') {
       const { rows } = await pool.query('SELECT resident_id FROM residents WHERE email=$1', [email]);
-      if (rows.length) found = true;
-    }
-    if (!found && (!account_type || account_type === 'portal')) {
+      found = rows.length > 0;
+    } else {
       const { rows } = await pool.query('SELECT user_id FROM users WHERE email=$1', [email]);
-      if (rows.length) found = true;
+      found = rows.length > 0;
     }
     if (!found) return res.json({ ok:false, message:'No account found with that email address.' });
     await sendOTP(email);

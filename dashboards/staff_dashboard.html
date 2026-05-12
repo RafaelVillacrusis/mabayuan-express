@@ -77,7 +77,7 @@
 <section class="panel">
   <h2 style="margin-top:0">Staff Processing Queue</h2>
   <div class="audit-filter-grid" id="staffQueueFilter">
-    <input class="input" type="text" id="staffQueueSearch" placeholder="Search transaction, resident, or document…" autocomplete="off" />
+    <input class="input" type="text" id="staffQueueSearch" placeholder="Search transaction, resident, or document…" />
     <select class="select" id="staffQueueStatus">
       <option value="all">All Statuses</option>
       <option value="Approved">Approved</option>
@@ -123,8 +123,8 @@
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
+        .catch(function() { window.location.replace("/portal/login"); });
     }
   });
 })();
