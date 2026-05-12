@@ -1246,19 +1246,33 @@ input[type="date"] { max-width: 100%; }
 
 /* ── Shared Pagination ── */
 .pg-row {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 10px; margin-top: 14px;
-  font-size: 0.85rem; color: var(--muted);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+  margin-top: 14px; font-size: 0.85rem;
+  padding: 6px 2px 2px;
 }
-.pg-controls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pg-info {
+  color: var(--muted); font-size: 0.83rem;
+  white-space: nowrap;
+}
+.pg-controls {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: #fdf8f8; border: 1px solid #e8d5d7;
+  border-radius: 10px; padding: 3px 5px;
+  flex-shrink: 0;
+}
 .pg-btn {
-  padding: 5px 10px; border: 1px solid #e0d0d2;
-  border-radius: 6px; background: #fff; cursor: pointer;
+  padding: 4px 10px; border: none;
+  border-radius: 7px; background: transparent; cursor: pointer;
   font-size: 0.82rem; color: var(--text); transition: background .15s;
-  min-width: 34px; text-align: center;
+  min-width: 30px; text-align: center; font-weight: 500; line-height: 1.5;
+  white-space: nowrap;
 }
-.pg-btn:hover:not(:disabled) { background: #f5edef; }
-.pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 700; }
-.pg-btn:disabled { opacity: .4; cursor: default; }
-.pg-ellipsis { padding: 0 4px; color: var(--muted); }
-.pg-info { color: var(--muted); font-size: 0.83rem; }
+.pg-btn:hover:not(:disabled) { background: #f0e4e5; }
+.pg-btn.active { background: var(--primary); color: #fff; font-weight: 700; }
+.pg-btn:disabled { opacity: .35; cursor: default; }
+.pg-ellipsis {
+  padding: 0 3px; color: var(--muted);
+  font-size: 0.82rem; line-height: 1.5; user-select: none;
+}

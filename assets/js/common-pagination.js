@@ -48,7 +48,7 @@ function createPaginator(tbodyId, paginationId, pageSize = 10) {
     }
 
     el.innerHTML = `
-      <div class="pg-info">Showing ${start + 1}–${end} of ${total} record${total !== 1 ? 's' : ''}</div>
+      <span class="pg-info">Showing ${start + 1}–${end} of ${total} record${total !== 1 ? 's' : ''}</span>
       <div class="pg-controls">
         <button class="pg-btn" onclick="window.__pg_${paginationId}(${_page - 1})" ${_page <= 1 ? 'disabled' : ''}>‹ Prev</button>
         ${btns}
