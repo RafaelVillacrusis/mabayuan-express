@@ -431,29 +431,33 @@
     const statusDisplay = s => s === 'Approved' ? 'Processing' : s;
     const statusClass   = s => (statusDisplay(s)).toLowerCase().replace(/[^a-z]+/g, '-');
     const tbody = document.getElementById('reportRows');
-    // Save current paginated HTML
     const saved = tbody.innerHTML;
-    // Render ALL rows
+
+    // Render ALL rows (bypass pagination)
     tbody.innerHTML = allRows.length
       ? allRows.map(r => `
         <tr>
-          <td class="mono">\${escapeHtml(r.transaction_no || '—')}</td>
-          <td>\${escapeHtml(r.resident_name || '—')}</td>
-          <td>\${escapeHtml(r.document_name || '—')}</td>
-          <td>₱\${Number(r.price_at_request || 0).toFixed(2)}</td>
-          <td><span class="status-pill status-\${statusClass(r.status)}">\${escapeHtml(statusDisplay(r.status))}</span></td>
-          <td>\${formatDate(r.suggested_release_date)}</td>
-          <td>\${formatDate(r.release_date)}</td>
-          <td>\${formatDate(r.updated_at)}</td>
+          <td class="mono">${escapeHtml(r.transaction_no || '—')}</td>
+          <td>${escapeHtml(r.resident_name || '—')}</td>
+          <td>${escapeHtml(r.document_name || '—')}</td>
+          <td>₱${Number(r.price_at_request || 0).toFixed(2)}</td>
+          <td><span class="status-pill status-${statusClass(r.status)}">${escapeHtml(statusDisplay(r.status))}</span></td>
+          <td>${formatDate(r.suggested_release_date)}</td>
+          <td>${formatDate(r.release_date)}</td>
+          <td>${formatDate(r.updated_at)}</td>
         </tr>`).join('')
       : `<tr><td colspan="8" class="empty-state">No records.</td></tr>`;
-    // Update record count for print
-    document.getElementById('reportCount').textContent = `\${allRows.length} record\${allRows.length !== 1 ? 's' : ''}`;
+
+    // Update record count for print header
+    document.getElementById('reportCount').textContent = `${allRows.length} record${allRows.length !== 1 ? 's' : ''}`;
+
     window.print();
-    // Restore paginated view
+
+    // Restore paginated view after print dialog closes
     setTimeout(() => {
       tbody.innerHTML = saved;
-    }, 1000);
+      document.getElementById('reportCount').textContent = `${allRows.length} record${allRows.length !== 1 ? 's' : ''}`;
+    }, 1500);
   }
 
   /* ── Mobile nav ── */
