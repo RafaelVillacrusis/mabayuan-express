@@ -241,7 +241,7 @@
           <button id="applyFilter">Apply</button>
           <button id="resetFilter" style="background:var(--muted)">Reset</button>
         </div>
-        <button onclick="window.print()" class="btn btn-small no-print" style="background:var(--primary);color:#fff;border:none;padding:9px 20px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">🖨 Print Report</button>
+        <button onclick="printReport()" class="btn btn-small no-print" style="background:var(--primary);color:#fff;border:none;padding:9px 20px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">🖨 Print Report</button>
       </div>
     </div>
 
@@ -587,6 +587,40 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDocChart(); loadTrendChart(); loadTableData();
   });
 });
+
+/* ── Print: snapshot Chart.js canvases → <img> so they render correctly in print ── */
+function printReport() {
+  updatePrintMeta();
+
+  // Replace each canvas with a static image snapshot
+  const wraps = document.querySelectorAll('.chart-wrap');
+  const swaps = [];
+
+  wraps.forEach(wrap => {
+    const canvas = wrap.querySelector('canvas');
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.width  = '100%';
+    img.style.height = canvas.offsetHeight + 'px';
+    img.style.display = 'block';
+    img.style.objectFit = 'contain';
+    wrap.replaceChild(img, canvas);
+    swaps.push({ wrap, canvas, img });
+  });
+
+  // Small delay to let DOM settle, then print
+  setTimeout(() => {
+    window.print();
+    // Restore canvases after dialog closes
+    setTimeout(() => {
+      swaps.forEach(({ wrap, canvas, img }) => {
+        wrap.replaceChild(canvas, img);
+      });
+    }, 1500);
+  }, 150);
+}
 </script>
 <script>
 (function(){
