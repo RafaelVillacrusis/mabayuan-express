@@ -267,7 +267,7 @@
         <p>Document requests overview — Barangay Mabayuan</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;" class="no-print">
-        <button onclick="window.print()" class="btn btn-small" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);">🖨 Print / Save PDF</button>
+        <button onclick="printAllRows()" class="btn btn-small" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);">🖨 Print / Save PDF</button>
         <a href="/staff/dashboard" class="btn btn-small" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3);">← Back</a>
       </div>
     </div>
@@ -425,6 +425,36 @@
     if (footer) footer.textContent = `This report was generated on ${now} by Barangay Mabayuan Staff via Mabayuan Express. For official use only.`;
     loadReport();
   });
+
+  /* ── Print all rows (bypass pagination) ── */
+  function printAllRows() {
+    const statusDisplay = s => s === 'Approved' ? 'Processing' : s;
+    const statusClass   = s => (statusDisplay(s)).toLowerCase().replace(/[^a-z]+/g, '-');
+    const tbody = document.getElementById('reportRows');
+    // Save current paginated HTML
+    const saved = tbody.innerHTML;
+    // Render ALL rows
+    tbody.innerHTML = allRows.length
+      ? allRows.map(r => `
+        <tr>
+          <td class="mono">\${escapeHtml(r.transaction_no || '—')}</td>
+          <td>\${escapeHtml(r.resident_name || '—')}</td>
+          <td>\${escapeHtml(r.document_name || '—')}</td>
+          <td>₱\${Number(r.price_at_request || 0).toFixed(2)}</td>
+          <td><span class="status-pill status-\${statusClass(r.status)}">\${escapeHtml(statusDisplay(r.status))}</span></td>
+          <td>\${formatDate(r.suggested_release_date)}</td>
+          <td>\${formatDate(r.release_date)}</td>
+          <td>\${formatDate(r.updated_at)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="8" class="empty-state">No records.</td></tr>`;
+    // Update record count for print
+    document.getElementById('reportCount').textContent = `\${allRows.length} record\${allRows.length !== 1 ? 's' : ''}`;
+    window.print();
+    // Restore paginated view
+    setTimeout(() => {
+      tbody.innerHTML = saved;
+    }, 1000);
+  }
 
   /* ── Mobile nav ── */
   function openNav()  { document.getElementById('topNav').classList.add('open'); document.getElementById('navOverlay').classList.add('open'); }

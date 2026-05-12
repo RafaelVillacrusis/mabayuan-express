@@ -1,14 +1,67 @@
 let staffReqPg, pendingResPg;
+let allStaffRequests = [];
+let staffSortCol = 'suggested_release_date', staffSortDir = 'asc';
 let socket;
 function getFilter() { return new URLSearchParams(window.location.search).get('status') || 'all'; }
 function setFilter(status) { const url = new URL(window.location.href); status === 'all' ? url.searchParams.delete('status') : url.searchParams.set('status', status); window.history.replaceState({}, '', url); }
 async function loadMe() { const res = await fetch('/api/staff/me'); const me = await res.json(); document.getElementById('staffName').textContent = me.full_name; }
 async function loadCounts() { const res = await fetch('/api/staff/counts'); const counts = await res.json(); const map = { all: counts.total_requests || 0, Approved: counts.approved_count || 0, 'Ready for Pickup': counts.ready_count || 0, Claimed: counts.claimed_count || 0 }; document.querySelectorAll('.filter-card[data-status]').forEach(card => { card.querySelector('.filter-value').textContent = map[card.dataset.status] || 0; card.classList.toggle('active', card.dataset.status === getFilter()); }); document.getElementById('pendingResidentsCount').textContent = counts.pending_residents || 0; }
 async function loadRequests() {
-  const res  = await fetch(`/api/staff/requests?status=${encodeURIComponent(getFilter())}`);
-  const rows = await res.json();
+  const res = await fetch('/api/staff/requests?status=all');
+  allStaffRequests = await res.json();
+  renderStaffQueue();
+}
+
+function getStaffQueueFiltered() {
+  const search   = (document.getElementById('staffQueueSearch')?.value || '').trim().toLowerCase();
+  const status   = document.getElementById('staffQueueStatus')?.value || 'all';
+  const dateFrom = document.getElementById('staffQueueDateFrom')?.value || '';
+  const dateTo   = document.getElementById('staffQueueDateTo')?.value || '';
+  const cardFilter = getFilter();
+
+  let rows = allStaffRequests.filter(row => {
+    if (cardFilter !== 'all' && row.status !== cardFilter) return false;
+    if (status !== 'all' && row.status !== status) return false;
+    if (dateFrom || dateTo) {
+      const d = (row.suggested_release_date || '').slice(0, 10);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo   && d > dateTo)   return false;
+    }
+    if (search) {
+      const hay = [row.transaction_no, row.resident_name, row.document_name, row.status].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  rows.sort((a, b) => {
+    let va = a[staffSortCol] ?? '', vb = b[staffSortCol] ?? '';
+    va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
+    if (va < vb) return staffSortDir === 'asc' ? -1 : 1;
+    if (va > vb) return staffSortDir === 'asc' ?  1 : -1;
+    return 0;
+  });
+
+  return rows;
+}
+
+function renderStaffQueue() {
+  const rows = getStaffQueueFiltered();
+  // Update sort indicators
+  document.querySelectorAll('#staffQueueTable thead th[data-col]').forEach(th => {
+    th.classList.toggle('sort-asc',  th.dataset.col === staffSortCol && staffSortDir === 'asc');
+    th.classList.toggle('sort-desc', th.dataset.col === staffSortCol && staffSortDir === 'desc');
+  });
   if (!staffReqPg) staffReqPg = createPaginator('staffRequestRows', 'staffReqPg', 10);
-  staffReqPg.setRows(rows, row => `<tr><td>${escapeHtml(row.transaction_no)}</td><td>${escapeHtml(row.resident_name)}</td><td>${escapeHtml(row.document_name)}</td><td>${formatDate(row.suggested_release_date)}</td><td>${formatDate(row.release_date)}</td><td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${row.status}</span></td><td><a class="btn btn-small" href="/staff/request/${row.request_id}">Open</a></td></tr>`);
+  staffReqPg.setRows(rows, row => `<tr>
+    <td>${escapeHtml(row.transaction_no)}</td>
+    <td>${escapeHtml(row.resident_name)}</td>
+    <td>${escapeHtml(row.document_name)}</td>
+    <td>${formatDate(row.suggested_release_date)}</td>
+    <td>${formatDate(row.release_date)}</td>
+    <td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${escapeHtml(row.status)}</span></td>
+    <td><a class="btn btn-small" href="/staff/request/${row.request_id}">Open</a></td>
+  </tr>`);
 }
 async function loadPendingResidents() {
   const res  = await fetch('/api/staff/pending-residents');
@@ -163,7 +216,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   connectSocket();
   const msgs = await loadInboxBadge();
   renderNotifDropdown(msgs);
-  document.querySelectorAll('.filter-card[data-status]').forEach(card => card.addEventListener('click', async () => { setFilter(card.dataset.status); await loadCounts(); await loadRequests(); }));
+  document.querySelectorAll('.filter-card[data-status]').forEach(card => card.addEventListener('click', async () => {
+    setFilter(card.dataset.status);
+    await loadCounts();
+    renderStaffQueue();
+  }));
+
+  // Queue filter controls
+  let qTimer;
+  document.getElementById('staffQueueSearch')?.addEventListener('input', () => {
+    clearTimeout(qTimer); qTimer = setTimeout(renderStaffQueue, 250);
+  });
+  document.getElementById('staffQueueStatus')?.addEventListener('change', renderStaffQueue);
+  document.getElementById('staffQueueApply')?.addEventListener('click', renderStaffQueue);
+  document.getElementById('staffQueueReset')?.addEventListener('click', () => {
+    document.getElementById('staffQueueSearch').value  = '';
+    document.getElementById('staffQueueStatus').value  = 'all';
+    document.getElementById('staffQueueDateFrom').value = '';
+    document.getElementById('staffQueueDateTo').value   = '';
+    setFilter('all');
+    document.querySelectorAll('.filter-card[data-status]').forEach(c =>
+      c.classList.toggle('active', c.dataset.status === 'all'));
+    renderStaffQueue();
+  });
+
+  // Sort headers
+  document.querySelectorAll('#staffQueueTable thead th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (staffSortCol === col) staffSortDir = staffSortDir === 'asc' ? 'desc' : 'asc';
+      else { staffSortCol = col; staffSortDir = 'asc'; }
+      renderStaffQueue();
+    });
+  });
   const bellBtn = document.getElementById('staffNotifButton');
   const dropdown = document.getElementById('staffNotifDropdown');
   if (bellBtn && dropdown) {

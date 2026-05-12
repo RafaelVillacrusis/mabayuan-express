@@ -17,7 +17,11 @@
   nav.top-links,
   .nav-overlay,
   .nav-toggle,
-  .nav-close { display: none !important; }
+  .nav-close,
+  .pg-row,
+  #paginationRow,
+  .pg-controls,
+  .pg-info { display: none !important; }
 
   body { background: #fff !important; margin: 0; padding: 0; font-size: 11pt; font-family: 'Segoe UI', Arial, sans-serif; color: #2d1518; }
   .page-shell { display: block; }
