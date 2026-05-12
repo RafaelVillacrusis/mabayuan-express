@@ -1243,3 +1243,22 @@ input[type="date"] { max-width: 100%; }
 .filter-card--archived { border-color: #c4b9c4 !important; }
 .filter-card--archived .filter-value { color: #6b5b6e; }
 .filter-card--archived.active { border-color: #6b5b6e !important; background: #f5f0f5; }
+
+/* ── Shared Pagination ── */
+.pg-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-top: 14px;
+  font-size: 0.85rem; color: var(--muted);
+}
+.pg-controls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pg-btn {
+  padding: 5px 10px; border: 1px solid #e0d0d2;
+  border-radius: 6px; background: #fff; cursor: pointer;
+  font-size: 0.82rem; color: var(--text); transition: background .15s;
+  min-width: 34px; text-align: center;
+}
+.pg-btn:hover:not(:disabled) { background: #f5edef; }
+.pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 700; }
+.pg-btn:disabled { opacity: .4; cursor: default; }
+.pg-ellipsis { padding: 0 4px; color: var(--muted); }
+.pg-info { color: var(--muted); font-size: 0.83rem; }

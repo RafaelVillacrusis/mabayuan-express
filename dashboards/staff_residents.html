@@ -128,9 +128,10 @@
               <th>Action</th>
             </tr>
           </thead>
-          <tbody id="residentsRows"></tbody>
+          <tbody id="residentsRows" data-empty-colspan="6"></tbody>
         </table>
       </div>
+      <div id="residentsPg" class="pg-row"></div>
     </section>
 
   </main>
@@ -210,6 +211,256 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common-pagination.js"></script>
+<script src="/assets/js/common.js"></script>
+<script src="/assets/js/delete-modal.js"></script>
+<script>
+/* ── helpers ──────────────────────────────────────────────────────── */
+function badgeHtml(status) {
+  const cls = { Pending:'badge-pending', Approved:'badge-approved', Declined:'badge-declined' }[status] || '';
+  return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+}
+
+/* ── state ────────────────────────────────────────────────────────── */
+let currentFilter = 'all';
+
+/* ── counts ──────────────────────────────────────────────────────── */
+async function loadCounts() {
+  const res = await fetch('/api/staff/residents/counts');
+  const c = await res.json();
+  document.getElementById('countTotal').textContent    = c.total    || 0;
+  document.getElementById('countApproved').textContent = c.approved || 0;
+  document.getElementById('countPending').textContent  = c.pending  || 0;
+  document.getElementById('countDeclined').textContent = c.declined || 0;
+  document.getElementById('countArchived').textContent = c.archived || 0;
+}
+
+/* ── list ────────────────────────────────────────────────────────── */
+async function loadResidents() {
+  const search = document.getElementById('searchInput').value.trim();
+  const isArchived = currentFilter === 'archived';
+  const status = isArchived ? 'all' : currentFilter;
+  const url = `/api/staff/residents?status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}&archived=${isArchived}`;
+  const res  = await fetch(url);
+  const rows = await res.json();
+
+  if (!window._residentsPg) window._residentsPg = createPaginator('residentsRows', 'residentsPg', 10);
+  window._residentsPg.setRows(rows, r => `)arset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resident Records — Staff</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .search-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+    .search-bar input { flex:1; min-width:200px; }
+    .search-bar select { min-width:140px; }
+    .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.78rem; font-weight:600; }
+    .badge-pending  { background:#fff3cd; color:#856404; }
+    .badge-approved { background:#d1f5e0; color:#155724; }
+    .badge-declined { background:#fde8e8; color:#a51b1b; }
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    /* Override global .modal which treats it as an overlay — here it's the inner card */
+    .modal-overlay .modal { position:static; inset:auto; background:#fff; border-radius:18px; padding:32px; width:min(600px,95vw); max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,.2); display:block; z-index:auto; }
+    .modal h2 { margin:0 0 20px; font-size:1.15rem; }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-grid2 .full { grid-column:1/-1; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+    .info-row { display:flex; gap:6px; margin-bottom:6px; font-size:.9rem; }
+    .info-label { color:var(--muted); min-width:110px; }
+    .section-meta { font-size:.83rem; color:var(--muted); margin-bottom:4px; }
+  
+  </style>
+</head>
+<body>
+<div class="page-shell">
+
+  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+    <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+      <div class="brand-copy">
+        <div>Resident Records</div>
+        <small>Maintain and update resident information</small>
+      </div>
+    </div>
+    <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
+      <nav class="top-links" id="topNav">
+        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+        
+      <a href="/staff/dashboard">← Dashboard</a>
+      <a href="/staff/report">Report</a>
+      <form action="/auth/logout" method="POST">
+        <button class="btn btn-small btn-ghost">Logout</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="container content-area">
+
+    <div class="dashboard-header">
+      <div>
+        <h1>Resident Record Management</h1>
+        <p class="section-meta">View, search, and update resident information. All edits are logged in the audit trail.</p>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <section class="filter-grid" style="margin-bottom:24px;">
+      <div class="filter-card active" data-status="all">
+        <div class="filter-label">All Residents</div>
+        <div class="filter-value" id="countTotal">—</div>
+      </div>
+      <div class="filter-card" data-status="Approved">
+        <div class="filter-label">Approved</div>
+        <div class="filter-value" id="countApproved">—</div>
+      </div>
+      <div class="filter-card" data-status="Pending">
+        <div class="filter-label">Pending</div>
+        <div class="filter-value" id="countPending">—</div>
+      </div>
+      <div class="filter-card" data-status="Declined">
+        <div class="filter-label">Declined</div>
+        <div class="filter-value" id="countDeclined">—</div>
+      </div>
+      <div class="filter-card filter-card--archived" data-status="archived">
+        <div class="filter-label">Archived</div>
+        <div class="filter-value" id="countArchived">—</div>
+      </div>
+    </section>
+
+    <!-- Search + filter bar -->
+    <section class="panel">
+      <div class="search-bar">
+        <input class="input" id="searchInput" type="text" placeholder="Search by name, email, phone, address…" />
+        <select class="input" id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="Approved">Approved</option>
+          <option value="Pending">Pending</option>
+          <option value="Declined">Declined</option>
+          <option value="archived">Archived</option>
+        </select>
+        <button class="btn" id="searchBtn">Search</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table staff-residents-table">
+          <thead>
+            <tr>
+              <th>Resident</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Address</th>
+              <th>Registered</th>
+              <th>Requests</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="residentsRows" data-empty-colspan="6"></tbody>
+        </table>
+      </div>
+      <div id="residentsPg" class="pg-row"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Edit / View Modal ───────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Resident Detail</h2>
+
+    <!-- Read-only info -->
+    <div id="modalInfo" style="margin-bottom:16px; padding:12px; background:var(--surface-soft); border-radius:10px; border:1px solid var(--border);">
+      <div class="info-row"><span class="info-label">Email</span><span id="infoEmail">—</span></div>
+      <div class="info-row"><span class="info-label">Status</span><span id="infoStatus">—</span></div>
+      <div class="info-row"><span class="info-label">Registered</span><span id="infoCreated">—</span></div>
+      <div class="info-row"><span class="info-label">Total Requests</span><span id="infoRequests">—</span></div>
+      <div class="info-row" id="idRow">
+        <span class="info-label">Valid ID</span>
+        <a id="infoId" href="#" target="_blank" class="btn btn-small">View ID</a>
+        <span id="infoIdMissing" style="display:none;font-size:0.78rem;color:#b07d10;background:#fdf4dc;border:1px solid #e8d48a;border-radius:6px;padding:3px 10px;font-weight:600;">⚠ Re-upload Required</span>
+      </div>
+    </div>
+
+    <!-- Editable fields -->
+    <form id="editForm">
+      <input type="hidden" id="editResidentId" />
+      <div class="form-grid2">
+        <div>
+          <label class="form-label">First Name</label>
+          <div class="input" id="editFirstName" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
+        </div>
+        <div>
+          <label class="form-label">Middle Name</label>
+          <div class="input" id="editMiddleName" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
+        </div>
+        <div>
+          <label class="form-label">Last Name</label>
+          <div class="input" id="editLastName" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
+        </div>
+        <div>
+          <label class="form-label">Suffix</label>
+          <div class="input" id="editSuffix" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;">—</div>
+        </div>
+        <div>
+          <label class="form-label">Phone Number</label>
+          <div class="ph-phone-wrap">
+            <div class="ph-phone-prefix">🇵🇭 +63</div>
+            <input class="input" id="editPhone" name="phone_number"
+              placeholder="9XXXXXXXXX" maxlength="10"
+              inputmode="numeric" pattern="9[0-9]{9}"
+              oninput="phPhoneInput(this)"
+              onblur="phPhoneValidate(this)" />
+          </div>
+          <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
+        </div>
+        <div>
+          <label class="form-label">Birth Date</label>
+          <div class="input" id="editBirth" style="background:#f8f3f4;color:#9a7a7d;cursor:not-allowed;"></div>
+        </div>
+        <div>
+          <label class="form-label">Email *</label>
+          <input class="input" type="email" id="editEmail" name="email" placeholder="email@example.com" required />
+        </div>
+        <div class="full">
+          <label class="form-label">Address</label>
+          <input class="input" id="editAddress" name="address" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modalClose">Cancel</button>
+        <button type="submit" class="btn" id="saveBtn">Save Changes</button>
+      </div>
+    </form>
+
+    <p id="saveMsg" style="display:none; color:var(--success); font-size:.88rem; margin-top:10px; text-align:right;">✓ Record updated successfully.</p>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
 <script>

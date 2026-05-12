@@ -79,14 +79,16 @@
               <th>Details</th>
             </tr>
           </thead>
-          <tbody id="auditRows"></tbody>
+          <tbody id="auditRows" data-empty-colspan="7"></tbody>
         </table>
       </div>
+      <div id="auditPg" class="pg-row"></div>
       <div id="auditMeta" style="margin-top:10px;font-size:0.82rem;color:#6b7280"></div>
     </section>
   </main>
 </div>
 <script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/captain-audit-trail.js"></script>
 <script>

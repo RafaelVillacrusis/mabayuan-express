@@ -137,16 +137,18 @@
                 <th>Description</th>
               </tr>
             </thead>
-            <tbody id="auditRows">
+            <tbody id="auditRows" data-empty-colspan="6">
               <tr><td colspan="6" class="empty-state">Loading audit logs…</td></tr>
             </tbody>
           </table>
         </div>
+      <div id="sysAuditPg" class="pg-row"></div>
       </div>
     </div>
   </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/system-admin-audit-trail.js"></script>
 <script>

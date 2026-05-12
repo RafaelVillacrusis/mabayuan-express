@@ -17,10 +17,12 @@ async function loadCounts() {
   document.getElementById('countUsers').textContent = data.total_users || 0;
 }
 
+let _docPg;
 async function loadDocuments() {
   const res = await fetch('/api/system-admin/documents');
   const rows = await res.json();
-  document.getElementById('documentRows').innerHTML = rows.map(row => `
+  if (!_docPg) _docPg = createPaginator('documentRows', 'docPg', 10);
+  _docPg.setRows(rows, row => `
     <tr>
       <td><strong>${escapeHtml(row.document_name)}</strong><br><small style="color:#94a3b8">${escapeHtml(row.description||'')}</small></td>
       <td>₱${Number(row.price).toFixed(2)}</td>
@@ -30,7 +32,7 @@ async function loadDocuments() {
         <button class="btn btn-small btn-ghost" onclick="editDocument(${row.document_id},'${escapeHtml(row.document_name).replace(/'/g,"&#39;")}','${escapeHtml(row.description||'').replace(/'/g,"&#39;")}','${row.price}','${row.processing_days}','${row.is_active}')">Edit</button>
         <button class="btn btn-small btn-danger" onclick="deleteDocument(${row.document_id},'${escapeHtml(row.document_name).replace(/'/g,"&#39;")}')">Delete</button>
       </td>
-    </tr>`).join('') || `<tr><td colspan="5" class="empty-state">No documents yet.</td></tr>`;
+    </tr>`);
 }
 
 async function loadUsers() {

@@ -1,10 +1,21 @@
+let staffReqPg, pendingResPg;
 let socket;
 function getFilter() { return new URLSearchParams(window.location.search).get('status') || 'all'; }
 function setFilter(status) { const url = new URL(window.location.href); status === 'all' ? url.searchParams.delete('status') : url.searchParams.set('status', status); window.history.replaceState({}, '', url); }
 async function loadMe() { const res = await fetch('/api/staff/me'); const me = await res.json(); document.getElementById('staffName').textContent = me.full_name; }
 async function loadCounts() { const res = await fetch('/api/staff/counts'); const counts = await res.json(); const map = { all: counts.total_requests || 0, Approved: counts.approved_count || 0, 'Ready for Pickup': counts.ready_count || 0, Claimed: counts.claimed_count || 0 }; document.querySelectorAll('.filter-card[data-status]').forEach(card => { card.querySelector('.filter-value').textContent = map[card.dataset.status] || 0; card.classList.toggle('active', card.dataset.status === getFilter()); }); document.getElementById('pendingResidentsCount').textContent = counts.pending_residents || 0; }
-async function loadRequests() { const res = await fetch(`/api/staff/requests?status=${encodeURIComponent(getFilter())}`); const rows = await res.json(); document.getElementById('staffRequestRows').innerHTML = rows.map(row => `<tr><td>${escapeHtml(row.transaction_no)}</td><td>${escapeHtml(row.resident_name)}</td><td>${escapeHtml(row.document_name)}</td><td>${formatDate(row.suggested_release_date)}</td><td>${formatDate(row.release_date)}</td><td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${row.status}</span></td><td><a class="btn btn-small" href="/staff/request/${row.request_id}">Open</a></td></tr>`).join('') || `<tr><td colspan="7" class="empty-state">No requests found.</td></tr>`; }
-async function loadPendingResidents() { const res = await fetch('/api/staff/pending-residents'); const rows = await res.json(); document.getElementById('pendingResidentsRows').innerHTML = rows.map(row => `<tr><td>${escapeHtml(row.last_name)}, ${escapeHtml(row.first_name)}</td><td>${escapeHtml(row.email)}</td><td>${escapeHtml(row.phone_number || '-')}</td><td>${escapeHtml(row.address || '-')}</td><td>${row.valid_id_path ? `<a class="btn btn-small" href="/api/staff/residents/${row.resident_id}/id-image" target="_blank">View ID</a>` : '-'}</td><td class="table-actions"><button class="btn btn-small" onclick="approveResident(${row.resident_id})">Approve</button><button class="btn btn-small btn-ghost" onclick="declineResident(${row.resident_id})">Decline</button></td></tr>`).join('') || `<tr><td colspan="6" class="empty-state">No pending residents.</td></tr>`; }
+async function loadRequests() {
+  const res  = await fetch(`/api/staff/requests?status=${encodeURIComponent(getFilter())}`);
+  const rows = await res.json();
+  if (!staffReqPg) staffReqPg = createPaginator('staffRequestRows', 'staffReqPg', 10);
+  staffReqPg.setRows(rows, row => `<tr><td>${escapeHtml(row.transaction_no)}</td><td>${escapeHtml(row.resident_name)}</td><td>${escapeHtml(row.document_name)}</td><td>${formatDate(row.suggested_release_date)}</td><td>${formatDate(row.release_date)}</td><td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${row.status}</span></td><td><a class="btn btn-small" href="/staff/request/${row.request_id}">Open</a></td></tr>`);
+}
+async function loadPendingResidents() {
+  const res  = await fetch('/api/staff/pending-residents');
+  const rows = await res.json();
+  if (!pendingResPg) pendingResPg = createPaginator('pendingResidentsRows', 'pendingResPg', 10);
+  pendingResPg.setRows(rows, row => `<tr><td>${escapeHtml(row.last_name)}, ${escapeHtml(row.first_name)}</td><td>${escapeHtml(row.email)}</td><td>${escapeHtml(row.phone_number || '-')}</td><td>${escapeHtml(row.address || '-')}</td><td>${row.valid_id_path ? `<a class="btn btn-small" href="/api/staff/residents/${row.resident_id}/id-image" target="_blank">View ID</a>` : '-'}</td><td class="table-actions"><button class="btn btn-small" onclick="approveResident(${row.resident_id})">Approve</button><button class="btn btn-small btn-ghost" onclick="declineResident(${row.resident_id})">Decline</button></td></tr>`);
+}
 async function approveResident(id) { const res = await fetch(`/api/staff/residents/${id}/approve`, { method:'POST' }); if (!res.ok) alert('Could not approve resident.'); await refreshAll(); }
 async function declineResident(id) {
   // Show decline reason modal
