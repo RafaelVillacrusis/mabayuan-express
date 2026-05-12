@@ -1246,33 +1246,52 @@ input[type="date"] { max-width: 100%; }
 
 /* ── Shared Pagination ── */
 .pg-row {
-  display: flex; align-items: center;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap; gap: 8px;
-  margin-top: 14px; font-size: 0.85rem;
-  padding: 6px 2px 2px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 16px 10px;
 }
 .pg-info {
-  color: var(--muted); font-size: 0.83rem;
+  color: var(--muted);
+  font-size: 0.83rem;
   white-space: nowrap;
 }
 .pg-controls {
-  display: inline-flex; align-items: center; gap: 2px;
-  background: #fdf8f8; border: 1px solid #e8d5d7;
-  border-radius: 10px; padding: 3px 5px;
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #fdf8f8;
+  border: 1px solid #e8d5d7;
+  border-radius: 10px;
+  padding: 3px 5px;
 }
 .pg-btn {
-  padding: 4px 10px; border: none;
-  border-radius: 7px; background: transparent; cursor: pointer;
-  font-size: 0.82rem; color: var(--text); transition: background .15s;
-  min-width: 30px; text-align: center; font-weight: 500; line-height: 1.5;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text);
+  transition: background .15s;
+  min-width: 30px;
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.5;
   white-space: nowrap;
 }
 .pg-btn:hover:not(:disabled) { background: #f0e4e5; }
 .pg-btn.active { background: var(--primary); color: #fff; font-weight: 700; }
 .pg-btn:disabled { opacity: .35; cursor: default; }
 .pg-ellipsis {
-  padding: 0 3px; color: var(--muted);
-  font-size: 0.82rem; line-height: 1.5; user-select: none;
+  padding: 0 3px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  user-select: none;
 }
+/* Pagination inside sa-panel (sysadmin) — same padding as sa-panel cells */
+.sa-panel .pg-row { padding: 8px 14px 14px; }

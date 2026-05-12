@@ -66,23 +66,7 @@
     #dashFilterForm.audit-filter-grid { grid-template-columns: 1fr; }
   }
 
-  /* ── Pagination ── */
-  #paginationRow {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 10px; margin-top: 14px;
-    font-size: 0.85rem; color: var(--muted);
-  }
-  .pg-controls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-  .pg-btn {
-    padding: 5px 10px; border: 1px solid #e0d0d2;
-    border-radius: 6px; background: #fff; cursor: pointer;
-    font-size: 0.82rem; color: var(--text); transition: background .15s;
-    min-width: 34px; text-align: center;
-  }
-  .pg-btn:hover:not(:disabled) { background: #f5edef; }
-  .pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 700; }
-  .pg-btn:disabled { opacity: .4; cursor: default; }
-  .pg-ellipsis { padding: 0 4px; color: var(--muted); }
+
 </style>
 </head><body><div class="page-shell"><div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
     <header class="topbar"><div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -130,7 +114,8 @@
     <tbody id="captainRequestRows"></tbody>
   </table>
 </div>
-<div id="paginationRow"></div></section></main></div><script src="/socket.io/socket.io.js"></script><script src="/assets/js/common.js"></script>
+<div id="paginationRow" class="pg-row"></div></section></main></div><script src="/socket.io/socket.io.js"></script><script src="/assets/js/common-pagination.js"></script>
+<script src="/assets/js/common.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
 <script src="/assets/js/captain-dashboard.js"></script><script>
 (function(){

@@ -115,41 +115,30 @@ function renderTable() {
         </tr>`).join('')
     : `<tr><td colspan="7" class="empty-state">No requests found.</td></tr>`;
 
-  // Render pagination
-  renderPagination(currentPage, totalPages, total, start, pageRows.length);
-}
-
-function renderPagination(page, totalPages, total, start, count) {
-  const el = document.getElementById('paginationRow');
-  if (!el) return;
-
-  if (total === 0) { el.innerHTML = ''; return; }
-
-  const end = start + count;
-  let pageButtons = '';
-
-  // Always show first, last, and neighbours around current
-  const pages = new Set();
-  pages.add(1);
-  pages.add(totalPages);
-  for (let i = Math.max(1, page - 1); i <= Math.min(totalPages, page + 1); i++) pages.add(i);
-  const sorted = [...pages].sort((a,b)=>a-b);
-
-  let prev = 0;
-  for (const p of sorted) {
-    if (p - prev > 1) pageButtons += `<span class="pg-ellipsis">…</span>`;
-    pageButtons += `<button class="pg-btn${p === page ? ' active' : ''}" onclick="goPage(${p})">${p}</button>`;
-    prev = p;
+  // Render pagination using shared pg-row style
+  const pgEl = document.getElementById('paginationRow');
+  if (pgEl) {
+    if (total === 0) { pgEl.innerHTML = ''; }
+    else {
+      const end = start + pageRows.length;
+      const pages = new Set([1, totalPages]);
+      for (let i = Math.max(1, currentPage-1); i <= Math.min(totalPages, currentPage+1); i++) pages.add(i);
+      const sorted = [...pages].sort((a,b)=>a-b);
+      let btns = '', prev = 0;
+      for (const p of sorted) {
+        if (p - prev > 1) btns += `<span class="pg-ellipsis">…</span>`;
+        btns += `<button class="pg-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+        prev = p;
+      }
+      pgEl.innerHTML = `
+        <span class="pg-info">Showing ${start+1}–${end} of ${total} record${total!==1?'s':''}</span>
+        <div class="pg-controls">
+          <button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹ Prev</button>
+          ${btns}
+          <button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>Next ›</button>
+        </div>`;
+    }
   }
-
-  el.innerHTML = `
-    <div class="pg-info">Showing ${start+1}–${end} of ${total} record${total !== 1 ? 's' : ''}</div>
-    <div class="pg-controls">
-      <button class="pg-btn" onclick="goPage(${page-1})" ${page<=1?'disabled':''}>‹ Prev</button>
-      ${pageButtons}
-      <button class="pg-btn" onclick="goPage(${page+1})" ${page>=totalPages?'disabled':''}>Next ›</button>
-    </div>
-  `;
 }
 
 function goPage(p) {
