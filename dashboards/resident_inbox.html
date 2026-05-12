@@ -64,8 +64,8 @@
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/resident/login"); })
-        .catch(function() { window.location.replace("/resident/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
+        .catch(function() { window.location.replace("/login"); });
     }
   });
 })();
