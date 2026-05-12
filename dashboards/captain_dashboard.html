@@ -5,7 +5,30 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Captain Dashboard</title><link rel="stylesheet" href="/assets/css/style.css" />  <style>
-  </style>
+  /* ── Sort headers ── */
+  #captainTable thead th[data-col] { cursor: pointer; user-select: none; white-space: nowrap; }
+  #captainTable thead th[data-col]::after { content: ' ⇅'; opacity: .35; font-size: .8em; }
+  #captainTable thead th.sort-asc::after  { content: ' ↑'; opacity: 1; }
+  #captainTable thead th.sort-desc::after { content: ' ↓'; opacity: 1; }
+
+  /* ── Pagination ── */
+  #paginationRow {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; margin-top: 14px;
+    font-size: 0.85rem; color: var(--muted);
+  }
+  .pg-controls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .pg-btn {
+    padding: 5px 10px; border: 1px solid #e0d0d2;
+    border-radius: 6px; background: #fff; cursor: pointer;
+    font-size: 0.82rem; color: var(--text); transition: background .15s;
+    min-width: 34px; text-align: center;
+  }
+  .pg-btn:hover:not(:disabled) { background: #f5edef; }
+  .pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 700; }
+  .pg-btn:disabled { opacity: .4; cursor: default; }
+  .pg-ellipsis { padding: 0 4px; color: var(--muted); }
+</style>
 </head><body><div class="page-shell"><div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
     <header class="topbar"><div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
@@ -19,7 +42,40 @@
 </svg></div><div class="brand-copy"><div>Captain Dashboard</div><small>Approval and decline of requests</small></div></div><button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
       <nav class="top-links" id="topNav">
         <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        <a href="/captain/dashboard">Dashboard</a><a href="/captain/analytics">Analytics</a><a href="/captain/messages">Messages</a><a href="/captain/audit-trail">Audit Trail</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form></nav></header><main class="container content-area"><div class="dashboard-header"><div><h1>Welcome, <span id="captainName">Captain</span></h1><p>Review resident requests before they proceed to staff processing.</p></div></div><section class="filter-grid"><div class="filter-card active" data-status="all"><div class="filter-label">Total</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Pending Approval"><div class="filter-label">Pending Approval</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Approved"><div class="filter-label">Approved</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Declined"><div class="filter-label">Declined</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Ready for Pickup"><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Claimed"><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></section><section class="panel"><h2 style="margin-top:0">Requests for Captain Review</h2><div style="margin-bottom:12px"><input type="text" id="captainSearch" placeholder="Search by transaction, resident, or document…" style="width:100%;max-width:420px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:0.9rem" /></div><div class="table-wrap"><table class="table"><thead><tr><th>Transaction</th><th>Resident</th><th>Document</th><th>Price</th><th>Suggested Release</th><th>Status</th><th>Action</th></tr></thead><tbody id="captainRequestRows"></tbody></table></div></section></main></div><script src="/socket.io/socket.io.js"></script><script src="/assets/js/common.js"></script>
+        <a href="/captain/dashboard">Dashboard</a><a href="/captain/analytics">Analytics</a><a href="/captain/messages">Messages</a><a href="/captain/audit-trail">Audit Trail</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form></nav></header><main class="container content-area"><div class="dashboard-header"><div><h1>Welcome, <span id="captainName">Captain</span></h1><p>Review resident requests before they proceed to staff processing.</p></div></div><section class="filter-grid"><div class="filter-card active" data-status="all"><div class="filter-label">Total</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Pending Approval"><div class="filter-label">Pending Approval</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Approved"><div class="filter-label">Approved</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Declined"><div class="filter-label">Declined</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Ready for Pickup"><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Claimed"><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></section><section class="panel"><h2 style="margin-top:0">Requests for Captain Review</h2><div class="audit-filter-grid" id="dashFilterForm">
+  <input class="input" type="text" id="captainSearch" placeholder="Search transaction, resident, or document…" />
+  <select class="select" id="statusDropdown">
+    <option value="all">All Statuses</option>
+    <option value="Pending Approval">Pending Approval</option>
+    <option value="Approved">Approved</option>
+    <option value="Declined">Declined</option>
+    <option value="Ready for Pickup">Ready for Pickup</option>
+    <option value="Claimed">Claimed</option>
+  </select>
+  <input class="input" type="date" id="dateFromFilter" />
+  <input class="input" type="date" id="dateToFilter" />
+  <div class="button-row audit-filter-actions">
+    <button class="btn btn-small" id="applyDashFilter">Apply</button>
+    <button class="btn btn-small btn-ghost" id="resetDashFilter">Reset</button>
+  </div>
+</div>
+<div class="table-wrap">
+  <table class="table" id="captainTable">
+    <thead>
+      <tr>
+        <th data-col="transaction_no">Transaction</th>
+        <th data-col="resident_name">Resident</th>
+        <th data-col="document_name">Document</th>
+        <th data-col="price_at_request">Price</th>
+        <th data-col="suggested_release_date">Suggested Release</th>
+        <th data-col="status">Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="captainRequestRows"></tbody>
+  </table>
+</div>
+<div id="paginationRow"></div></section></main></div><script src="/socket.io/socket.io.js"></script><script src="/assets/js/common.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
 <script src="/assets/js/captain-dashboard.js"></script><script>
 (function(){
