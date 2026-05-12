@@ -108,7 +108,7 @@ async function getResidentRequests(residentId, filter = 'all') {
     params.push(filter);
   }
 
-  sql += ` ORDER BY created_at DESC`;
+  sql += ` ORDER BY created_at ASC`;
 
   const { rows } = await pool.query(sql, params);
   return rows;
@@ -143,7 +143,7 @@ async function getRequestsByRole(role, filter = 'all') {
     params.push(filter);
   }
 
-  sql += ` ORDER BY r.created_at DESC`;
+  sql += ` ORDER BY r.created_at ASC`;
 
   const { rows } = await pool.query(sql, params);
   return rows;

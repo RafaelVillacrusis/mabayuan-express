@@ -37,7 +37,7 @@ router.get('/api/staff/report', requireRole('staff'), async (req, res) => {
     FROM requests r
     JOIN residents res ON res.resident_id = r.resident_id
     WHERE r.status IN ('Approved','Ready for Pickup','Claimed')
-    ORDER BY r.updated_at DESC
+    ORDER BY r.created_at ASC
   `);
   res.json(rows);
 });
