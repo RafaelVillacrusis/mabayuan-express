@@ -350,6 +350,7 @@
 <script src="/assets/js/delete-modal.js"></script>
 <script>
   let allRows = [];
+  let currentFilteredRows = [];
 
   async function loadReport() {
     const res = await fetch('/api/staff/report');
@@ -393,6 +394,7 @@
   }
 
   function renderRows(rows) {
+    currentFilteredRows = rows; // track for printing
     // Stats
     document.getElementById('sTotal').textContent      = rows.length;
     document.getElementById('sProcessing').textContent = rows.filter(r => r.status === 'Approved').length;
@@ -426,16 +428,19 @@
     loadReport();
   });
 
-  /* ── Print all rows (bypass pagination) ── */
+  /* ── Print filtered rows (respects active filters, bypasses pagination) ── */
   function printAllRows() {
     const statusDisplay = s => s === 'Approved' ? 'Processing' : s;
     const statusClass   = s => (statusDisplay(s)).toLowerCase().replace(/[^a-z]+/g, '-');
     const tbody = document.getElementById('reportRows');
     const saved = tbody.innerHTML;
+    const savedCount = document.getElementById('reportCount').textContent;
 
-    // Render ALL rows (bypass pagination)
-    tbody.innerHTML = allRows.length
-      ? allRows.map(r => `
+    // Use currently filtered rows, not all rows
+    const rowsToPrint = currentFilteredRows.length ? currentFilteredRows : allRows;
+
+    tbody.innerHTML = rowsToPrint.length
+      ? rowsToPrint.map(r => `
         <tr>
           <td class="mono">${escapeHtml(r.transaction_no || '—')}</td>
           <td>${escapeHtml(r.resident_name || '—')}</td>
@@ -448,16 +453,16 @@
         </tr>`).join('')
       : `<tr><td colspan="8" class="empty-state">No records.</td></tr>`;
 
-    // Update record count for print header
-    document.getElementById('reportCount').textContent = `${allRows.length} record${allRows.length !== 1 ? 's' : ''}`;
+    document.getElementById('reportCount').textContent = `${rowsToPrint.length} record${rowsToPrint.length !== 1 ? 's' : ''}`;
 
     window.print();
 
     // Restore paginated view after print dialog closes
     setTimeout(() => {
       tbody.innerHTML = saved;
-      document.getElementById('reportCount').textContent = `${allRows.length} record${allRows.length !== 1 ? 's' : ''}`;
+      document.getElementById('reportCount').textContent = savedCount;
     }, 1500);
+  }
   }
 
   /* ── Mobile nav ── */
