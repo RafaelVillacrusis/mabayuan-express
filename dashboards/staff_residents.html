@@ -103,7 +103,7 @@
     <!-- Search + filter bar -->
     <section class="panel">
       <div class="search-bar">
-        <input class="input" id="searchInput" type="text" placeholder="Search by name, email, phone, address…" />
+        <input class="input" id="searchInput" type="text" placeholder="Search by name, email, phone, address…" autocomplete="off" />
         <select class="input" id="statusFilter">
           <option value="all">All statuses</option>
           <option value="Approved">Approved</option>
@@ -352,7 +352,7 @@ async function loadResidents() {
     <!-- Search + filter bar -->
     <section class="panel">
       <div class="search-bar">
-        <input class="input" id="searchInput" type="text" placeholder="Search by name, email, phone, address…" />
+        <input class="input" id="searchInput" type="text" placeholder="Search by name, email, phone, address…" autocomplete="off" />
         <select class="input" id="statusFilter">
           <option value="all">All statuses</option>
           <option value="Approved">Approved</option>
@@ -683,8 +683,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
-        .catch(function() { window.location.replace("/portal/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
+        .catch(function() { window.location.replace("/login"); });
     }
   });
 })();

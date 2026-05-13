@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <link rel="manifest" href="/assets/manifest.json">
   <meta name="theme-color" content="#a64d57">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login — Mabayuan Express</title>
-  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/style.css"/>
   <style>
     body{margin:0;min-height:100vh;background:linear-gradient(135deg,#4a1e24 0%,#6b2d35 40%,#8b3d46 70%,#5c2830 100%);display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;padding:20px;box-sizing:border-box;}
     .auth-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
@@ -65,33 +65,38 @@
       <div class="success-banner" id="successBanner"></div>
       <form action="/auth/login" method="POST" autocomplete="off">
         <label class="form-label">Email address</label>
-        <input class="input" type="email" name="email" required autocomplete="off" placeholder="your@email.com" style="margin-bottom:14px">
+        <input class="input" type="email" name="email" required autocomplete="off"
+               placeholder="your@email.com" style="margin-bottom:14px">
         <label class="form-label">Password</label>
         <div class="pw-wrap" style="margin-bottom:4px">
-          <input class="input" type="password" name="password" id="pwField" required autocomplete="new-password" placeholder="Enter your password">
-          <button class="toggle-pw" type="button" onclick="togglePw()">&#128065;</button>
+          <input class="input" type="password" name="password" id="pwField"
+                 required autocomplete="new-password" placeholder="Enter your password">
+          <button class="toggle-pw" type="button" onclick="togglePw()">👁</button>
         </div>
         <div class="forgot-row"><a href="/forgot-password">Forgot password?</a></div>
         <button class="btn-auth" type="submit">Login</button>
       </form>
       <div class="auth-footer">
         <p>Don't have an account? <a href="/resident/register">Register as Resident</a></p>
-        <p><a href="/">&#8592; Back to home</a></p>
+        <p><a href="/">← Back to home</a></p>
       </div>
     </div>
   </div>
 </div>
 <script>
-  function togglePw(){const i=document.getElementById('pwField'),b=i.nextElementSibling;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'\u{1F441}':'\u{1F648}';}
+  function togglePw(){
+    const i=document.getElementById('pwField'),b=i.nextElementSibling;
+    i.type=i.type==='password'?'text':'password';
+    b.textContent=i.type==='password'?'👁':'🙈';
+  }
   (function(){
-    const p=new URLSearchParams(window.location.search),err=p.get('error'),reg=p.get('registered');
+    const p=new URLSearchParams(window.location.search);
+    const err=p.get('error'), reg=p.get('registered');
     if(err){const e=document.getElementById('errorBanner');e.textContent=decodeURIComponent(err);e.style.display='block';}
     if(reg==='pending'){const e=document.getElementById('successBanner');e.textContent='Registration received! Please wait for staff approval before logging in.';e.style.display='block';}
-    window.addEventListener('pageshow',function(e){if(e.persisted){const p=document.getElementById('pwField');if(p)p.value='';}});
+    window.addEventListener('pageshow',e=>{if(e.persisted){const f=document.getElementById('pwField');if(f)f.value='';}});
   })();
 </script>
-<script>
-  if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/assets/sw.js");});}
-</script>
+<script>if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/assets/sw.js");});}</script>
 </body>
 </html>

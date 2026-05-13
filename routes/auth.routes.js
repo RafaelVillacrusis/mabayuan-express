@@ -31,15 +31,15 @@ const ROLE_DASHBOARD = {
 router.get('/', (req, res) => {
   noCache(res);
   if (req.session.resident) return res.redirect('/resident/dashboard');
-  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/portal/login');
+  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/login');
   res.sendFile(path.join(__dirname, '../views/index.html'));
 });
 
 // ── Resident ──────────────────────────────────────────────────────────────────
-router.get('/resident/login', (req, res) => {
+router.get('/login', (req, res) => {
   noCache(res);
   if (req.session.resident) return res.redirect('/resident/dashboard');
-  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/portal/login');
+  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/login');
   res.sendFile(path.join(__dirname, '../views/resident_login.html'));
 });
 
@@ -50,18 +50,18 @@ router.get('/resident/register', (req, res) => {
 });
 
 // ── Personnel — single login page, smart routing ──────────────────────────────
-router.get('/portal/login', (req, res) => {
+router.get('/login', (req, res) => {
   noCache(res);
-  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/portal/login');
+  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/login');
   if (req.session.resident) return res.redirect('/resident/dashboard');
   res.sendFile(path.join(__dirname, '../views/admin_login.html'));
 });
 
 // Keep old /admin/login and separate role URLs working — all use the same page
-router.get('/admin/login', (req, res) => res.redirect('/portal/login'));
-router.get('/login/staff', (req, res) => res.redirect('/portal/login'));
-router.get('/login/captain', (req, res) => res.redirect('/portal/login'));
-router.get('/login/sysadmin', (req, res) => res.redirect('/portal/login'));
+router.get('/admin/login', (req, res) => res.redirect('/login'));
+router.get('/login/staff', (req, res) => res.redirect('/login'));
+router.get('/login/captain', (req, res) => res.redirect('/login'));
+router.get('/login/sysadmin', (req, res) => res.redirect('/login'));
 
 // ── Forgot password ───────────────────────────────────────────────────────────
 router.get('/forgot-password', (req, res) => {
@@ -77,7 +77,7 @@ router.get('/api/session-check', (req, res) => {
   // Return appropriate login page based on referer
   const referer = req.headers.referer || '';
   const isResident = referer.includes('/resident/');
-  res.json({ ok: false, redirect: isResident ? '/resident/login' : '/portal/login' });
+  res.json({ ok: false, redirect: isResident ? '/login' : '/login' });
 });
 
 // ── Resident Register ─────────────────────────────────────────────────────────
@@ -132,21 +132,52 @@ router.post('/auth/resident/register', upload.single('valid_id'), async (req, re
 });
 
 // ── Resident Login ────────────────────────────────────────────────────────────
+// ── Unified Login ─────────────────────────────────────────────────────────────
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    // Check residents first
+    const { rows: rRows } = await pool.query('SELECT * FROM residents WHERE email=$1 LIMIT 1', [email]);
+    if (rRows.length) {
+      const resident = rRows[0];
+      const valid = await bcrypt.compare(password, resident.password_hash);
+      if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
+      if (resident.status === 'Pending')  return redirectWithError(res, '/login', 'Your account is still pending staff approval.');
+      if (resident.status === 'Declined') return redirectWithError(res, '/login', 'Your account was declined. Please contact the barangay office.');
+      if (resident.is_archived)           return redirectWithError(res, '/login', 'Your account has been archived. Please contact the barangay office.');
+      req.session.resident = { resident_id: resident.resident_id, full_name: `${resident.first_name} ${resident.last_name}`, email: resident.email };
+      delete req.session.user;
+      return res.redirect('/resident/dashboard');
+    }
+    // Check personnel
+    const { rows: uRows } = await pool.query('SELECT * FROM users WHERE email=$1 LIMIT 1', [email]);
+    if (uRows.length) {
+      const user = uRows[0];
+      const valid = await bcrypt.compare(password, user.password_hash);
+      if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
+      req.session.user = { user_id: user.user_id, full_name: user.full_name, email: user.email, role: user.role };
+      delete req.session.resident;
+      return res.redirect(ROLE_DASHBOARD[user.role] || '/login');
+    }
+    return redirectWithError(res, '/login', 'No account found with that email address.');
+  } catch(e) { console.error(e); redirectWithError(res, '/login', 'Login failed. Please try again.'); }
+});
+
 router.post('/auth/resident/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const { rows } = await pool.query('SELECT * FROM residents WHERE email=$1 LIMIT 1', [email]);
-    if (!rows.length) return redirectWithError(res, '/resident/login', 'No account found with that email address.');
+    if (!rows.length) return redirectWithError(res, '/login', 'No account found with that email address.');
     const resident = rows[0];
     const valid = await bcrypt.compare(password, resident.password_hash);
-    if (!valid) return redirectWithError(res, '/resident/login', 'Incorrect password. Please try again.');
-    if (resident.status === 'Pending') return redirectWithError(res, '/resident/login', 'Your account is still pending staff approval.');
-    if (resident.status === 'Declined') return redirectWithError(res, '/resident/login', 'Your account was declined. Please contact the barangay office.');
-    if (resident.is_archived) return redirectWithError(res, '/resident/login', 'Your account has been archived. Please contact the barangay office.');
+    if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
+    if (resident.status === 'Pending') return redirectWithError(res, '/login', 'Your account is still pending staff approval.');
+    if (resident.status === 'Declined') return redirectWithError(res, '/login', 'Your account was declined. Please contact the barangay office.');
+    if (resident.is_archived) return redirectWithError(res, '/login', 'Your account has been archived. Please contact the barangay office.');
     req.session.resident = { resident_id:resident.resident_id, first_name:resident.first_name, last_name:resident.last_name, email:resident.email };
     delete req.session.user;
     res.redirect('/resident/dashboard');
-  } catch(e) { console.error(e); redirectWithError(res, '/resident/login', 'Login failed. Please try again.'); }
+  } catch(e) { console.error(e); redirectWithError(res, '/login', 'Login failed. Please try again.'); }
 });
 
 // ── Personnel Login — one route, detects role, routes to correct dashboard ────
@@ -154,20 +185,20 @@ router.post('/auth/portal/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const { rows } = await pool.query('SELECT * FROM users WHERE email=$1 LIMIT 1', [email]);
-    if (!rows.length) return redirectWithError(res, '/portal/login', 'No account found with that email address.');
+    if (!rows.length) return redirectWithError(res, '/login', 'No account found with that email address.');
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return redirectWithError(res, '/portal/login', 'Incorrect password. Please try again.');
+    if (!valid) return redirectWithError(res, '/login', 'Incorrect password. Please try again.');
 
     // Set session and route based on role automatically
     req.session.user = { user_id:user.user_id, full_name:user.full_name, email:user.email, role:user.role };
     delete req.session.resident;
 
     const dashboard = ROLE_DASHBOARD[user.role];
-    if (!dashboard) return redirectWithError(res, '/portal/login', 'Your account role is not recognized. Please contact the administrator.');
+    if (!dashboard) return redirectWithError(res, '/login', 'Your account role is not recognized. Please contact the administrator.');
 
     res.redirect(dashboard);
-  } catch(e) { console.error(e); redirectWithError(res, '/portal/login', 'Login failed. Please try again.'); }
+  } catch(e) { console.error(e); redirectWithError(res, '/login', 'Login failed. Please try again.'); }
 });
 
 // ── Forgot Password ───────────────────────────────────────────────────────────
@@ -209,7 +240,7 @@ router.post('/auth/forgot-password/reset', async (req, res) => {
 router.post('/auth/logout', (req, res) => {
   // Remember who was logged in before destroying session
   const wasResident = !!req.session.resident;
-  const redirectTo = wasResident ? '/resident/login' : '/portal/login';
+  const redirectTo = wasResident ? '/login' : '/login';
 
   req.session.destroy(() => {
     res.clearCookie('connect.sid');

@@ -95,7 +95,7 @@
 
       <div class="form-row">
         <label for="msgSubject">Subject</label>
-        <input type="text" id="msgSubject" placeholder="e.g. Office Closure Notice" maxlength="200" />
+        <input type="text" id="msgSubject" placeholder="e.g. Office Closure Notice" maxlength="200" autocomplete="off" />
       </div>
 
       <div class="form-row">
@@ -201,8 +201,8 @@
     if (e.persisted) {
       fetch("/api/session-check", { credentials: "include" })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/portal/login"); })
-        .catch(function() { window.location.replace("/portal/login"); });
+        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
+        .catch(function() { window.location.replace("/login"); });
     }
   });
 })();
