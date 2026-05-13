@@ -52,11 +52,13 @@ router.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/login.html'));
 });
 
-// Keep old /admin/login and separate role URLs working — all use the same page
-router.get('/admin/login', (req, res) => res.redirect('/login'));
-router.get('/login/staff', (req, res) => res.redirect('/login'));
-router.get('/login/captain', (req, res) => res.redirect('/login'));
-router.get('/login/sysadmin', (req, res) => res.redirect('/login'));
+// Keep old login URLs — all redirect to unified /login
+router.get('/portal/login', (req, res) => { noCache(res); res.redirect('/login'); });
+router.get('/resident/login', (req, res) => { noCache(res); res.redirect('/login'); });
+router.get('/admin/login',    (req, res) => { noCache(res); res.redirect('/login'); });
+router.get('/login/staff',    (req, res) => { noCache(res); res.redirect('/login'); });
+router.get('/login/captain',  (req, res) => { noCache(res); res.redirect('/login'); });
+router.get('/login/sysadmin', (req, res) => { noCache(res); res.redirect('/login'); });
 
 // ── Forgot password ───────────────────────────────────────────────────────────
 router.get('/forgot-password', (req, res) => {
