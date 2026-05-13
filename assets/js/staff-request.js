@@ -16,6 +16,12 @@ async function loadRequest() {
   document.getElementById('staffNotesRelease').value = req.staff_notes || '';
   document.getElementById('staffNotesClaim').value = req.staff_notes || '';
   document.getElementById('printReportLink').href = `/staff/request/${requestId}/report`;
+  document.getElementById('printDocLink').href = `/staff/request/${requestId}/document`;
+
+  // Show Print Official Document button only after Captain approves
+  const printDocStatuses = ['Approved', 'Ready for Pickup', 'Claimed'];
+  document.getElementById('printDocCard').style.display = printDocStatuses.includes(req.status) ? '' : 'none';
+
   document.getElementById('logList').innerHTML = renderLogs(data.logs || []);
   document.getElementById('releaseForm').action = `/api/staff/requests/${requestId}/set-release`;
   document.getElementById('claimForm').action = `/api/staff/requests/${requestId}/claim`;
