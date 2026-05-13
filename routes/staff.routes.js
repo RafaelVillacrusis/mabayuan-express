@@ -142,6 +142,223 @@ router.get('/staff/request/:id/report', requireRole('staff'), async (req, res) =
 </html>`);
 });
 
+// ── Document Generator — per document type ─────────────────────────────────
+router.get('/staff/request/:id/document', requireRole('staff'), async (req, res) => {
+  const request = await getRequestById(req.params.id);
+  if (!request) return res.status(404).send('Request not found.');
+
+  const allowedStatuses = ['Approved', 'Ready for Pickup', 'Claimed'];
+  if (!allowedStatuses.includes(request.status)) {
+    return res.status(403).send('Document can only be printed after Captain approval.');
+  }
+
+  const fullName = [
+    request.first_name,
+    request.middle_name ? request.middle_name + ' ' : '',
+    request.last_name,
+    request.suffix ? ' ' + request.suffix : ''
+  ].join(' ').replace(/\s+/g, ' ').trim();
+
+  const address = request.address || 'Barangay Mabayuan, Olongapo City, Zambales';
+  const purpose = request.purpose || '—';
+  const txn     = request.transaction_no;
+  const captain = 'Hon. Edwin M. Esposo';
+  const captainTitle = 'Punong Barangay, Barangay Mabayuan';
+
+  const issuedDate = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Validity: 6 months from today
+  const validUntil = new Date();
+  validUntil.setMonth(validUntil.getMonth() + 6);
+  const validityDate = validUntil.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const docName = (request.document_name || '').trim().toLowerCase();
+
+  // ── Document body per type ──────────────────────────────────────────────
+  let docTitle = request.document_name.toUpperCase();
+  let orNumber = `OR-${txn.replace('TXN-','')}`;
+  let body = '';
+
+  if (docName.includes('clearance')) {
+    body = `
+      <p>TO WHOM IT MAY CONCERN:</p>
+      <p>This is to certify that <strong>${fullName}</strong>, of legal age, a bonafide resident of <strong>${address}</strong>, is personally known to me and has been a resident of this Barangay.</p>
+      <p>Further, this certifies that he/she is of good moral character and has no derogatory record filed in this office.</p>
+      <p>This certification is issued upon request of the above-named person for <strong>${purpose}</strong> and for whatever legal purpose it may serve.</p>`;
+  } else if (docName.includes('residency')) {
+    body = `
+      <p>TO WHOM IT MAY CONCERN:</p>
+      <p>This is to certify that <strong>${fullName}</strong>, of legal age, is a bonafide resident of <strong>${address}</strong> and has been continuously residing in the said address.</p>
+      <p>This certification is issued upon request of the above-named person for <strong>${purpose}</strong> and for whatever legal purpose it may serve.</p>`;
+  } else if (docName.includes('indigency')) {
+    body = `
+      <p>TO WHOM IT MAY CONCERN:</p>
+      <p>This is to certify that <strong>${fullName}</strong>, of legal age, a resident of <strong>${address}</strong>, belongs to an indigent family in this Barangay and is in need of financial assistance.</p>
+      <p>This certification is issued upon request of the above-named person for <strong>${purpose}</strong> and for whatever legal purpose it may serve.</p>`;
+  } else if (docName.includes('business permit') || docName.includes('business')) {
+    body = `
+      <p>TO WHOM IT MAY CONCERN:</p>
+      <p>This is to certify that <strong>${fullName}</strong>, of legal age, a resident of <strong>${address}</strong>, has been granted a Barangay Business Permit to operate a business within the jurisdiction of Barangay Mabayuan, Olongapo City, Zambales.</p>
+      <p>This permit is issued upon request for <strong>${purpose}</strong> and subject to existing ordinances and regulations of the barangay.</p>`;
+  } else if (docName.includes('cedula') || docName.includes('community tax')) {
+    docTitle = 'COMMUNITY TAX CERTIFICATE (CEDULA)';
+    body = `
+      <p>This is to certify that <strong>${fullName}</strong>, residing at <strong>${address}</strong>, has paid the Community Tax for the current year.</p>
+      <p>Issued for <strong>${purpose}</strong>.</p>`;
+  } else {
+    body = `
+      <p>TO WHOM IT MAY CONCERN:</p>
+      <p>This is to certify that <strong>${fullName}</strong>, of legal age, a bonafide resident of <strong>${address}</strong>, has requested and been issued this <strong>${request.document_name}</strong>.</p>
+      <p>This certification is issued upon request for <strong>${purpose}</strong> and for whatever legal purpose it may serve.</p>`;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${request.document_name} — ${fullName}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Times New Roman',Times,serif;background:#f0eded;min-height:100vh;padding:24px 16px;color:#1a0a0c;font-size:14px}
+    .doc-outer{max-width:720px;margin:0 auto;background:#fff;border:1px solid #ddd;box-shadow:0 4px 24px rgba(0,0,0,.12)}
+
+    /* Triple border effect */
+    .doc-border-outer{padding:10px;border:3px solid #8b2131}
+    .doc-border-inner{padding:8px;border:1px solid #8b2131}
+    .doc-content{padding:28px 36px}
+
+    /* Header */
+    .doc-header{text-align:center;border-bottom:2px solid #8b2131;padding-bottom:18px;margin-bottom:22px;position:relative}
+    .doc-header .republic{font-size:11px;letter-spacing:.06em;color:#555;margin-bottom:2px}
+    .doc-header .province{font-size:11px;color:#555;margin-bottom:12px}
+    .header-row{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:10px}
+    .seal{width:72px;height:72px;border-radius:50%;border:2px solid #8b2131;display:flex;align-items:center;justify-content:center;background:#fdf8f8;flex-shrink:0}
+    .seal svg{width:48px;height:48px}
+    .brgy-name{font-size:22px;font-weight:700;color:#8b2131;letter-spacing:.02em}
+    .brgy-sub{font-size:11px;color:#666;margin-top:2px}
+    .doc-type-title{font-size:17px;font-weight:700;letter-spacing:.08em;color:#1a0a0c;margin-top:14px;text-decoration:underline}
+
+    /* Body */
+    .doc-body-text p{margin-bottom:16px;line-height:1.9;text-align:justify;text-indent:40px}
+    .doc-body-text p:first-child{text-indent:0}
+
+    /* Details table */
+    .doc-details{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px}
+    .doc-details td{padding:5px 10px;vertical-align:top}
+    .doc-details td:first-child{width:38%;color:#555;font-style:italic}
+    .doc-details td:last-child{font-weight:600;color:#1a0a0c;border-bottom:1px dotted #ccc}
+
+    /* Signature */
+    .signature-section{margin-top:40px;display:flex;justify-content:space-between;align-items:flex-end}
+    .sig-issued{font-size:12px;color:#555}
+    .sig-block{text-align:center;min-width:220px}
+    .sig-line{border-top:1.5px solid #1a0a0c;margin-bottom:4px;margin-top:50px}
+    .sig-name{font-weight:700;font-size:14px;color:#8b2131}
+    .sig-title{font-size:11px;color:#555;margin-top:2px}
+
+    /* OR / Control no */
+    .control-row{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-top:18px;padding-top:10px;border-top:1px solid #eee}
+
+    /* Footer watermark */
+    .doc-footer{text-align:center;font-size:10px;color:#aaa;padding:10px 0 4px;font-style:italic}
+
+    /* Print button bar */
+    .print-bar{display:flex;gap:10px;justify-content:flex-end;padding:14px 16px;background:#fdf8f8;border-top:1px solid #e8d5d7}
+    .btn{padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.15s;font-family:Arial,sans-serif}
+    .btn-primary{background:linear-gradient(135deg,#4a1e24,#8b2131);color:#fff}
+    .btn-ghost{background:#fff;border:1.5px solid #e8d5d7;color:#8b2131}
+
+    @media print{
+      body{background:#fff;padding:0}
+      .doc-outer{box-shadow:none;border:none;max-width:100%}
+      .doc-border-outer{border-color:#8b2131;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .print-bar{display:none}
+      @page{size:letter portrait;margin:15mm 12mm}
+    }
+  </style>
+</head>
+<body>
+<div class="doc-outer">
+  <div class="doc-border-outer">
+    <div class="doc-border-inner">
+      <div class="doc-content">
+
+        <!-- Header -->
+        <div class="doc-header">
+          <div class="republic">Republic of the Philippines</div>
+          <div class="province">City of Olongapo · Province of Zambales</div>
+          <div class="header-row">
+            <div class="seal">
+              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="18" cy="18" r="17" stroke="#8b2131" stroke-width="1.5" fill="#fff"/>
+                <rect x="9" y="7" width="12" height="16" rx="2" fill="rgba(139,33,49,0.18)"/>
+                <path d="M17 7 L21 11 L17 11 Z" fill="rgba(139,33,49,0.15)"/>
+                <line x1="11" y1="13" x2="19" y2="13" stroke="#8b2131" stroke-width="1.2" stroke-linecap="round"/>
+                <line x1="11" y1="16" x2="19" y2="16" stroke="#8b2131" stroke-width="1.2" stroke-linecap="round"/>
+                <line x1="11" y1="19" x2="16" y2="19" stroke="#8b2131" stroke-width="1.2" stroke-linecap="round"/>
+                <circle cx="25" cy="27" r="5" fill="#8b2131"/>
+                <polyline points="22.5,27 24.5,29 27.5,24.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </div>
+            <div>
+              <div class="brgy-name">BARANGAY MABAYUAN</div>
+              <div class="brgy-sub">Olongapo City, Zambales</div>
+            </div>
+          </div>
+          <div class="doc-type-title">${docTitle}</div>
+        </div>
+
+        <!-- Details -->
+        <table class="doc-details">
+          <tr><td>Transaction No.</td><td>${txn}</td></tr>
+          <tr><td>Resident Name</td><td>${fullName}</td></tr>
+          <tr><td>Address</td><td>${address}</td></tr>
+          <tr><td>Date Issued</td><td>${issuedDate}</td></tr>
+          <tr><td>Valid Until</td><td>${validityDate}</td></tr>
+        </table>
+
+        <!-- Body -->
+        <div class="doc-body-text">
+          ${body}
+        </div>
+
+        <!-- Signature -->
+        <div class="signature-section">
+          <div class="sig-issued">
+            Issued at Barangay Mabayuan<br/>
+            Olongapo City, Zambales<br/>
+            ${issuedDate}
+          </div>
+          <div class="sig-block">
+            <div class="sig-line"></div>
+            <div class="sig-name">${captain}</div>
+            <div class="sig-title">${captainTitle}</div>
+          </div>
+        </div>
+
+        <!-- Control / OR -->
+        <div class="control-row">
+          <span>O.R. No.: ${orNumber}</span>
+          <span>Amount Paid: ₱${Number(request.price_at_request).toFixed(2)}</span>
+          <span>Doc Stamp: ____________</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div class="doc-footer">This document is valid for 6 months from date of issuance. Not valid without official seal.</div>
+  <div class="print-bar">
+    <button class="btn btn-ghost" onclick="window.close()">✕ Close</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print Document</button>
+  </div>
+</div>
+</body>
+</html>`;
+
+  res.send(html);
+});
+
 router.get('/api/staff/me', requireRole('staff'), (req, res) => res.json(req.session.user));
 
 router.get('/api/staff/counts', requireRole('staff'), async (req, res) => {
