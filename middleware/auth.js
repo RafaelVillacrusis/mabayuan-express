@@ -7,20 +7,20 @@ function noCache(res) {
 
 function requireResident(req, res, next) {
   noCache(res);
-  if (!req.session.resident) return res.redirect('/resident/login');
+  if (!req.session.resident) return res.redirect('/login');
   next();
 }
 
 function requireUser(req, res, next) {
   noCache(res);
-  if (!req.session.user) return res.redirect('/portal/login');
+  if (!req.session.user) return res.redirect('/login');
   next();
 }
 
 function requireRole(...roles) {
   return (req, res, next) => {
     noCache(res);
-    if (!req.session.user) return res.redirect('/portal/login');
+    if (!req.session.user) return res.redirect('/login');
     if (!roles.includes(req.session.user.role)) return res.status(403).send('Forbidden');
     next();
   };
