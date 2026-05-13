@@ -184,7 +184,8 @@
             <div>
               <label class="form-label">Birth date *</label>
               <input class="input" type="date" name="birth_date" id="birthField" required max="9999-12-31">
-              <div id="birthHint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;">You must be at least 18 years old to register.</div>
+              <div id="birthNotice" style="font-size:12px;margin-top:5px;color:#9a7a7d;">&#9888; Must be at least 18 years old to register.</div>
+              <div id="birthHint" style="display:none;font-size:12px;margin-top:3px;font-weight:600;"></div>
             </div>
             <div class="full">
               <label class="form-label">Email address *</label>
@@ -470,35 +471,44 @@
   (function() {
     const birthField = document.getElementById('birthField');
     const today = new Date();
+    // Use local date formatting to avoid UTC timezone offset shifting the date
     const max18 = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-    const maxStr = max18.toISOString().slice(0, 10);
+    const maxStr = max18.getFullYear() + '-' +
+      String(max18.getMonth() + 1).padStart(2, '0') + '-' +
+      String(max18.getDate()).padStart(2, '0');
     birthField.max = maxStr;
 
     function validateAge() {
-      const hint = document.getElementById('birthHint');
-      const val = birthField.value;
-      if (!val) { hint.style.display = 'none'; birthField.style.borderColor = ''; return; }
+      const hint   = document.getElementById('birthHint');
+      const notice = document.getElementById('birthNotice');
+      const val    = birthField.value;
+      if (!val) {
+        hint.style.display = 'none';
+        birthField.style.borderColor = '';
+        notice.style.color = '#9a7a7d';
+        return;
+      }
 
       const birth = new Date(val);
-      // Calculate exact age in years
       let age = today.getFullYear() - birth.getFullYear();
-      const monthDiff = today.getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
+      const md = today.getMonth() - birth.getMonth();
+      if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) age--;
 
-      if (age < 18) {
+      if (age < 0 || isNaN(age)) {
         birthField.style.borderColor = '#dc2626';
-        hint.style.cssText = 'display:block;color:#dc2626;font-size:12px;margin-top:4px;';
-        if (age < 0) {
-          hint.textContent = 'Please enter a valid birth date.';
-        } else {
-          const yearsLeft = 17 - age;
-          hint.textContent = age < 17
-            ? `You are ${age} year${age !== 1 ? 's' : ''} old. You must be at least 18 to register. You need ${yearsLeft + 1} more year${yearsLeft + 1 !== 1 ? 's' : ''}.`
-            : `You are 17 years old. You must be at least 18 to register. You need 1 more year.`;
-        }
+        notice.style.color = '#dc2626';
+        hint.style.cssText = 'display:block;color:#dc2626;font-size:12px;margin-top:3px;font-weight:600;';
+        hint.textContent = 'Please enter a valid birth date.';
+      } else if (age < 18) {
+        const yearsLeft = 18 - age;
+        birthField.style.borderColor = '#dc2626';
+        notice.style.color = '#dc2626';
+        hint.style.cssText = 'display:block;color:#dc2626;font-size:12px;margin-top:3px;font-weight:600;';
+        hint.textContent = `You are ${age} year${age !== 1 ? 's' : ''} old — ${yearsLeft} more year${yearsLeft !== 1 ? 's' : ''} needed to register.`;
       } else {
         birthField.style.borderColor = '#16a34a';
-        hint.style.cssText = 'display:block;color:#16a34a;font-size:12px;margin-top:4px;';
+        notice.style.color = '#16a34a';
+        hint.style.cssText = 'display:block;color:#16a34a;font-size:12px;margin-top:3px;font-weight:600;';
         hint.textContent = `Age verified — ${age} years old. ✓`;
       }
     }
