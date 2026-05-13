@@ -36,12 +36,7 @@ router.get('/', (req, res) => {
 });
 
 // ── Resident ──────────────────────────────────────────────────────────────────
-router.get('/login', (req, res) => {
-  noCache(res);
-  if (req.session.resident) return res.redirect('/resident/dashboard');
-  if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/login');
-  res.sendFile(path.join(__dirname, '../views/resident_login.html'));
-});
+
 
 router.get('/resident/register', (req, res) => {
   noCache(res);
@@ -54,7 +49,7 @@ router.get('/login', (req, res) => {
   noCache(res);
   if (req.session.user) return res.redirect(ROLE_DASHBOARD[req.session.user.role] || '/login');
   if (req.session.resident) return res.redirect('/resident/dashboard');
-  res.sendFile(path.join(__dirname, '../views/admin_login.html'));
+  res.sendFile(path.join(__dirname, '../views/login.html'));
 });
 
 // Keep old /admin/login and separate role URLs working — all use the same page
@@ -127,7 +122,7 @@ router.post('/auth/resident/register', upload.single('valid_id'), async (req, re
     // Send registration confirmation email
     await sendRegistrationReceivedEmail({ firstName: first_name, lastName: last_name, email });
 
-    res.redirect('/resident/login?registered=pending');
+    res.redirect('/login?registered=pending');
   } catch(e) { console.error(e); redirectWithError(res, '/resident/register', 'Registration failed. Please try again.'); }
 });
 
