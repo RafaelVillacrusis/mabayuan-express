@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <title>AI Assistant — Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    [hidden] { display:none !important; }
+    .ai-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+    .ai-tab { border:1.5px solid var(--border); background:#fff; color:var(--text); border-radius:999px; padding:9px 16px; font-weight:700; font-size:14px; cursor:pointer; }
+    .ai-tab[aria-selected="true"] { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .ai-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+    .ai-grid .full { grid-column:1 / -1; }
+    .ai-note { background:#fdf4dc; border:1px solid #e8d48a; color:#5c4500; border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.55; margin:12px 0; }
+    .ai-error { background:#fef2f2; border:1px solid #fecaca; color:#b42318; border-radius:10px; padding:10px 14px; font-size:13.5px; margin-top:12px; }
+    .ai-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+    .ai-output { width:100%; box-sizing:border-box; min-height:340px; font-family:ui-monospace, Consolas, monospace; font-size:13.5px; line-height:1.6; }
+    .ai-loading { display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-size:13.5px; }
+    .ai-spinner { width:16px; height:16px; border:2.5px solid #eadcdd; border-top-color:var(--primary); border-radius:50%; animation:aiSpin .8s linear infinite; }
+    @keyframes aiSpin { to { transform:rotate(360deg); } }
+    .ai-result-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-top:14px; }
+    .ai-result-grid div { background:#f9f6f6; border:1px solid #f0e4e5; border-radius:12px; padding:10px 12px; }
+    .ai-result-grid span { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#9a7a7d; font-weight:700; margin-bottom:3px; }
+    .ai-chipcount { display:inline-flex; gap:6px; align-items:center; background:#f9f6f6; border:1px solid #f0e4e5; border-radius:999px; padding:5px 11px; font-size:12.5px; margin:0 6px 6px 0; }
+    .ai-chipcount b { color:var(--primary); }
+    .ai-msgcell { max-width:380px; white-space:normal; word-break:break-word; }
+    .ai-meta { font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="page-shell">
+  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+          <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+          <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+          <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="26" cy="28" r="7" fill="#fff"/>
+          <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="brand-copy"><div id="brandRole">Dashboard</div><small>AI Assistant</small></div>
+    </div>
+    <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
+    <nav class="top-links" id="topNav">
+      <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+      <span id="navLinks"></span>
+      <form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
+    </nav>
+  </header>
+
+  <main class="container content-area">
+    <div class="dashboard-header">
+      <div>
+        <h1>AI Assistant</h1>
+        <p>Generate report drafts and organize resident inquiries with Google Gemini. Always review AI output before using it.</p>
+      </div>
+    </div>
+
+    <div class="ai-tabs" role="tablist">
+      <button class="ai-tab" role="tab" aria-selected="true" data-tab="report">📝 Report Generator</button>
+      <button class="ai-tab" role="tab" aria-selected="false" data-tab="classify">🏷️ Inquiry Classifier</button>
+      <button class="ai-tab" role="tab" aria-selected="false" data-tab="inquiries">📥 Resident Inquiries</button>
+    </div>
+
+    <!-- ── Report Generator ── -->
+    <section class="panel" data-panel="report">
+      <div class="section-head"><div><h2 style="margin:0">Report Generator</h2>
+        <p class="section-subtitle">Summaries use aggregated system records only. No resident names or contact details are sent to the AI.</p></div></div>
+      <form id="reportForm" novalidate>
+        <div class="ai-grid">
+          <div>
+            <label class="form-label" for="reportType">Report type</label>
+            <select class="select" id="reportType">
+              <option value="requests">Summary of document requests</option>
+              <option value="inquiries">Summary of frequently asked questions</option>
+              <option value="announcement">Draft announcement</option>
+            </select>
+          </div>
+          <div data-for="range"><label class="form-label" for="dateFrom">From</label><input class="input" type="date" id="dateFrom"></div>
+          <div data-for="range"><label class="form-label" for="dateTo">To</label><input class="input" type="date" id="dateTo"></div>
+          <div data-for="announcement" hidden>
+            <label class="form-label" for="audience">Audience</label>
+            <select class="select" id="audience"><option value="residents">Residents</option><option value="staff">Barangay personnel</option><option value="all">Everyone</option></select>
+          </div>
+          <div class="full" data-for="announcement" hidden>
+            <label class="form-label" for="annTopic">Topic *</label>
+            <input class="input" id="annTopic" maxlength="300" placeholder="e.g. Free medical mission at the barangay hall">
+          </div>
+          <div class="full" data-for="announcement" hidden>
+            <label class="form-label" for="annDetails">Details <span class="ai-meta">(date, time, place, who can join, what to bring)</span></label>
+            <textarea class="textarea input" id="annDetails" rows="4" maxlength="1500" placeholder="Saturday, Nov 22, 8AM–12NN at the Barangay Mabayuan covered court. Bring a valid ID."></textarea>
+          </div>
+        </div>
+        <div class="ai-actions">
+          <button class="btn" type="submit" id="reportBtn">Generate draft</button>
+          <span class="ai-loading" id="reportLoading" hidden><span class="ai-spinner"></span> Generating… this can take a few seconds</span>
+        </div>
+      </form>
+      <div class="ai-error" id="reportError" hidden></div>
+      <div id="reportOutputWrap" hidden>
+        <div class="ai-note">⚠️ <strong>AI-generated draft.</strong> Check every figure and statement, and edit as needed before using it as an official report or announcement.</div>
+        <textarea class="textarea input ai-output" id="reportOutput" aria-label="Generated report (editable)"></textarea>
+        <div class="ai-actions">
+          <button class="btn btn-outline" type="button" id="copyReport">Copy text</button>
+          <span class="ai-meta" id="reportMeta"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Inquiry Classifier ── -->
+    <section class="panel" data-panel="classify" hidden>
+      <div class="section-head"><div><h2 style="margin:0">Inquiry Classifier</h2>
+        <p class="section-subtitle">Paste a message a resident sent (walk-in note, text, or social media message) to categorize it and get a suggested reply. Chatbot questions are classified automatically.</p></div></div>
+      <form id="classifyForm" novalidate>
+        <label class="form-label" for="classifyInput">Resident message</label>
+        <textarea class="textarea input" id="classifyInput" rows="4" maxlength="1000" placeholder="I want to know how I can apply for a certificate of indigency."></textarea>
+        <div class="ai-actions">
+          <button class="btn" type="submit" id="classifyBtn">Classify</button>
+          <span class="ai-loading" id="classifyLoading" hidden><span class="ai-spinner"></span> Classifying…</span>
+          <span class="ai-meta" id="classifyCount">0/1000</span>
+        </div>
+      </form>
+      <div class="ai-error" id="classifyError" hidden></div>
+      <div id="classifyResult" hidden>
+        <div class="ai-result-grid">
+          <div><span>Category</span><strong id="cCategory"></strong></div>
+          <div><span>Subcategory</span><strong id="cSub"></strong></div>
+          <div><span>Intent</span><strong id="cIntent"></strong></div>
+        </div>
+        <p style="margin:12px 0 6px"><strong>Summary:</strong> <span id="cSummary"></span></p>
+        <label class="form-label" for="cReply" style="margin-top:10px">Suggested reply <span class="ai-meta">(review before sending)</span></label>
+        <textarea class="textarea input" id="cReply" rows="4"></textarea>
+        <div class="ai-actions"><button class="btn btn-outline" type="button" id="copyReply">Copy reply</button></div>
+      </div>
+    </section>
+
+    <!-- ── Resident Inquiries ── -->
+    <section class="panel" data-panel="inquiries" hidden>
+      <div class="section-head"><div><h2 style="margin:0">Resident Inquiries</h2>
+        <p class="section-subtitle">Questions residents asked the chatbot and messages classified by staff, grouped by AI category.</p></div></div>
+      <div class="ai-grid" style="margin-bottom:12px">
+        <div><label class="form-label" for="inqCategory">Category</label><select class="select" id="inqCategory"><option value="">All categories</option></select></div>
+        <div><label class="form-label" for="inqFrom">From</label><input class="input" type="date" id="inqFrom"></div>
+        <div><label class="form-label" for="inqTo">To</label><input class="input" type="date" id="inqTo"></div>
+      </div>
+      <div id="inqCounts" style="margin-bottom:10px"></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Message</th><th>Category</th><th>Subcategory</th><th>Intent</th><th>From</th></tr></thead>
+          <tbody id="inqRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/assets/js/common.js"></script>
+<script>
+  function openNav() { document.getElementById('topNav').classList.add('open'); document.getElementById('navOverlay').classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function closeNav() { document.getElementById('topNav').classList.remove('open'); document.getElementById('navOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+</script>
+<script src="/assets/js/ai-assistant.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => { navigator.serviceWorker.register("/assets/sw.js"); });
+  }
+</script>
+</body>
+</html>

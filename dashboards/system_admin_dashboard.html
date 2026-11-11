@@ -90,6 +90,9 @@
       <a class="sa-nav-item" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
       <a class="sa-nav-item" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
       <a class="sa-nav-item" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Recent Requests</a>
+      <button class="sa-nav-item" onclick="showSection('ai',this);loadAiUsage()">
+        <span class="sa-icon">🤖</span> AI Usage
+      </button>
       <a class="sa-nav-item" href="/api/system-admin/backup"><span class="sa-icon">💾</span> Download Backup</a>
     </nav>
     <div class="admin-sidebar-footer">
@@ -209,6 +212,38 @@
         </div>
       </div>
 
+      <!-- ── AI USAGE ── -->
+      <div class="sa-section" id="view-ai">
+        <div class="admin-page-header">
+          <div><h1>AI Usage &amp; Performance</h1><p>Google Gemini request monitoring: quota, response time, and errors.</p></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="select" id="aiDays" onchange="loadAiUsage()" style="min-height:38px">
+              <option value="1">Last 24 hours</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option>
+            </select>
+            <button class="sa-btn sa-btn-ghost sa-btn-sm" onclick="loadAiUsage()">Refresh</button>
+          </div>
+        </div>
+        <div id="aiLive" class="sa-panel" style="margin-bottom:20px"><div class="sa-panel-body">Loading…</div></div>
+        <div class="sa-stat-grid">
+          <div class="sa-stat-card"><div class="sa-stat-icon rose">⏱️</div><div><div class="sa-stat-val" id="aiAvgLatency">—</div><div class="sa-stat-label">Avg API Response</div></div></div>
+          <div class="sa-stat-card"><div class="sa-stat-icon pink">🖥️</div><div><div class="sa-stat-val" id="aiAvgUi">—</div><div class="sa-stat-label">Avg UI Rendering</div></div></div>
+          <div class="sa-stat-card"><div class="sa-stat-icon wine">✅</div><div><div class="sa-stat-val" id="aiSuccess">0</div><div class="sa-stat-label">Successful Requests</div></div></div>
+          <div class="sa-stat-card"><div class="sa-stat-icon mauve">⚠️</div><div><div class="sa-stat-val" id="aiFailed">0</div><div class="sa-stat-label">Failed Requests</div></div></div>
+        </div>
+        <div class="sa-panel" style="margin-bottom:20px">
+          <div class="sa-panel-header"><h2>📊 Performance Testing Record</h2></div>
+          <div class="table-wrap"><table class="sa-table"><thead><tr><th>Indicator</th><th>Result</th></tr></thead><tbody id="aiRecord"></tbody></table></div>
+        </div>
+        <div class="sa-panel" style="margin-bottom:20px">
+          <div class="sa-panel-header"><h2>🧩 By Feature</h2></div>
+          <div class="table-wrap"><table class="sa-table"><thead><tr><th>Feature</th><th>Requests</th><th>Failed</th><th>Avg response</th></tr></thead><tbody id="aiByFeature"></tbody></table></div>
+        </div>
+        <div class="sa-panel">
+          <div class="sa-panel-header"><h2>🚨 Errors &amp; Fallbacks</h2></div>
+          <div class="table-wrap"><table class="sa-table"><thead><tr><th>Code</th><th>Meaning</th><th>Count</th></tr></thead><tbody id="aiByError"></tbody></table></div>
+        </div>
+      </div>
+
       <!-- ── USERS ── -->
     </div>
   </div>
@@ -219,8 +254,58 @@
 <script src="/assets/js/delete-modal.js"></script>
 <script src="/assets/js/system-admin-dashboard.js"></script>
 <script>
-  const sectionTitles = { overview:'Dashboard', documents:'Document Configuration' };
-  const sectionIcons = { overview:'📊', documents:'📄' };
+  const sectionTitles = { overview:'Dashboard', documents:'Document Configuration', ai:'AI Usage' };
+  const sectionIcons = { overview:'📊', documents:'📄', ai:'🤖' };
+
+  const AI_ERROR_LABELS = {
+    THROTTLED:'User sent too many requests (per-user limit)', RATE_LIMITED:'Gemini rate limit hit (after backoff)',
+    BUSY:'Request queue full', QUOTA_EXHAUSTED:'Daily quota reached', TIMEOUT:'Gemini request timed out',
+    NETWORK:'Could not reach Gemini', UNAVAILABLE:'API key missing or invalid', BLOCKED:'Blocked by safety filter (fallback shown)',
+    EMPTY:'Empty AI response (fallback shown)', INTERNAL:'Unexpected server error'
+  };
+  const fmtMs = v => v == null ? '—' : (v >= 1000 ? (v/1000).toFixed(2) + ' s' : v + ' ms');
+  async function loadAiUsage() {
+    const live = document.getElementById('aiLive');
+    try {
+      const res = await fetch('/api/ai/usage?days=' + document.getElementById('aiDays').value);
+      const d = await res.json();
+      if (!res.ok || !d.ok) throw new Error(d.message || 'Could not load AI usage.');
+      const s = d.summary, l = d.live;
+      const state = !l.configured ? '<b style="color:#b42318">Not configured: set GEMINI_API_KEY</b>'
+        : l.key_paused ? '<b style="color:#b42318">Paused: Gemini rejected the API key</b>'
+        : '<b style="color:#1f7a3f">Online</b>';
+      live.innerHTML = `<div class="sa-panel-body" style="display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13.5px">
+        <span>Status: ${state}</span><span>Model: <b>${escapeHtml(l.model)}</b></span>
+        <span>Calls today: <b>${l.calls_today} / ${l.per_day_limit}</b></span>
+        <span>Last minute: <b>${l.calls_last_minute} / ${l.per_minute_limit}</b></span>
+        <span>In progress: <b>${l.active_requests}</b> · Queued: <b>${l.queued_requests}</b></span>
+        <span>Cached answers: <b>${l.cache_entries}</b></span></div>`;
+      document.getElementById('aiAvgLatency').textContent = fmtMs(s.avg_latency_ms);
+      document.getElementById('aiAvgUi').textContent = fmtMs(s.avg_ui_render_ms);
+      document.getElementById('aiSuccess').textContent = s.success + s.fallback;
+      document.getElementById('aiFailed').textContent = s.failed;
+      const errRate = s.total ? (s.failed / s.total * 100).toFixed(1) + '%' : '—';
+      document.getElementById('aiRecord').innerHTML = [
+        ['Average API Response Time', fmtMs(s.avg_latency_ms)],
+        ['95th Percentile API Response Time', fmtMs(s.p95_latency_ms)],
+        ['Average UI Rendering Time', fmtMs(s.avg_ui_render_ms)],
+        ['Total AI Requests', s.total],
+        ['Number of Successful Requests', `${s.success + s.fallback} (${s.fallback} fallback, ${s.cached} from cache)`],
+        ['Number of Failed Requests', s.failed],
+        ['Error Rate', errRate],
+        ['Gemini API Calls (incl. retries)', s.gemini_calls],
+      ].map(([k, v]) => `<tr><td>${k}</td><td><b>${v}</b></td></tr>`).join('');
+      const names = { chatbot:'Barangay Chatbot', classifier:'Inquiry Classifier', report:'Report Generator' };
+      document.getElementById('aiByFeature').innerHTML = d.by_feature.length
+        ? d.by_feature.map(f => `<tr><td>${names[f.feature] || escapeHtml(f.feature)}</td><td>${f.total}</td><td>${f.failed}</td><td>${fmtMs(f.avg_latency_ms)}</td></tr>`).join('')
+        : '<tr><td colspan="4" class="empty-state">No AI requests yet.</td></tr>';
+      document.getElementById('aiByError').innerHTML = d.by_error.length
+        ? d.by_error.map(e => `<tr><td><code>${escapeHtml(e.error_code)}</code></td><td>${AI_ERROR_LABELS[e.error_code] || ''}</td><td>${e.total}</td></tr>`).join('')
+        : '<tr><td colspan="3" class="empty-state">No errors recorded.</td></tr>';
+    } catch (err) {
+      live.innerHTML = `<div class="sa-panel-body" style="color:#b42318">${escapeHtml(err.message)}</div>`;
+    }
+  }
 
   function showSection(name, btn) {
     document.querySelectorAll('.sa-section').forEach(el=>el.classList.remove('active'));

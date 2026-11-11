@@ -23,6 +23,15 @@
    SESSION_SECRET    = any long random string
    PORT              = 3000
 
+   --- Google Gemini (AI Assistant) ---
+   GEMINI_API_KEY    = from https://aistudio.google.com/apikey (keep secret, backend only)
+   GEMINI_MODEL      = optional, default gemini-2.5-flash
+   GEMINI_RPM        = optional, app-wide requests per minute (default 10)
+   GEMINI_RPD        = optional, app-wide requests per day (default 250)
+   GEMINI_TIMEOUT_MS = optional, per-request timeout (default 20000)
+   Without GEMINI_API_KEY the site still works; the AI features show
+   "currently unavailable".
+
 3. ENABLE SUPABASE AUTH (OTP EMAIL)
    In your Supabase Dashboard:
    a. Go to Authentication → Providers

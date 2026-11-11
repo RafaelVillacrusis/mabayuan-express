@@ -15,6 +15,7 @@ const systemAdminRoutes = require('./routes/systemAdmin.routes');
 const captainRoutes = require('./routes/captain.routes');
 const staffRoutes = require('./routes/staff.routes');
 const helpRoutes = require('./routes/help.routes');
+const aiRoutes = require('./routes/ai.routes');
 const { initRealtime } = require('./node/realtime');
 
 const app = express();
@@ -42,16 +43,14 @@ app.use(systemAdminRoutes);
 app.use(captainRoutes);
 app.use(staffRoutes);
 app.use(helpRoutes);
+app.use(aiRoutes);
 
 app.use((req, res) => {
   res.status(404).send('Page not found.');
 });
 
-// Ensure resident verification columns exist (see resident_verification_migration.sql)
-require('./db').query(`
-  ALTER TABLE residents ADD COLUMN IF NOT EXISTS valid_id_type VARCHAR(80);
-  ALTER TABLE residents ADD COLUMN IF NOT EXISTS residency_cert_path TEXT;
-`).catch(err => console.error('Resident verification migration failed:', err.message));
+// Ensure new columns/tables exist (see resident_verification_migration.sql, ai_migration.sql)
+require('./actions/schema.actions').ensureSchema();
 
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
