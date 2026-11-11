@@ -47,6 +47,12 @@ app.use((req, res) => {
   res.status(404).send('Page not found.');
 });
 
+// Ensure resident verification columns exist (see resident_verification_migration.sql)
+require('./db').query(`
+  ALTER TABLE residents ADD COLUMN IF NOT EXISTS valid_id_type VARCHAR(80);
+  ALTER TABLE residents ADD COLUMN IF NOT EXISTS residency_cert_path TEXT;
+`).catch(err => console.error('Resident verification migration failed:', err.message));
+
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

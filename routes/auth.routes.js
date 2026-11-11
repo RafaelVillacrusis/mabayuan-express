@@ -77,11 +77,62 @@ router.get('/api/session-check', (req, res) => {
   res.json({ ok: false, redirect: isResident ? '/login' : '/login' });
 });
 
+// Accepted government-issued IDs (keep in sync with views/resident_register.html)
+const VALID_ID_TYPES = [
+  'PhilSys National ID',
+  'Passport',
+  "Driver's License",
+  'UMID',
+  'SSS ID',
+  'GSIS ID',
+  'PRC ID',
+  'Postal ID',
+  "Voter's ID",
+  'PhilHealth ID',
+  'TIN ID',
+  'Senior Citizen ID',
+  'PWD ID',
+];
+const ALLOWED_UPLOAD_MIME = /^(image\/(jpeg|png|gif|webp)|application\/pdf)$/;
+
+// Upload a registration file to Supabase Storage; returns the stored path or null on failure
+async function uploadRegistrationFile(file, folder, email) {
+  const ext = file.originalname.split('.').pop().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const fileName = `${folder ? folder + '/' : ''}${Date.now()}-${email.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
+  const { error } = await supabase.storage
+    .from('valid-ids')
+    .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
+  if (error) {
+    console.error('Supabase Storage upload error:', error);
+    return null;
+  }
+  return `supabase:valid-ids/${fileName}`;
+}
+
 // ── Resident Register ─────────────────────────────────────────────────────────
-router.post('/auth/resident/register', upload.single('valid_id'), async (req, res) => {
+const registerUpload = upload.fields([
+  { name: 'valid_id', maxCount: 1 },
+  { name: 'residency_cert', maxCount: 1 },
+]);
+router.post('/auth/resident/register', (req, res, next) => {
+  registerUpload(req, res, err => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Each uploaded file must be 5MB or smaller.' : 'File upload failed. Please try again.';
+      return redirectWithError(res, '/resident/register', msg);
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
-    const { first_name, middle_name, last_name, suffix, birth_date, phone_number, address, email, password, confirm_password } = req.body;
-    if (!req.file) return redirectWithError(res, '/resident/register', 'Valid ID is required.');
+    const { first_name, middle_name, last_name, suffix, birth_date, phone_number, address, email, password, confirm_password, valid_id_type } = req.body;
+    const validIdFile = req.files?.valid_id?.[0];
+    const residencyFile = req.files?.residency_cert?.[0];
+    if (!VALID_ID_TYPES.includes(valid_id_type)) return redirectWithError(res, '/resident/register', 'Please select the type of valid ID you are uploading.');
+    if (!validIdFile) return redirectWithError(res, '/resident/register', 'Valid ID is required.');
+    if (!residencyFile) return redirectWithError(res, '/resident/register', 'Barangay Certificate of Residency is required.');
+    if (!ALLOWED_UPLOAD_MIME.test(validIdFile.mimetype) || !ALLOWED_UPLOAD_MIME.test(residencyFile.mimetype)) {
+      return redirectWithError(res, '/resident/register', 'Uploads must be an image (JPG, PNG, GIF, WEBP) or PDF.');
+    }
     if (password !== confirm_password) return redirectWithError(res, '/resident/register', 'Passwords do not match.');
     if (!isStrongPassword(password)) return redirectWithError(res, '/resident/register', 'Password must be at least 8 characters and include a letter, a number, and a special character.');
 
@@ -98,28 +149,18 @@ router.post('/auth/resident/register', upload.single('valid_id'), async (req, re
     if (existing.length) return redirectWithError(res, '/resident/register', 'Email already exists.');
     const hash = await bcrypt.hash(password, 10);
 
-    // Upload valid ID to Supabase Storage (persists across redeploys)
-    const ext = req.file.originalname.split('.').pop().replace(/[^a-zA-Z0-9]/g, '');
-    const fileName = `${Date.now()}-${email.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
-    const { error: uploadError } = await supabase.storage
-      .from('valid-ids')
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false
-      });
-    if (uploadError) {
-      console.error('Supabase Storage upload error:', uploadError);
-      return redirectWithError(res, '/resident/register', 'Failed to upload ID. Please try again.');
-    }
-    // Store the Supabase Storage path (bucket/filename) in DB
-    const validIdPath = `supabase:valid-ids/${fileName}`;
+    // Upload valid ID and Certificate of Residency to Supabase Storage (persists across redeploys)
+    const validIdPath = await uploadRegistrationFile(validIdFile, '', email);
+    if (!validIdPath) return redirectWithError(res, '/resident/register', 'Failed to upload ID. Please try again.');
+    const residencyCertPath = await uploadRegistrationFile(residencyFile, 'residency-certs', email);
+    if (!residencyCertPath) return redirectWithError(res, '/resident/register', 'Failed to upload Certificate of Residency. Please try again.');
 
     const { rows: result } = await pool.query(
-      `INSERT INTO residents (first_name,middle_name,last_name,suffix,email,password_hash,status,birth_date,phone_number,address,valid_id_path)
-       VALUES ($1,$2,$3,$4,$5,$6,'Pending',$7,$8,$9,$10) RETURNING resident_id`,
-      [first_name, middle_name||null, last_name, suffix||null, email, hash, birth_date||null, phone_number||null, address||null, validIdPath]
+      `INSERT INTO residents (first_name,middle_name,last_name,suffix,email,password_hash,status,birth_date,phone_number,address,valid_id_path,valid_id_type,residency_cert_path)
+       VALUES ($1,$2,$3,$4,$5,$6,'Pending',$7,$8,$9,$10,$11,$12) RETURNING resident_id`,
+      [first_name, middle_name||null, last_name, suffix||null, email, hash, birth_date||null, phone_number||null, address||null, validIdPath, valid_id_type, residencyCertPath]
     );
-    await createAuditLog({ actorRole:'resident', targetType:'resident', targetId:result[0].resident_id, action:'RESIDENT_REGISTERED', description:`Resident registration submitted for ${first_name} ${last_name}.`, metadata:{email} });
+    await createAuditLog({ actorRole:'resident', targetType:'resident', targetId:result[0].resident_id, action:'RESIDENT_REGISTERED', description:`Resident registration submitted for ${first_name} ${last_name}.`, metadata:{email, valid_id_type} });
 
     // Send registration confirmation email
     await sendRegistrationReceivedEmail({ firstName: first_name, lastName: last_name, email });

@@ -93,7 +93,7 @@
     const p=new URLSearchParams(window.location.search);
     const err=p.get('error'), reg=p.get('registered');
     if(err){const e=document.getElementById('errorBanner');e.textContent=decodeURIComponent(err);e.style.display='block';}
-    if(reg==='pending'){const e=document.getElementById('successBanner');e.textContent='Registration received! Please wait for staff approval before logging in.';e.style.display='block';}
+    if(reg==='pending'){const e=document.getElementById('successBanner');e.textContent='Registration received! Barangay staff will review your valid ID and Certificate of Residency. You will receive an email once your account is approved.';e.style.display='block';}
     window.addEventListener('pageshow',e=>{if(e.persisted){const f=document.getElementById('pwField');if(f)f.value='';}});
   })();
 </script>

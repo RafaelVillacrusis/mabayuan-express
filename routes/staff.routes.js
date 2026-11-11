@@ -814,4 +814,41 @@ router.get('/api/staff/residents/:id/id-image', requireRole('staff'), async (req
   }
 });
 
+// View resident Barangay Certificate of Residency — served from Supabase Storage
+router.get('/api/staff/residents/:id/residency-cert', requireRole('staff'), async (req, res) => {
+  const NOT_FOUND_PAGE = `
+    <!DOCTYPE html><html><head><title>Certificate Not Found</title>
+    <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f0f1;}
+    .box{text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);}
+    h2{color:#8b2131;margin:0 0 8px;}p{color:#666;margin:0;}</style></head>
+    <body><div class="box">
+      <h2>Certificate Not Found</h2>
+      <p>No Barangay Certificate of Residency was found for this resident.</p>
+    </div></body></html>`;
+
+  try {
+    const resident = await getResidentById(req.params.id);
+    if (!resident) return res.status(404).send('Resident not found.');
+    const certPath = resident.residency_cert_path;
+    if (!certPath || !certPath.startsWith('supabase:')) return res.status(404).send(NOT_FOUND_PAGE);
+
+    const [bucket, ...fileParts] = certPath.replace('supabase:', '').split('/');
+    const fileName = fileParts.join('/');
+    const { data, error } = await supabase.storage.from(bucket).download(fileName);
+    if (error || !data) {
+      console.error('Supabase Storage download error:', error);
+      return res.status(404).send(NOT_FOUND_PAGE);
+    }
+
+    const ext = path.extname(fileName).toLowerCase();
+    const mimeTypes = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp', '.pdf': 'application/pdf' };
+    res.setHeader('Content-Type', mimeTypes[ext] || data.type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${path.basename(fileName)}"`);
+    res.send(Buffer.from(await data.arrayBuffer()));
+  } catch (err) {
+    console.error('Error serving residency certificate:', err);
+    res.status(500).send('Could not load certificate.');
+  }
+});
+
 module.exports = router;

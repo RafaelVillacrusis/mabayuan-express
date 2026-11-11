@@ -152,6 +152,12 @@
         <span class="info-label">Valid ID</span>
         <a id="infoId" href="#" target="_blank" class="btn btn-small">View ID</a>
         <span id="infoIdMissing" style="display:none;font-size:0.78rem;color:#b07d10;background:#fdf4dc;border:1px solid #e8d48a;border-radius:6px;padding:3px 10px;font-weight:600;">⚠ Re-upload Required</span>
+        <span id="infoIdType" style="font-size:0.8rem;color:#6b5b6e;"></span>
+      </div>
+      <div class="info-row" id="certRow">
+        <span class="info-label">Residency Cert.</span>
+        <a id="infoCert" href="#" target="_blank" class="btn btn-small">View Certificate</a>
+        <span id="infoCertMissing" style="display:none;font-size:0.8rem;color:#9a7a7d;">Not provided</span>
       </div>
     </div>
 
@@ -384,6 +390,12 @@ async function loadResidents() {
         <span class="info-label">Valid ID</span>
         <a id="infoId" href="#" target="_blank" class="btn btn-small">View ID</a>
         <span id="infoIdMissing" style="display:none;font-size:0.78rem;color:#b07d10;background:#fdf4dc;border:1px solid #e8d48a;border-radius:6px;padding:3px 10px;font-weight:600;">⚠ Re-upload Required</span>
+        <span id="infoIdType" style="font-size:0.8rem;color:#6b5b6e;"></span>
+      </div>
+      <div class="info-row" id="certRow">
+        <span class="info-label">Residency Cert.</span>
+        <a id="infoCert" href="#" target="_blank" class="btn btn-small">View Certificate</a>
+        <span id="infoCertMissing" style="display:none;font-size:0.8rem;color:#9a7a7d;">Not provided</span>
       </div>
     </div>
 
@@ -554,6 +566,18 @@ async function openModal(residentId) {
     idRow.style.display     = 'flex';
   } else {
     idRow.style.display = 'none';
+  }
+  document.getElementById('infoIdType').textContent = resident.valid_id_type || '';
+
+  const certLink    = document.getElementById('infoCert');
+  const certMissing = document.getElementById('infoCertMissing');
+  if (resident.residency_cert_path) {
+    certLink.href             = `/api/staff/residents/${resident.resident_id}/residency-cert`;
+    certLink.style.display    = 'inline-block';
+    certMissing.style.display = 'none';
+  } else {
+    certLink.style.display    = 'none';
+    certMissing.style.display = 'inline';
   }
 
   // Populate editable fields

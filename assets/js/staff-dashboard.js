@@ -1,4 +1,5 @@
 let staffReqPg, pendingResPg;
+let pendingResidentsById = new Map();
 let allStaffRequests = [];
 let staffSortCol = 'suggested_release_date', staffSortDir = 'asc';
 let socket;
@@ -67,9 +68,133 @@ async function loadPendingResidents() {
   const res  = await fetch('/api/staff/pending-residents');
   const rows = await res.json();
   if (!pendingResPg) pendingResPg = createPaginator('pendingResidentsRows', 'pendingResPg', 10);
-  pendingResPg.setRows(rows, row => `<tr><td>${escapeHtml(row.last_name)}, ${escapeHtml(row.first_name)}</td><td>${escapeHtml(row.email)}</td><td>${escapeHtml(row.phone_number || '-')}</td><td>${escapeHtml(row.address || '-')}</td><td>${row.valid_id_path ? `<a class="btn btn-small" href="/api/staff/residents/${row.resident_id}/id-image" target="_blank">View ID</a>` : '-'}</td><td class="table-actions"><button class="btn btn-small" onclick="approveResident(${row.resident_id})">Approve</button><button class="btn btn-small btn-ghost" onclick="declineResident(${row.resident_id})">Decline</button></td></tr>`);
+  pendingResidentsById = new Map(rows.map(r => [String(r.resident_id), r]));
+  pendingResPg.setRows(rows, row => `<tr>
+    <td>${escapeHtml(row.last_name)}, ${escapeHtml(row.first_name)}</td>
+    <td>${escapeHtml(row.email)}</td>
+    <td>${escapeHtml(row.phone_number || '-')}</td>
+    <td>${escapeHtml(row.address || '-')}</td>
+    <td>${docStatusHtml(row)}</td>
+    <td class="table-actions"><button class="btn btn-small" onclick="openReviewModal(${row.resident_id})">Review</button></td>
+  </tr>`);
 }
-async function approveResident(id) { const res = await fetch(`/api/staff/residents/${id}/approve`, { method:'POST' }); if (!res.ok) alert('Could not approve resident.'); await refreshAll(); }
+
+
+function docStatusHtml(row) {
+  const id   = row.valid_id_path ? `<div>🪪 ${escapeHtml(row.valid_id_type || 'Valid ID')}</div>` : '<div style="color:#dc2626">🪪 No valid ID</div>';
+  const cert = row.residency_cert_path ? '<div>📄 Certificate of Residency</div>' : '<div style="color:#dc2626">📄 No certificate</div>';
+  return `<div style="font-size:12px;line-height:1.6">${id}${cert}</div>`;
+}
+
+// Renders an uploaded document (image or PDF) for the review modal
+function reviewDocHtml(title, subtitle, url, storedPath) {
+  if (!storedPath || storedPath.startsWith('missing:')) {
+    return `<div class="review-doc"><div class="review-doc-head"><strong>${title}</strong><span>${escapeHtml(subtitle)}</span></div>
+      <div class="review-doc-empty">Not provided${storedPath ? ' (file lost — resident must re-upload)' : ''}</div></div>`;
+  }
+  const isPdf = /\.pdf$/i.test(storedPath);
+  const preview = isPdf
+    ? `<iframe src="${url}" title="${title}"></iframe>`
+    : `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${title}"></a>`;
+  return `<div class="review-doc"><div class="review-doc-head"><strong>${title}</strong><span>${escapeHtml(subtitle)}</span>
+    <a class="btn btn-small btn-ghost" href="${url}" target="_blank" rel="noopener">Open full size ↗</a></div>
+    <div class="review-doc-preview">${preview}</div></div>`;
+}
+
+function ensureReviewModal() {
+  if (document.getElementById('residentReviewModal')) return;
+  document.head.insertAdjacentHTML('beforeend', `<style>
+    #residentReviewModal .details-card { width:min(1000px,100%); max-height:92vh; }
+    .review-info { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 18px; margin-bottom:18px; font-size:14px; }
+    .review-info div span { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#9a7a7d; font-weight:700; }
+    .review-docs { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+    .review-doc { border:1px solid #f0e4e5; border-radius:14px; overflow:hidden; background:#fdf8f8; display:flex; flex-direction:column; }
+    .review-doc-head { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:10px 12px; border-bottom:1px solid #f0e4e5; background:#fff; }
+    .review-doc-head strong { flex:1 1 100%; font-size:14px; color:#2d1518; }
+    .review-doc-head span { flex:1; font-size:12px; color:#6b5b6e; }
+    .review-doc-preview { height:340px; display:flex; align-items:center; justify-content:center; background:#f5f0f1; }
+    .review-doc-preview a { display:flex; width:100%; height:100%; align-items:center; justify-content:center; }
+    .review-doc-preview img { max-width:100%; max-height:100%; object-fit:contain; }
+    .review-doc-preview iframe { width:100%; height:100%; border:0; background:#fff; }
+    .review-doc-empty { padding:40px 16px; text-align:center; color:#dc2626; font-size:13px; }
+    .review-checklist { margin:18px 0 0; padding:12px 16px; background:#fdf4dc; border:1px solid #e8d48a; border-radius:10px; font-size:13px; color:#5c4500; }
+    .review-checklist ul { margin:6px 0 0; padding-left:18px; }
+  </style>`);
+  document.body.insertAdjacentHTML('afterbegin', `
+    <div class="details-modal" id="residentReviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+      <div class="details-card">
+        <div class="details-head">
+          <h2 id="reviewTitle">Review Registration</h2>
+          <button class="details-close" onclick="closeReviewModal()" aria-label="Close">✕</button>
+        </div>
+        <div class="details-body" id="reviewBody"></div>
+        <div class="details-foot" style="justify-content:flex-end;">
+          <span id="reviewError" style="display:none;color:#dc2626;font-size:13px;align-self:center;margin-right:auto;"></span>
+          <button class="btn-delete" id="reviewDeclineBtn">Decline</button>
+          <button class="btn-view" id="reviewApproveBtn">✓ Approve Account</button>
+        </div>
+      </div>
+    </div>`);
+  document.getElementById('residentReviewModal').addEventListener('click', e => { if (e.target.id === 'residentReviewModal') closeReviewModal(); });
+}
+
+function openReviewModal(residentId) {
+  const r = pendingResidentsById.get(String(residentId));
+  if (!r) return;
+  ensureReviewModal();
+  const fullName = [r.first_name, r.middle_name, r.last_name, r.suffix].filter(Boolean).join(' ');
+  document.getElementById('reviewTitle').textContent = `Review Registration — ${fullName}`;
+  document.getElementById('reviewBody').innerHTML = `
+    <div class="review-info">
+      <div><span>Full name</span>${escapeHtml(fullName)}</div>
+      <div><span>Birth date</span>${r.birth_date ? formatDate(r.birth_date) : '—'}</div>
+      <div><span>Email</span>${escapeHtml(r.email)}</div>
+      <div><span>Phone</span>${escapeHtml(r.phone_number || '—')}</div>
+      <div style="grid-column:1/-1"><span>Address</span>${escapeHtml(r.address || '—')}</div>
+      <div><span>Registered</span>${formatDateTime(r.created_at)}</div>
+    </div>
+    <div class="review-docs">
+      ${reviewDocHtml('Valid ID', r.valid_id_type || 'ID type not specified', `/api/staff/residents/${r.resident_id}/id-image`, r.valid_id_path)}
+      ${reviewDocHtml('Barangay Certificate of Residency', 'Proof of residency in Barangay Mabayuan', `/api/staff/residents/${r.resident_id}/residency-cert`, r.residency_cert_path)}
+    </div>
+    <div class="review-checklist"><strong>Before approving, confirm that:</strong>
+      <ul>
+        <li>The name and birth date on the valid ID match the details above.</li>
+        <li>The ID is clear, readable, and not expired.</li>
+        <li>The Certificate of Residency was issued by Barangay Mabayuan and names this applicant.</li>
+      </ul>
+    </div>`;
+  document.getElementById('reviewError').style.display = 'none';
+  const approveBtn = document.getElementById('reviewApproveBtn');
+  approveBtn.disabled = false;
+  approveBtn.textContent = '✓ Approve Account';
+  approveBtn.onclick = () => approveResident(residentId);
+  document.getElementById('reviewDeclineBtn').onclick = () => { closeReviewModal(); declineResident(residentId); };
+  document.getElementById('residentReviewModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+  const modal = document.getElementById('residentReviewModal');
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.openReviewModal = openReviewModal; window.closeReviewModal = closeReviewModal;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReviewModal(); });
+
+async function approveResident(id) {
+  const btn = document.getElementById('reviewApproveBtn');
+  const errEl = document.getElementById('reviewError');
+  if (btn) { btn.disabled = true; btn.textContent = 'Approving…'; }
+  const res = await fetch(`/api/staff/residents/${id}/approve`, { method:'POST' });
+  if (!res.ok) {
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Approve Account'; }
+    if (errEl) { errEl.textContent = 'Could not approve resident. Please try again.'; errEl.style.display = 'inline'; }
+    return;
+  }
+  closeReviewModal();
+  await refreshAll();
+}
 async function declineResident(id) {
   // Show decline reason modal
   showDeclineModal(id);

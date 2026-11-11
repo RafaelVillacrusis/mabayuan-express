@@ -80,6 +80,12 @@
       display:flex;gap:10px;flex-shrink:0;background:#fdf8f8;
     }
 
+    .verify-note {
+      display:flex;align-items:flex-start;gap:8px;
+      background:#fdf8f8;border:1px solid #e8d5d7;border-radius:8px;
+      padding:9px 12px;font-size:12px;color:#5b3a3f;line-height:1.6;
+    }
+
     @keyframes fadeIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
     @keyframes scaleIn { from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)} }
   
@@ -108,8 +114,8 @@
         <h3>3. Valid ID Requirement</h3>
         <p>You must upload a valid government-issued ID during registration. Accepted IDs include: PhilSys ID, Passport, Driver's License, SSS/GSIS ID, Voter's ID, and PRC ID. The ID must be clear, readable, and currently valid.</p>
 
-        <h3>4. Account Approval</h3>
-        <p>Your account is subject to approval by barangay staff. You will not be able to log in or submit requests until your account has been reviewed and approved. Approval is not guaranteed and is at the discretion of the barangay.</p>
+        <h3>4. Proof of Residency &amp; Account Approval</h3>
+        <p>You must upload a Barangay Certificate of Residency issued by Barangay Mabayuan. Your account is subject to approval by barangay staff, who will verify your valid ID and certificate. You will receive an email once your account is approved. You will not be able to log in or submit requests until your account has been reviewed and approved. Approval is not guaranteed and is at the discretion of the barangay.</p>
 
         <h3>5. Document Requests</h3>
         <ul>
@@ -225,8 +231,35 @@
               <input class="input" name="suffix" placeholder="Jr., Sr., III…">
             </div>
             <div>
-              <label class="form-label">Valid ID <span style="color:#64748b;font-size:12px">(image or PDF, max 5MB)</span> *</label>
-              <input class="input" type="file" name="valid_id" accept="image/*,.pdf" required>
+              <label class="form-label">Type of valid ID *</label>
+              <select class="select" name="valid_id_type" id="validIdType" required>
+                <option value="">Select your valid ID…</option>
+                <option>PhilSys National ID</option>
+                <option>Passport</option>
+                <option>Driver's License</option>
+                <option>UMID</option>
+                <option>SSS ID</option>
+                <option>GSIS ID</option>
+                <option>PRC ID</option>
+                <option>Postal ID</option>
+                <option>Voter's ID</option>
+                <option>PhilHealth ID</option>
+                <option>TIN ID</option>
+                <option>Senior Citizen ID</option>
+                <option>PWD ID</option>
+              </select>
+            </div>
+            <div class="full verify-note">
+              <span style="font-size:14px;line-height:1.5;flex-shrink:0;">🪪</span>
+              <span>Barangay staff will check your <strong>valid ID</strong> and <strong>Barangay Certificate of Residency</strong> to confirm you are a resident of Barangay Mabayuan. Make sure both photos are clear and readable. You'll get an email once your account is approved.</span>
+            </div>
+            <div>
+              <label class="form-label">Valid ID photo <span style="color:#64748b;font-size:12px">(image or PDF, max 5MB)</span> *</label>
+              <input class="input" type="file" name="valid_id" id="validIdFile" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" required>
+            </div>
+            <div>
+              <label class="form-label">Barangay Certificate of Residency <span style="color:#64748b;font-size:12px">(image or PDF, max 5MB)</span> *</label>
+              <input class="input" type="file" name="residency_cert" id="residencyFile" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" required>
             </div>
             <div>
               <label class="form-label">Password *</label>
@@ -351,6 +384,30 @@
         banner.style.display = 'block';
         document.getElementById('birthField').focus();
         return;
+      }
+
+      // Verification documents check
+      if (!document.getElementById('validIdType').value) {
+        e.preventDefault();
+        banner.textContent = 'Please select the type of valid ID you are uploading.';
+        banner.style.display = 'block';
+        document.getElementById('validIdType').focus();
+        return;
+      }
+      for (const [id, label] of [['validIdFile', 'Valid ID'], ['residencyFile', 'Barangay Certificate of Residency']]) {
+        const file = document.getElementById(id).files[0];
+        if (!file) {
+          e.preventDefault();
+          banner.textContent = `${label} is required.`;
+          banner.style.display = 'block';
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          e.preventDefault();
+          banner.textContent = `${label} must be 5MB or smaller.`;
+          banner.style.display = 'block';
+          return;
+        }
       }
 
       // Phone check — input now stores 9XXXXXXXXX, prepend 0 for DB
