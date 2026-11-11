@@ -16,7 +16,8 @@ const pool = require('../db');
 
 const CONFIG = {
   apiKey:        process.env.GEMINI_API_KEY || '',
-  model:         process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  model:         process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+  thinkingLevel: process.env.GEMINI_THINKING_LEVEL || 'minimal',   // Gemini 3.x: minimal | low | medium | high
   timeoutMs:     Number(process.env.GEMINI_TIMEOUT_MS || 20000),
   maxConcurrent: Number(process.env.GEMINI_MAX_CONCURRENT || 3),
   maxQueue:      Number(process.env.GEMINI_MAX_QUEUE || 25),
@@ -182,14 +183,17 @@ async function generate({ system, contents, schema, maxTokens = 1024, temperatur
   try {
     const generationConfig = { temperature, maxOutputTokens: maxTokens };
     if (schema) { generationConfig.responseMimeType = 'application/json'; generationConfig.responseSchema = schema; }
-    // Gemini 2.5 Flash "thinks" by default; turning it off makes short answers much faster
-    if (/2\.5-flash/.test(CONFIG.model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    // Gemini models "think" before answering by default, which makes simple answers slow.
+    // Keep thinking to a minimum: Gemini 3.x uses thinkingLevel, Gemini 2.5 Flash uses thinkingBudget.
+    if (/^gemini-[3-9]/.test(CONFIG.model)) generationConfig.thinkingConfig = { thinkingLevel: CONFIG.thinkingLevel };
+    else if (/2\.5-flash/.test(CONFIG.model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
 
-    const body = JSON.stringify({
+    const buildBody = () => JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents,
       generationConfig,
     });
+    let body = buildBody();
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(CONFIG.model)}:generateContent`;
 
     for (let attempt = 0; ; attempt++) {
@@ -219,6 +223,17 @@ async function generate({ system, contents, schema, maxTokens = 1024, temperatur
         const msg = json?.error?.message || `HTTP ${status}`;
         if (status === 401 || status === 403 || (status === 400 && /api key/i.test(msg))) {
           disableKey(msg);
+          throw new AIError('UNAVAILABLE', msg);
+        }
+        // Model rejected our thinking setting — retry once without it
+        if (status === 400 && /thinking/i.test(msg) && generationConfig.thinkingConfig) {
+          delete generationConfig.thinkingConfig;
+          body = buildBody();
+          continue;
+        }
+        // Model retired or misspelled
+        if (status === 404) {
+          console.error(`[AI] Gemini model "${CONFIG.model}" is not available — set GEMINI_MODEL to a current model. (${msg})`);
           throw new AIError('UNAVAILABLE', msg);
         }
         if (status === 429 || status >= 500) {
