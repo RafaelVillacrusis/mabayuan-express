@@ -77,11 +77,11 @@ function getFilteredSorted() {
     if (cardFilter !== 'all' && row.status !== cardFilter) return false;
     // Dropdown filter
     if (statusFilter !== 'all' && row.status !== statusFilter) return false;
-    // Date range filter
-    const dateFrom = getDateFrom();
-    const dateTo   = getDateTo();
+    // Date range filter — by the date the resident made the request (Philippine time)
+    const [dateFrom, dateTo] = getDateRange();
     if (dateFrom || dateTo) {
-      const rowDate = (row.suggested_release_date || row.updated_at || '').slice(0, 10);
+      const rowDate = phDate(row.created_at);
+      if (!rowDate) return false;
       if (dateFrom && rowDate < dateFrom) return false;
       if (dateTo   && rowDate > dateTo)   return false;
     }
@@ -135,14 +135,17 @@ function renderTable() {
           <td>${escapeHtml(row.transaction_no)}</td>
           <td>${escapeHtml(row.resident_name)}</td>
           <td>${escapeHtml(row.document_name)}</td>
+          <td>${row.created_at ? formatDate(row.created_at) : '-'}</td>
           <td>${peso(row.price_at_request)}</td>
           <td>${formatDate(row.suggested_release_date)}</td>
           <td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${escapeHtml(row.status === 'Pending Approval' ? 'Needs decision' : row.status)}</span></td>
           <td>${row.status === 'Pending Approval'
             ? `<a class="btn btn-small" href="/captain/request/${row.request_id}">Review</a>`
-            : `<a class="btn btn-small btn-ghost" href="/captain/request/${row.request_id}">View</a>`}</td>
+            : `<a class="btn btn-small btn-ghost" href="/captain/request/${row.request_id}">View</a>`}${row.valid_id_path && !String(row.valid_id_path).startsWith('missing:')
+            ? `<button type="button" class="btn btn-small btn-ghost cp-id-btn" data-id-view="${row.request_id}" title="View the valid ID uploaded with this request">🪪 ID</button>`
+            : ''}</td>
         </tr>`).join('')
-    : `<tr><td colspan="7" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
+    : `<tr><td colspan="8" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
 
   // Render pagination using shared pg-row style
   const pgEl = document.getElementById('paginationRow');
@@ -215,7 +218,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dd = document.getElementById('statusDropdown');
   if (dd) dd.addEventListener('change', () => { currentPage = 1; renderTable(); });
 
-  // Apply / Reset date filter buttons
+  // From / To dates — apply as soon as a date is picked
+  ['dateFromFilter', 'dateToFilter'].forEach(id =>
+    document.getElementById(id).addEventListener('change', () => { currentPage = 1; renderTable(); }));
+
+  // Apply / Reset buttons
   const applyBtn = document.getElementById('applyDashFilter');
   const resetBtn = document.getElementById('resetDashFilter');
   if (applyBtn) applyBtn.addEventListener('click', () => { currentPage = 1; renderTable(); });
@@ -224,6 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('statusDropdown').value  = 'all';
     document.getElementById('dateFromFilter').value  = '';
     document.getElementById('dateToFilter').value    = '';
+    getDateRange();
     setFilter('all');
     document.querySelectorAll('.filter-card').forEach(c => c.classList.toggle('active', c.dataset.status === 'all'));
     currentPage = 1;
@@ -244,6 +252,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// ── Date filter helpers (wired up in DOMContentLoaded above via applyDashFilter/resetDashFilter) ──
-function getDateFrom() { return (document.getElementById('dateFromFilter') || {}).value || ''; }
-function getDateTo()   { return (document.getElementById('dateToFilter')   || {}).value || ''; }
+// ── From / To date filter ───────────────────────────────────────────────────
+// YYYY-MM-DD of a timestamp in Philippine time
+function phDate(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d)) return String(value).slice(0, 10);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}
+
+/** Returns [from, to]; ignores "To" when it is before "From" and says so. Also updates the hint line. */
+function getDateRange() {
+  const fromEl = document.getElementById('dateFromFilter');
+  const toEl   = document.getElementById('dateToFilter');
+  const from = fromEl ? fromEl.value : '';
+  let to     = toEl ? toEl.value : '';
+  if (toEl) toEl.min = from || '';
+  if (fromEl) fromEl.max = to || '';
+  const bad = from && to && to < from;
+  document.getElementById('dateToField')?.classList.toggle('invalid', !!bad);
+  const note = document.getElementById('dateRangeNote');
+  if (note) {
+    const fmt = v => new Date(v + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+    note.hidden = !(from || to);
+    note.innerHTML = bad ? '⚠️ The <strong>To</strong> date is before the <strong>From</strong> date, so it is ignored.'
+      : from && to ? `Showing requests made from <strong>${fmt(from)}</strong> to <strong>${fmt(to)}</strong>.`
+      : from ? `Showing requests made on or after <strong>${fmt(from)}</strong>.`
+      : to ? `Showing requests made on or before <strong>${fmt(to)}</strong>.` : '';
+  }
+  if (bad) to = '';
+  return [from, to];
+}
+
+// ── Valid ID viewer ─────────────────────────────────────────────────────────
+function openIdViewer(requestId) {
+  const row = allRows.find(r => String(r.request_id) === String(requestId));
+  if (!row) return;
+  const modal = document.getElementById('idModal');
+  document.getElementById('idModalSub').textContent = `${row.resident_name} · ${row.document_name} · ${row.transaction_no}`;
+  document.getElementById('idModalReview').href = `/captain/request/${row.request_id}`;
+  document.getElementById('idModalReview').textContent = row.status === 'Pending Approval' ? 'Review request' : 'Open request';
+  renderRequestValidId({ ...row, has_valid_id: true }, 'captain');
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  document.getElementById('idModalClose').focus();
+}
+function closeIdViewer() {
+  const modal = document.getElementById('idModal');
+  if (modal.hidden) return;
+  modal.hidden = true;
+  document.body.style.overflow = '';
+  document.getElementById('validIdBody').innerHTML = '';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-id-view]');
+  if (b) return openIdViewer(b.dataset.idView);
+  if (e.target.id === 'idModal' || e.target.closest('#idModalClose, #idModalDone')) closeIdViewer();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeIdViewer(); });
