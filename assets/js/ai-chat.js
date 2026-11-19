@@ -255,6 +255,7 @@
   function open() { panel.hidden = false; fab.innerHTML = '✕'; fab.setAttribute('aria-label', 'Close Mabayuan AI Assistant'); input.focus(); log.scrollTop = log.scrollHeight; }
   function close() { panel.hidden = true; fab.innerHTML = '💬'; fab.setAttribute('aria-label', 'Open Mabayuan AI Assistant'); }
 
+  window.mxOpenAiChat = open;   // lets page buttons (e.g. "Ask the assistant") open the chat
   fab.addEventListener('click', () => (panel.hidden ? open() : close()));
   panel.querySelector('[data-act="close"]').addEventListener('click', close);
   panel.querySelector('[data-act="clear"]').addEventListener('click', () => { history = []; persist(); renderAll(); input.focus(); });

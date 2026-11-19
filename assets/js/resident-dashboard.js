@@ -69,11 +69,51 @@ async function loadResidentRequests() {
         <td>${formatDate(row.updated_at || row.created_at)}</td>
         <td>${actions}</td>
       </tr>`;
-  }).join('') || `<tr><td colspan="8" class="empty-state">No requests found.</td></tr>`;
+  }).join('') || (filter === 'all'
+    ? `<tr><td colspan="8" class="empty-state"><div class="rd-empty">
+         <div class="rd-empty-icon">📭</div><strong>No requests yet</strong>
+         <p>Your document requests will appear here once you submit one.</p>
+         <a class="btn btn-small" href="/resident/request">+ Request your first document</a></div></td></tr>`
+    : `<tr><td colspan="8" class="empty-state"><div class="rd-empty">
+         <div class="rd-empty-icon">🔍</div><strong>No ${escapeHtml(FILTER_LABELS[filter] || filter)} requests</strong>
+         <p>Click "Total Requests" above to see all of your requests.</p></div></td></tr>`);
 
   document.querySelectorAll('.filter-card').forEach(card =>
     card.classList.toggle('active', card.dataset.status === filter)
   );
+  const note = document.getElementById('rdFilterNote');
+  if (note) note.textContent = filter === 'all'
+    ? 'Showing all requests. Click a card above to filter by status.'
+    : `Showing ${FILTER_LABELS[filter] || filter} requests only.`;
+}
+
+const FILTER_LABELS = { pending: 'Pending', processing: 'Processing', ready: 'Ready for Pickup', declined: 'Declined' };
+
+async function loadAvailableDocuments() {
+  const list = document.getElementById('rdDocs');
+  if (!list) return;
+  try {
+    const res = await fetch('/api/public/documents');
+    const docs = await res.json();
+    list.innerHTML = docs.length ? docs.map(d => {
+      const days = Number(d.processing_days) || 0;
+      const price = Number(d.price) > 0 ? peso(d.price) : 'Free';
+      return `<li><div><div class="rd-doc-name">${escapeHtml(d.document_name)}</div>
+        <div class="rd-doc-meta">${price} · ${days ? `${days} day${days === 1 ? '' : 's'}` : 'Same day'}</div></div>
+        <a href="/resident/request?document=${encodeURIComponent(d.document_id)}">Request →</a></li>`;
+    }).join('') : '<li class="rd-muted">No documents are available right now.</li>';
+  } catch {
+    list.innerHTML = '<li class="rd-muted">Could not load documents.</li>';
+  }
+}
+
+function renderRecentUpdates(items) {
+  const list = document.getElementById('rdUpdates');
+  if (!list) return;
+  list.innerHTML = items.length ? items.slice(0, 4).map(item => `
+    <li class="${item.is_read ? '' : 'unread'}"><span class="rd-dot"></span>
+      <div><strong>${escapeHtml(item.title)}</strong><span>${formatDateTime(item.created_at)}</span></div></li>`).join('')
+    : '<li class="rd-muted">No updates yet. You\'ll be notified here when your requests change.</li>';
 }
 
 async function loadNotifications(markRead = false) {
@@ -87,6 +127,7 @@ async function loadNotifications(markRead = false) {
       <p>${escapeHtml(item.message)}</p>
       <span>${formatDateTime(item.created_at)}</span>
     </div>`).join('') || '<p class="empty-state">No notifications yet.</p>';
+  renderRecentUpdates(items);
 
   if (markRead && unread > 0) {
     await fetch('/api/resident/notifications/read', { method: 'POST' });
@@ -123,6 +164,9 @@ function connectResidentSocket(residentId) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   showStatusMessage('pageMessage');
+  const today = document.getElementById('rdToday');
+  if (today) today.textContent = new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  loadAvailableDocuments();
   await loadResidentProfile();
   await loadResidentStats();
   await loadResidentRequests();

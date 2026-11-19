@@ -12,6 +12,89 @@
   <title>Resident Dashboard</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
   <style>
+    /* ── Resident dashboard layout ── */
+    .rd-hero {
+      position:relative; display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+      padding:26px 28px; margin-bottom:20px; border-radius:22px; color:#fff;
+      background:
+        radial-gradient(circle at 92% 18%, rgba(255,255,255,.14) 0 90px, transparent 91px),
+        radial-gradient(circle at 78% 120%, rgba(255,255,255,.10) 0 120px, transparent 121px),
+        linear-gradient(135deg, #7a2130 0%, #a64d57 60%, #ba616a 100%);
+      box-shadow:0 18px 35px rgba(68,29,34,.18);
+    }
+    .rd-hero h1 { margin:4px 0 6px; font-size:clamp(22px,3vw,30px); color:#fff; }
+    .rd-hero p { margin:0; opacity:.92; font-size:14.5px; max-width:620px; }
+    .rd-date { font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; opacity:.85; font-weight:700; }
+    .rd-hero-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .rd-btn-light, .rd-btn-outline {
+      display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:10px 18px;
+      font-weight:700; font-size:14px; text-decoration:none; cursor:pointer; transition:var(--transition); font-family:inherit;
+    }
+    .rd-btn-light { background:#fff; color:#8b2131; border:none; }
+    .rd-btn-light:hover { background:#fdf2f3; transform:translateY(-1px); }
+    .rd-btn-outline { background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.7); }
+    .rd-btn-outline:hover { background:rgba(255,255,255,.15); }
+    .rd-hero .icon-button { background:rgba(255,255,255,.95); }
+    .rd-hero .notif-dropdown { color:var(--text); }
+
+    .rd-stat { display:flex; align-items:center; gap:14px; }
+    .rd-stat .filter-value { margin-top:2px; }
+    .rd-stat-icon { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:21px; flex-shrink:0; }
+    .rd-i-total { background:#fbe9eb; } .rd-i-pending { background:#fdf4dc; } .rd-i-processing { background:#e6effc; }
+    .rd-i-ready { background:#e6f6ea; } .rd-i-declined { background:#fde8e8; }
+
+    .rd-layout { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:20px; align-items:start; }
+    .rd-layout > .panel, .rd-side > .panel { margin-bottom:0; }
+    .rd-main, .rd-side { display:flex; flex-direction:column; gap:20px; min-width:0; }
+    .rd-main > .panel { margin-bottom:0; }
+    .rd-how { padding:18px 20px; }
+    .rd-how h3 { margin:0 0 14px; font-size:16px; }
+    .rd-how .rd-steps { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px; }
+    .rd-how .rd-steps li { background:#fdf8f8; border:1px solid #f3e9ea; border-radius:14px; padding:12px 14px; }
+    .rd-layout .table td { vertical-align:middle; }
+    .rd-side .panel { padding:18px 20px; }
+    .rd-side h3, .rd-how h3 { margin:0 0 12px; font-size:16px; display:flex; align-items:center; gap:8px; }
+    .rd-panel-sub { margin:4px 0 0; color:var(--muted); font-size:13px; }
+
+    .rd-docs { list-style:none; margin:0; padding:0; max-height:300px; overflow-y:auto; }
+    .rd-docs li { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f3e9ea; }
+    .rd-docs li:last-child { border-bottom:none; }
+    .rd-docs .rd-doc-name { font-weight:700; font-size:14px; }
+    .rd-docs .rd-doc-meta { font-size:12.5px; color:var(--muted); }
+    .rd-docs a { margin-left:auto; font-size:12.5px; font-weight:700; color:var(--primary); text-decoration:none; white-space:nowrap; }
+    .rd-docs a:hover { text-decoration:underline; }
+
+    .rd-updates { list-style:none; margin:0; padding:0; }
+    .rd-updates li { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f3e9ea; font-size:13.5px; }
+    .rd-updates li:last-child { border-bottom:none; }
+    .rd-dot { width:9px; height:9px; border-radius:50%; background:#d9c4c6; margin-top:6px; flex-shrink:0; }
+    .rd-updates li.unread .rd-dot { background:var(--primary); }
+    .rd-updates strong { display:block; }
+    .rd-updates span { font-size:12px; color:var(--muted); }
+
+    .rd-steps { list-style:none; margin:0; padding:0; counter-reset:rd; }
+    .rd-steps li { counter-increment:rd; display:flex; gap:12px; padding:7px 0; font-size:13.5px; line-height:1.45; }
+    .rd-steps li::before {
+      content:counter(rd); width:24px; height:24px; border-radius:50%; flex-shrink:0;
+      background:#fbe9eb; color:var(--primary); font-weight:800; font-size:12px; display:grid; place-items:center;
+    }
+    .rd-steps strong { display:block; }
+    .rd-muted { color:var(--muted); font-size:13px; margin:0; }
+
+    .rd-empty { display:flex; flex-direction:column; align-items:center; gap:6px; padding:18px 0; }
+    .rd-empty-icon { font-size:38px; }
+    .rd-empty strong { color:var(--text); font-size:15px; }
+    .rd-empty p { margin:0 0 8px; }
+
+    @media (max-width:1100px) { .rd-layout { grid-template-columns:minmax(0,1fr); } }
+    @media (max-width:900px) { .rd-how .rd-steps { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+    @media (max-width:480px) { .rd-how .rd-steps { grid-template-columns:1fr; } }
+    @media (max-width:700px) {
+      .rd-hero { flex-direction:column-reverse; padding:20px; }
+      .rd-hero .notif-wrap { align-self:flex-end; }
+      .rd-stat-icon { width:38px; height:38px; font-size:18px; border-radius:12px; }
+    }
+
     /* Details Modal */
     .details-modal {
       position:fixed;inset:0;z-index:999;
@@ -148,15 +231,23 @@
       </nav>
     </header>
     <main class="container content-area">
-      <div class="dashboard-header">
-        <div><h1>Hello, <span id="residentName">Resident</span></h1><p>View status, suggested release date, and latest notifications.</p></div>
+      <section class="rd-hero">
+        <div>
+          <span class="rd-date" id="rdToday"></span>
+          <h1>Hello, <span id="residentName">Resident</span> 👋</h1>
+          <p>Track your document requests, check release dates, and get updates from Barangay Mabayuan.</p>
+          <div class="rd-hero-actions">
+            <a class="rd-btn-light" href="/resident/request">+ Request a document</a>
+            <button type="button" class="rd-btn-outline" onclick="window.mxOpenAiChat && window.mxOpenAiChat()">💬 Ask the assistant</button>
+          </div>
+        </div>
         <div class="notif-wrap">
           <button type="button" class="icon-button" id="notifButton">🔔 <span class="notif-badge" id="notifCount">0</span></button>
           <div class="notif-dropdown" id="notifDropdown">
             <button class="notif-close-btn" style="width:100%;padding:10px;background:#fdf6f7;border:1px solid #f0e4e5;border-radius:10px;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:center" onclick="closeNotif()">✕ Close</button>
             <div id="notifList"></div></div>
         </div>
-      </div>
+      </section>
       <div class="page-message" id="pageMessage"></div>
 
       <!-- Re-upload ID banner — shown only when valid_id_path is missing -->
@@ -175,15 +266,20 @@
         </div>
       </div>
       <section class="filter-grid">
-        <div class="filter-card active" data-status="all"><div class="filter-label">Total Requests</div><div class="filter-value" id="statTotal">0</div></div>
-        <div class="filter-card" data-status="pending"><div class="filter-label">Pending</div><div class="filter-value" id="statPending">0</div></div>
-        <div class="filter-card filter-card--processing" data-status="processing"><div class="filter-label">Processing</div><div class="filter-value" id="statProcessing">0</div></div>
-        <div class="filter-card" data-status="ready"><div class="filter-label">Ready for Pickup</div><div class="filter-value" id="statReady">0</div></div>
-        <div class="filter-card filter-card--declined" data-status="declined"><div class="filter-label">Declined</div><div class="filter-value" id="statDeclined">0</div></div>
+        <div class="filter-card rd-stat active" data-status="all"><span class="rd-stat-icon rd-i-total">📄</span><div><div class="filter-label">Total Requests</div><div class="filter-value" id="statTotal">0</div></div></div>
+        <div class="filter-card rd-stat" data-status="pending"><span class="rd-stat-icon rd-i-pending">⏳</span><div><div class="filter-label">Pending</div><div class="filter-value" id="statPending">0</div></div></div>
+        <div class="filter-card rd-stat filter-card--processing" data-status="processing"><span class="rd-stat-icon rd-i-processing">⚙️</span><div><div class="filter-label">Processing</div><div class="filter-value" id="statProcessing">0</div></div></div>
+        <div class="filter-card rd-stat" data-status="ready"><span class="rd-stat-icon rd-i-ready">📦</span><div><div class="filter-label">Ready for Pickup</div><div class="filter-value" id="statReady">0</div></div></div>
+        <div class="filter-card rd-stat filter-card--declined" data-status="declined"><span class="rd-stat-icon rd-i-declined">✖️</span><div><div class="filter-label">Declined</div><div class="filter-value" id="statDeclined">0</div></div></div>
       </section>
+      <div class="rd-layout">
+      <div class="rd-main">
       <section class="panel">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
-          <h2 style="margin:0">My Requests</h2>
+          <div>
+            <h2 style="margin:0">My Requests</h2>
+            <p class="rd-panel-sub" id="rdFilterNote">Showing all requests. Click a card above to filter by status.</p>
+          </div>
           <a class="btn btn-small" href="/resident/request">+ Request a document</a>
         </div>
         <div class="table-wrap" style="margin-top:16px;">
@@ -204,6 +300,29 @@
           </table>
         </div>
       </section>
+
+      <section class="panel rd-how">
+        <h3>🧭 How It Works</h3>
+        <ol class="rd-steps">
+          <li><div><strong>Submit a request</strong>Choose a document and its purpose.</div></li>
+          <li><div><strong>Captain review</strong>The Barangay Captain checks your request.</div></li>
+          <li><div><strong>Processing</strong>Staff prepare your document and set a release date.</div></li>
+          <li><div><strong>Pick up</strong>Claim it at the Barangay Hall with your transaction number.</div></li>
+        </ol>
+      </section>
+      </div>
+
+      <aside class="rd-side">
+        <section class="panel">
+          <h3>📋 Available Documents</h3>
+          <ul class="rd-docs" id="rdDocs"><li class="rd-muted">Loading…</li></ul>
+        </section>
+        <section class="panel">
+          <h3>🔔 Recent Updates</h3>
+          <ul class="rd-updates" id="rdUpdates"><li class="rd-muted">Loading…</li></ul>
+        </section>
+      </aside>
+      </div>
     </main>
   </div>
 

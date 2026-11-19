@@ -26,4 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   select.addEventListener('change', updateDocInfo);
+
+  // Preselect a document when coming from the dashboard (?document=<id>)
+  const preselect = new URLSearchParams(window.location.search).get('document');
+  if (preselect && [...select.options].some(o => o.value === preselect)) {
+    select.value = preselect;
+    updateDocInfo();
+  }
 });
