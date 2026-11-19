@@ -22,6 +22,7 @@ const {
   getInboxMessages
 } = require('../actions/notification.actions');
 const { createAuditLog } = require('../actions/audit.actions');
+const { VALID_ID_TYPES, ALLOWED_UPLOAD_MIME, uploadToStorage, removeFromStorage, sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
 
 const router = express.Router();
 
@@ -103,18 +104,34 @@ router.get('/api/resident/requests', requireResident, async (req, res) => {
 });
 
 /* ================= CREATE REQUEST ================= */
-router.post('/api/resident/requests', requireResident, async (req, res) => {
+// Multipart form with the resident's valid ID. Responds with JSON so the form keeps its values on error.
+const requestUpload = upload.single('valid_id');
+router.post('/api/resident/requests', requireResident, (req, res, next) => {
+  requestUpload(req, res, err => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Your valid ID file must be 5MB or smaller.' : 'The valid ID upload failed. Please try again.';
+      return res.status(400).json({ error: msg, field: 'valid_id' });
+    }
+    next();
+  });
+}, async (req, res) => {
+  let storedIdPath = null;
   try {
     const residentId = req.session.resident.resident_id;
-    const { document_id, contact_number, purpose, purpose_details } = req.body;
+    const { document_id, contact_number, purpose, purpose_details, valid_id_type } = req.body;
+    const fail = (error, field) => res.status(400).json({ error, field });
 
     // Validate contact number — must be 11 digits starting with 09
     if (contact_number) {
       const cleaned = contact_number.startsWith('0') ? contact_number : '0' + contact_number;
-      if (!/^09[0-9]{9}$/.test(cleaned)) {
-        return res.status(400).send('Invalid contact number format.');
-      }
+      if (!/^09[0-9]{9}$/.test(cleaned)) return fail('Please enter a valid mobile number (10 digits starting with 9).', 'contact_number');
     }
+    if (!purpose) return fail('Please choose the purpose of your request.', 'purpose');
+
+    // Valid ID — required for every request
+    if (!VALID_ID_TYPES.includes(valid_id_type)) return fail('Please select the type of valid ID you are uploading.', 'valid_id_type');
+    if (!req.file) return fail('Please upload a photo of your valid ID.', 'valid_id');
+    if (!ALLOWED_UPLOAD_MIME.test(req.file.mimetype)) return fail('Your valid ID must be an image (JPG, PNG, GIF, WEBP) or a PDF.', 'valid_id');
 
     // Document
     const docResult = await pool.query(
@@ -124,21 +141,18 @@ router.post('/api/resident/requests', requireResident, async (req, res) => {
        LIMIT 1`,
       [document_id]
     );
-
     const documentRow = docResult.rows[0];
-    if (!documentRow) {
-      return res.status(400).send('Selected document is not available.');
-    }
+    if (!documentRow) return fail('The selected document is not available. Please choose another one.', 'document_id');
 
     // Resident
     const residentResult = await pool.query(
-      `SELECT valid_id_path, phone_number
-       FROM residents
-       WHERE resident_id = $1
-       LIMIT 1`,
+      `SELECT phone_number FROM residents WHERE resident_id = $1 LIMIT 1`,
       [residentId]
     );
-    const resident = residentResult.rows[0];
+    const resident = residentResult.rows[0] || {};
+
+    storedIdPath = await uploadToStorage(req.file, 'requests', `resident-${residentId}`);
+    if (!storedIdPath) return res.status(500).json({ error: 'We could not save your valid ID. Please try again.', field: 'valid_id' });
 
     const transactionNo = generateTransactionNumber();
     const combinedPurpose = [purpose, purpose_details].filter(Boolean).join(' - ');
@@ -146,14 +160,13 @@ router.post('/api/resident/requests', requireResident, async (req, res) => {
       addDays(new Date(), documentRow.processing_days)
     );
 
-    // INSERT REQUEST (IMPORTANT: RETURNING)
     const insertResult = await pool.query(
       `INSERT INTO requests
         (resident_id, document_id, document_name, price_at_request,
          processing_days_at_request, suggested_release_date, status,
-         transaction_no, purpose, contact_number, valid_id_path)
+         transaction_no, purpose, contact_number, valid_id_path, valid_id_type)
        VALUES
-        ($1,$2,$3,$4,$5,$6,'Pending Approval',$7,$8,$9,$10)
+        ($1,$2,$3,$4,$5,$6,'Pending Approval',$7,$8,$9,$10,$11)
        RETURNING request_id`,
       [
         residentId,
@@ -165,18 +178,20 @@ router.post('/api/resident/requests', requireResident, async (req, res) => {
         transactionNo,
         combinedPurpose || null,
         contact_number || resident.phone_number || null,
-        resident.valid_id_path || null
+        storedIdPath,
+        valid_id_type
       ]
     );
 
     const requestId = insertResult.rows[0].request_id;
+    storedIdPath = null; // saved with the request — keep the file
 
     await createRequestLog({
       requestId,
       actionType: 'CREATE',
       newStatus: 'Pending Approval',
       newReleaseDate: suggestedReleaseDate,
-      remarks: 'Resident submitted a new request.',
+      remarks: `Resident submitted a new request with a ${valid_id_type}.`,
       changedByRole: 'resident'
     });
 
@@ -195,15 +210,30 @@ router.post('/api/resident/requests', requireResident, async (req, res) => {
       targetId: requestId,
       action: 'REQUEST_SUBMITTED',
       description: `Resident submitted ${documentRow.document_name} request with transaction ${transactionNo}.`,
-      metadata: { resident_id: residentId, suggested_release_date: suggestedReleaseDate }
+      metadata: { resident_id: residentId, suggested_release_date: suggestedReleaseDate, valid_id_type }
     });
 
     refreshRoleDashboards('captain', 'system_admin', 'staff');
-    res.redirect('/resident/dashboard?submitted=1');
+    res.json({ ok: true, redirect: '/resident/dashboard?submitted=1', transaction_no: transactionNo });
 
   } catch (error) {
     console.error(error);
-    res.status(500).send('Could not submit request.');
+    if (storedIdPath) removeFromStorage(storedIdPath); // request wasn't saved — don't leave the file behind
+    res.status(500).json({ error: 'Could not submit your request. Please try again.' });
+  }
+});
+
+/* ================= RESIDENT: VIEW OWN REQUEST ID ================= */
+router.get('/api/resident/requests/:id/valid-id', requireResident, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT valid_id_path FROM requests WHERE request_id = $1 AND resident_id = $2 LIMIT 1`,
+      [req.params.id, req.session.resident.resident_id]
+    );
+    if (!rows.length || !(await sendStoredFile(res, rows[0].valid_id_path))) res.status(404).send(FILE_NOT_FOUND_PAGE);
+  } catch (err) {
+    console.error('Request valid ID error:', err);
+    if (!res.headersSent) res.status(500).send('Could not load the valid ID.');
   }
 });
 
@@ -240,6 +270,8 @@ router.delete('/api/resident/requests/:id', requireResident, async (req, res) =>
       return res.status(400).json({ error: 'Only pending requests can be deleted.' });
     }
     await pool.query('DELETE FROM requests WHERE request_id = $1 AND resident_id = $2', [req.params.id, residentId]);
+    // IDs uploaded with the request (not the registration ID) are removed with it
+    if (String(request.valid_id_path || '').startsWith('supabase:valid-ids/requests/')) removeFromStorage(request.valid_id_path);
     res.json({ ok: true, message: 'Request deleted successfully.' });
   } catch(e) { console.error(e); res.status(500).json({ error: 'Server error.' }); }
 });

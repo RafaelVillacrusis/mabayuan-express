@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const supabase = require('../supabase');
 const { sendRegistrationReceivedEmail } = require('../actions/email.actions');
 const pool = require('../db');
 const { createAuditLog } = require('../actions/audit.actions');
@@ -77,37 +76,9 @@ router.get('/api/session-check', (req, res) => {
   res.json({ ok: false, redirect: isResident ? '/login' : '/login' });
 });
 
-// Accepted government-issued IDs (keep in sync with views/resident_register.html)
-const VALID_ID_TYPES = [
-  'PhilSys National ID',
-  'Passport',
-  "Driver's License",
-  'UMID',
-  'SSS ID',
-  'GSIS ID',
-  'PRC ID',
-  'Postal ID',
-  "Voter's ID",
-  'PhilHealth ID',
-  'TIN ID',
-  'Senior Citizen ID',
-  'PWD ID',
-];
-const ALLOWED_UPLOAD_MIME = /^(image\/(jpeg|png|gif|webp)|application\/pdf)$/;
-
-// Upload a registration file to Supabase Storage; returns the stored path or null on failure
-async function uploadRegistrationFile(file, folder, email) {
-  const ext = file.originalname.split('.').pop().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  const fileName = `${folder ? folder + '/' : ''}${Date.now()}-${email.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
-  const { error } = await supabase.storage
-    .from('valid-ids')
-    .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
-  if (error) {
-    console.error('Supabase Storage upload error:', error);
-    return null;
-  }
-  return `supabase:valid-ids/${fileName}`;
-}
+// Accepted ID types and upload helpers are shared with the document request form
+const { VALID_ID_TYPES, ALLOWED_UPLOAD_MIME, uploadToStorage } = require('../actions/upload.actions');
+const uploadRegistrationFile = (file, folder, email) => uploadToStorage(file, folder, email);
 
 // ── Resident Register ─────────────────────────────────────────────────────────
 const registerUpload = upload.fields([

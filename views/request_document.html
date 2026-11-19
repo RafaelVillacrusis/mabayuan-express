@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Request a Document — Mabayuan Express</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
-  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css?v=3" />
   <style>
   </style>
 </head>
@@ -59,7 +59,7 @@
       </div>
 
       <div class="rq-layout">
-        <form class="panel" id="requestForm" action="/api/resident/requests" method="POST" novalidate>
+        <form class="panel" id="requestForm" action="/api/resident/requests" method="POST" enctype="multipart/form-data" novalidate>
           <section class="rq-section">
             <h2 class="rq-step"><span class="rq-step-num">1</span>Choose a document</h2>
             <label class="form-label" for="documentSelect">Document</label>
@@ -87,7 +87,36 @@
           </section>
 
           <section class="rq-section">
-            <h2 class="rq-step"><span class="rq-step-num">3</span>Contact details</h2>
+            <h2 class="rq-step"><span class="rq-step-num">3</span>Valid ID</h2>
+            <p class="rq-hint" style="margin:-6px 0 12px">Upload a valid government-issued ID for this request. The Barangay Captain and staff use it to confirm your identity.</p>
+            <label class="form-label" for="validIdType">Type of valid ID</label>
+            <select class="select" id="validIdType" name="valid_id_type" required>
+              <option value="">Select your valid ID…</option>
+              <option>PhilSys National ID</option>
+              <option>Passport</option>
+              <option>Driver's License</option>
+              <option>UMID</option>
+              <option>SSS ID</option>
+              <option>GSIS ID</option>
+              <option>PRC ID</option>
+              <option>Postal ID</option>
+              <option>Voter's ID</option>
+              <option>PhilHealth ID</option>
+              <option>TIN ID</option>
+              <option>Senior Citizen ID</option>
+              <option>PWD ID</option>
+            </select>
+            <span class="form-label" style="margin-top:14px">Photo of your valid ID</span>
+            <label class="rq-drop" id="idDrop">
+              <input class="rq-file" type="file" name="valid_id" id="validIdFile" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" required>
+              <div class="rq-drop-empty" id="idDropEmpty"><span class="rq-drop-icon" aria-hidden="true">🪪</span><strong>Upload your valid ID</strong><span>Tap to choose, or drag a file here</span><small>JPG, PNG or PDF · max 5MB</small></div>
+              <div class="rq-drop-file" id="idDropFile" hidden><div class="rq-thumb" id="idThumb"></div><div class="rq-file-info"><strong id="idFileName"></strong><span id="idFileSize"></span><em>Tap to change</em></div></div>
+            </label>
+            <div class="rq-hint">Make sure your name, photo and ID number are clear and readable, and that the ID is not expired.</div>
+          </section>
+
+          <section class="rq-section">
+            <h2 class="rq-step"><span class="rq-step-num">4</span>Contact details</h2>
             <label class="form-label" for="contactNumber">Mobile number</label>
             <div class="ph-phone-wrap">
               <div class="ph-phone-prefix">🇵🇭 +63</div>
@@ -111,16 +140,17 @@
           <h3>🧾 Request summary</h3>
           <div class="rq-sum-row"><span>Document</span><span id="sumDocument">—</span></div>
           <div class="rq-sum-row"><span>Purpose</span><span id="sumPurpose">—</span></div>
+          <div class="rq-sum-row"><span>Valid ID</span><span id="sumValidId">—</span></div>
           <div class="rq-sum-row"><span>Processing time</span><span id="processingDays">—</span></div>
           <div class="rq-sum-row"><span>Estimated release</span><span id="suggestedRelease">—</span></div>
           <div class="rq-sum-row rq-sum-total"><span>Fee</span><span id="documentPrice">—</span></div>
           <div class="rq-next">
             <strong>What happens next?</strong>
             <ol>
-              <li>The Barangay Captain reviews your request.</li>
+              <li>The Barangay Captain reviews your request and valid ID.</li>
               <li>Staff prepare your document and set the release date.</li>
               <li>You get an email and a notification when it's ready.</li>
-              <li>Pick it up at the Barangay Hall with your transaction number.</li>
+              <li>Pick it up at the Barangay Hall with your transaction number and the same valid ID.</li>
             </ol>
           </div>
         </aside>
@@ -136,6 +166,6 @@
   <script src="/assets/js/common.js"></script>
   <script src="/assets/js/resident-shell.js"></script>
   <script src="/assets/js/ai-chat.js" defer></script>
-  <script src="/assets/js/request-document.js"></script>
+  <script src="/assets/js/request-document.js?v=3"></script>
 </body>
 </html>

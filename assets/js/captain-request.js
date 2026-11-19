@@ -56,7 +56,7 @@ function renderHeader(req) {
   // Next step / outcome
   const next = document.getElementById('stNext');
   const msg = pending
-    ? ['⚖️ This request needs your decision', 'Check the resident details and purpose, then approve or decline below.']
+    ? ['⚖️ This request needs your decision', 'Check the resident details, purpose and valid ID, then approve or decline below.']
     : declined ? ['✖ You declined this request', 'The resident was notified by email. No further action is needed.']
     : req.status === 'Approved' ? ['✓ Approved — waiting for staff', 'Staff will set a release date and notify the resident.']
     : req.status === 'Ready for Pickup' ? ['📦 Ready for pickup', `The resident can claim the document${req.release_date ? ' from ' + formatDate(req.release_date) : ''}.`]
@@ -92,6 +92,7 @@ async function loadRequest() {
   document.getElementById('requestSuggested').textContent = formatDate(req.suggested_release_date);
   document.getElementById('requestStatus').textContent = req.status;
   document.getElementById('requestPurpose').textContent = req.purpose || '-';
+  renderRequestValidId(req, 'captain');
   document.getElementById('captainNotes').value = req.captain_notes || '';
   document.getElementById('logList').innerHTML = renderHistory(data.logs || []);
   document.getElementById('decisionForm').action = `/api/captain/requests/${requestId}/decision`;

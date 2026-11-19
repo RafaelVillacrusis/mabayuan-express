@@ -191,3 +191,40 @@ function phPhoneValidate(inp) {
 function phPhoneFullValue(inp) {
   return inp.value ? '0' + inp.value : '';
 }
+
+
+/**
+ * Show the valid ID a resident uploaded with a document request (staff & captain request pages).
+ * @param {object} req   request from getRequestById (has_valid_id, valid_id_type, request_id)
+ * @param {string} role  'staff' | 'captain'
+ */
+function renderRequestValidId(req, role) {
+  const box = document.getElementById('validIdBody');
+  if (!box) return;
+  if (!req.has_valid_id) {
+    box.innerHTML = '<p class="rq-id-missing">⚠️ No valid ID was uploaded with this request. Ask the resident to present one when claiming.</p>';
+    return;
+  }
+  const url = `/api/${role}/requests/${encodeURIComponent(req.request_id)}/valid-id`;
+  const type = req.valid_id_type || 'ID from registration (type not specified)';
+  box.innerHTML = `
+    <div class="rq-id-type"><span>ID type</span><strong>${escapeHtml(type)}</strong></div>
+    <a class="rq-id-frame" href="${url}" target="_blank" rel="noopener" title="Open full size">
+      <img alt="Valid ID uploaded by the resident" loading="lazy">
+      <span class="rq-id-pdf" hidden>📄 PDF file — open to view</span>
+    </a>
+    <div class="button-row" style="margin-top:10px"><a class="btn btn-small btn-ghost" href="${url}" target="_blank" rel="noopener">🔍 Open full size</a></div>
+    <p class="rq-id-tip">Check that the name and photo match the resident and that the ID is not expired.</p>`;
+  const img = box.querySelector('img');
+  img.addEventListener('error', () => {
+    // Not an image (PDF) or the file is gone — find out which
+    fetch(url, { method: 'HEAD' }).then(r => {
+      const pdf = r.ok && /pdf/i.test(r.headers.get('content-type') || '');
+      img.hidden = true;
+      const note = box.querySelector('.rq-id-pdf');
+      note.hidden = false;
+      if (!pdf) note.textContent = '⚠️ The ID file could not be loaded.';
+    }).catch(() => {});
+  });
+  img.src = url;
+}

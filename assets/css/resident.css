@@ -122,6 +122,24 @@
 .rq-purposes input:checked + span { color:#fff; }
 .rq-purposes label:has(input:checked) { background:var(--primary); border-color:var(--primary); color:#fff; }
 .rq-purposes label:has(input:focus-visible) { outline:3px solid #f4c2c8; outline-offset:2px; }
+.rs-portal span.form-label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; }
+/* Valid ID upload on the request form */
+.rq-drop { position:relative; display:block; border:2px dashed #e3cfd2; border-radius:14px; background:#fdf8f8; cursor:pointer; transition:border-color .15s, background .15s; }
+.rq-drop:hover, .rq-drop.drag { border-color:var(--primary); background:#fbeff0; }
+.rq-drop:has(.rq-file:focus-visible) { outline:3px solid #f4c2c8; outline-offset:2px; }
+.rq-drop.invalid { border-color:#dc2626; background:#fef2f2; }
+.rq-drop.has-file { border-style:solid; border-color:#a3d9b1; background:#f3fbf5; }
+.rq-file { position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; }
+.rq-drop-empty { display:flex; flex-direction:column; align-items:center; gap:4px; padding:22px 16px; text-align:center; font-size:13.5px; color:#3d2326; }
+.rq-drop-empty small { color:var(--muted); font-size:12px; }
+.rq-drop-icon { font-size:30px; line-height:1; margin-bottom:4px; }
+.rq-drop-file { display:flex; align-items:center; gap:14px; padding:12px 14px; }
+.rq-drop-empty[hidden], .rq-drop-file[hidden] { display:none; }
+.rq-thumb { width:96px; height:64px; flex-shrink:0; border-radius:8px; background:#fff center/cover no-repeat; border:1px solid #eadcdd; display:grid; place-items:center; font-size:12px; font-weight:800; color:var(--primary); }
+.rq-file-info { min-width:0; display:flex; flex-direction:column; gap:2px; font-size:13px; }
+.rq-file-info strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rq-file-info span { color:var(--muted); font-size:12px; }
+.rq-file-info em { color:var(--primary); font-style:normal; font-weight:700; font-size:12px; }
 .rq-error { background:#fef2f2; border:1px solid #fecaca; color:#b42318; border-radius:10px; padding:10px 14px; font-size:13.5px; margin-top:16px; }
 .rq-error[hidden] { display:none; }
 .rq-submit { width:100%; justify-content:center; min-height:48px; font-size:15px; margin-top:18px; }

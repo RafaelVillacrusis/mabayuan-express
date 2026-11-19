@@ -12,6 +12,7 @@ async function loadRequest() {
   document.getElementById('requestRelease').textContent = formatDate(req.release_date);
   document.getElementById('requestStatus').textContent = req.status;
   document.getElementById('requestPurpose').textContent = req.purpose || '-';
+  renderRequestValidId(req, 'staff');
   document.getElementById('releaseDateInput').value = req.release_date ? new Date(req.release_date).toISOString().slice(0,10) : (req.suggested_release_date ? new Date(req.suggested_release_date).toISOString().slice(0,10) : '');
   document.getElementById('staffNotesRelease').value = req.staff_notes || '';
   document.getElementById('staffNotesClaim').value = req.staff_notes || '';

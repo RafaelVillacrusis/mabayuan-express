@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mabayuan-express-v2';
+const CACHE_NAME = 'mabayuan-express-v3';
 const STATIC_ASSETS = [
   '/',
   '/assets/css/style.css',

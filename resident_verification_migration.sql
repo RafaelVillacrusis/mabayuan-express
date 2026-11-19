@@ -5,3 +5,7 @@
 
 ALTER TABLE residents ADD COLUMN IF NOT EXISTS valid_id_type       VARCHAR(80);
 ALTER TABLE residents ADD COLUMN IF NOT EXISTS residency_cert_path TEXT;
+
+-- Valid ID uploaded with each document request
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS valid_id_path TEXT;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS valid_id_type VARCHAR(80);

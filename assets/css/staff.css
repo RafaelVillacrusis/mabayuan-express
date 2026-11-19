@@ -89,5 +89,15 @@
   .st-progress small { display:none; }
 }
 
+/* ── Valid ID on request pages ───────────────────────────────────────── */
+.rq-id-type { display:flex; justify-content:space-between; gap:12px; font-size:14px; margin-bottom:10px; }
+.rq-id-type span { color:var(--muted); }
+.rq-id-frame { display:grid; place-items:center; min-height:120px; max-height:320px; overflow:hidden; border-radius:12px; border:1px solid var(--border); background:#f7f2f3; text-decoration:none; }
+.rq-id-frame img { display:block; max-width:100%; max-height:320px; object-fit:contain; }
+.rq-id-frame img[hidden] { display:none; }
+.rq-id-pdf { padding:24px; font-weight:700; color:var(--primary); font-size:14px; }
+.rq-id-tip { margin:10px 0 0; font-size:12.5px; color:var(--muted); }
+.rq-id-missing { margin:0; background:#fdf4dc; border:1px solid #e8d48a; color:#5c4500; border-radius:10px; padding:10px 12px; font-size:13.5px; }
+
 /* ── Messages page ───────────────────────────────────────────────────── */
 .st-portal .an-card .an-audience { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:2px 8px; background:#efedf0; color:#4a4250; margin-left:4px; }

@@ -18,6 +18,8 @@ const {
 const { getFilteredAuditLogs } = require('../actions/audit.actions');
 const { sendRequestApprovedEmail, sendRequestDeclinedEmail } = require('../actions/email.actions');
 
+const { sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
+
 const router = express.Router();
 
 router.get('/captain/dashboard', requireRole('captain'), (req, res) => {
@@ -58,6 +60,17 @@ router.get('/api/captain/requests/:id', requireRole('captain'), async (req, res)
   const request = await getRequestById(req.params.id);
   const logs = await getRequestLogs(req.params.id);
   res.json({ request, logs });
+});
+
+// Valid ID the resident uploaded with this request
+router.get('/api/captain/requests/:id/valid-id', requireRole('captain'), async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT valid_id_path FROM requests WHERE request_id = $1 LIMIT 1', [req.params.id]);
+    if (!rows.length || !(await sendStoredFile(res, rows[0].valid_id_path))) res.status(404).send(FILE_NOT_FOUND_PAGE);
+  } catch (err) {
+    console.error('Request valid ID error:', err);
+    if (!res.headersSent) res.status(500).send('Could not load the valid ID.');
+  }
 });
 
 router.post('/api/captain/requests/:id/decision', requireRole('captain'), async (req, res) => {

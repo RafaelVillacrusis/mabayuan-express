@@ -16,6 +16,8 @@ const { createResidentNotification, refreshRoleDashboards, getInboxMessages } = 
 const { createAuditLog } = require('../actions/audit.actions');
 const { sendAccountApprovedEmail, sendAccountDeclinedEmail, sendReadyForPickupEmail } = require('../actions/email.actions');
 
+const { sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
+
 const router = express.Router();
 
 router.get('/staff/dashboard', requireRole('staff'), (req, res) => {
@@ -374,6 +376,17 @@ router.get('/api/staff/requests/:id', requireRole('staff'), async (req, res) => 
   const request = await getRequestById(req.params.id);
   const logs = await getRequestLogs(req.params.id);
   res.json({ request, logs });
+});
+
+// Valid ID the resident uploaded with this request
+router.get('/api/staff/requests/:id/valid-id', requireRole('staff'), async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT valid_id_path FROM requests WHERE request_id = $1 LIMIT 1', [req.params.id]);
+    if (!rows.length || !(await sendStoredFile(res, rows[0].valid_id_path))) res.status(404).send(FILE_NOT_FOUND_PAGE);
+  } catch (err) {
+    console.error('Request valid ID error:', err);
+    if (!res.headersSent) res.status(500).send('Could not load the valid ID.');
+  }
 });
 
 router.get('/api/staff/pending-residents', requireRole('staff'), async (req, res) => {

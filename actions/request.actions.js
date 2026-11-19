@@ -177,6 +177,8 @@ async function getRequestById(requestId) {
       res.suffix,
       res.email,
       r.contact_number,
+      r.valid_id_type,
+      (r.valid_id_path IS NOT NULL AND r.valid_id_path NOT LIKE 'missing:%') AS has_valid_id,
       res.phone_number,
       res.address
     FROM requests r
