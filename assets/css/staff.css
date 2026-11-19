@@ -13,6 +13,9 @@
   .st-portal .rs-user-name { display:none; }
 }
 
+/* `hidden` always wins over display rules on portal pages */
+.st-portal [hidden] { display:none !important; }
+
 /* Table rows: keep text and buttons aligned */
 .st-portal .table td { vertical-align:middle; }
 

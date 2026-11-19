@@ -68,6 +68,16 @@ router.post('/api/captain/requests/:id/decision', requireRole('captain'), async 
     const request = await getRequestById(requestId);
     if (!request) return res.status(404).send('Request not found.');
 
+    // Only requests still waiting for the Captain can be decided — prevents resetting
+    // requests that staff already processed (e.g. Ready for Pickup / Claimed)
+    if (!['approve', 'decline'].includes(decision)) return res.status(400).send('Invalid decision.');
+    if (request.status !== 'Pending Approval') {
+      return res.redirect(`/captain/request/${requestId}?error=${encodeURIComponent('This request has already been decided.')}`);
+    }
+    if (decision === 'decline' && !(captain_notes || '').trim()) {
+      return res.redirect(`/captain/request/${requestId}?error=${encodeURIComponent('Please give a reason when declining a request.')}`);
+    }
+
     const newStatus = decision === 'approve' ? 'Approved' : 'Declined';
 
     // ✅ PostgreSQL-safe UPDATE (NO updated_at here)

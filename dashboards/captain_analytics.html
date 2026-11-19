@@ -9,8 +9,10 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Captain Analytics — Mabayuan Express</title>
+  <title>Analytics — Mabayuan Express Captain</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />
   <link rel="stylesheet" href="/assets/css/print-template.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
@@ -194,13 +196,12 @@
     .pagination-row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; flex-wrap: wrap; gap: 8px; }
     .pagination-row span { font-size: 12px; color: #9a7a7d; }</style>
 </head>
-<body>
+<body class="rs-portal st-portal" data-page="analytics">
 <div class="page-shell">
 
-  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <header class="topbar rs-topbar">
+      <a class="brand" href="/captain/dashboard" aria-label="Mabayuan Express — captain dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -210,24 +211,28 @@
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg></div>
-      <div class="brand-copy">
-        <div>Captain Dashboard</div>
-        <small>Analytics &amp; Reports</small>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
+        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">C</span><span class="rs-user-name" id="rsUserName">Captain</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
+          <a href="/captain/dashboard">🏠 Dashboard</a>
+          <a href="/captain/messages">📢 Send an announcement</a>
+          <a href="/captain/analytics">📈 Analytics report</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
       </div>
-    </div>
-    <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        
-      <a href="/captain/dashboard">Dashboard</a>
-      <a href="/captain/analytics" style="font-weight:700;text-decoration:underline">Analytics</a>
-      <a href="/captain/messages">Messages</a>
-      <a href="/captain/audit-trail">Audit Trail</a>
-      <a href="/captain/ai-assistant">AI Assistant</a><form action="/auth/logout" method="POST">
-        <button class="btn btn-small btn-ghost">Logout</button>
-      </form>
-    </nav>
-  </header>
+    </header>
 
   <main class="container content-area">
 
@@ -332,7 +337,15 @@
   </main>
 </div>
 
-<script src="/assets/js/common.js"></script>
+<nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home<span class="rs-badge" data-pending-badge hidden></span></a>
+    <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+    <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announce</a>
+    <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit</a>
+    <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/assets/js/common.js"></script>
+<script src="/assets/js/captain-shell.js"></script>
 <script>
 /* ── palette matching brand --primary: #a64d57 ── */
 const C = {
@@ -657,57 +670,6 @@ function printReport() {
     }, 1500);
   }, 150);
 }
-</script>
-<script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeNotif() {
-  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
-    d.classList.remove('show');
-  });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
 </script>
 </body>
 </html>

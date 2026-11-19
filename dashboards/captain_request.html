@@ -4,10 +4,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Captain Request Review</title><link rel="stylesheet" href="/assets/css/style.css" />  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Request Review — Mabayuan Express Captain</title><link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />  <style>
   </style>
-</head><body><div class="page-shell"><div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar"><div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+</head><body class="rs-portal st-portal" data-page="request"><div class="page-shell"><header class="topbar rs-topbar">
+      <a class="brand" href="/captain/dashboard" aria-label="Mabayuan Express — captain dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -16,60 +19,62 @@
   <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg></div><div class="brand-copy"><div>Captain Review</div><small>Request details</small></div></div><button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        <a href="/captain/dashboard">Dashboard</a><a href="/captain/audit-trail">Audit Trail</a><a href="/captain/ai-assistant">AI Assistant</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form></nav></header><main class="container content-area"><div class="page-message" id="pageMessage"></div><a href="/captain/dashboard" class="btn btn-small btn-ghost" style="margin-bottom:18px;">&larr; Back</a><div class="two-col"><section><div class="info-card"><h3>Resident details</h3><div class="info-list"><div><span>Resident name</span><strong id="residentName">-</strong></div><div><span>Address</span><strong id="residentAddress">-</strong></div><div><span>Contact number</span><strong id="residentContact">-</strong></div><div><span>Email</span><strong id="residentEmail">-</strong></div></div></div><div class="info-card"><h3>Request details</h3><div class="info-list"><div><span>Transaction</span><strong id="requestTransaction">-</strong></div><div><span>Document</span><strong id="requestDocument">-</strong></div><div><span>Price</span><strong id="requestPrice">-</strong></div><div><span>Suggested Release</span><strong id="requestSuggested">-</strong></div><div><span>Status</span><strong id="requestStatus">-</strong></div></div></div><div class="info-card"><h3>Purpose</h3><p id="requestPurpose" style="margin:0;line-height:1.7">-</p></div></section><section><div class="info-card"><h3>Decision</h3><form method="POST" id="decisionForm"><label class="form-label">Captain notes</label><textarea class="textarea" name="captain_notes" id="captainNotes" placeholder="Reason or note for approval/decline"></textarea><div class="button-row" style="justify-content:flex-end;margin-top:14px;"><button class="btn btn-small" name="decision" value="approve">Approve</button><button class="btn btn-small btn-danger" name="decision" value="decline">Decline</button></div></form></div><div class="info-card"><h3>Status and Date Logs</h3><div id="logList" class="log-list"></div></div></section></div></main></div><script src="/assets/js/common.js"></script>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
+        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">C</span><span class="rs-user-name" id="rsUserName">Captain</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
+          <a href="/captain/dashboard">🏠 Dashboard</a>
+          <a href="/captain/messages">📢 Send an announcement</a>
+          <a href="/captain/analytics">📈 Analytics report</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
+    </header><main class="container content-area"><div class="page-message" id="pageMessage"></div>
+<div class="st-head"><div>
+  <a class="st-crumb" href="/captain/dashboard">← Back to requests</a>
+  <div class="st-req-title"><h1 id="reqTitle">Request</h1><span class="status-pill" id="reqStatusPill"></span></div>
+  <p id="reqSubtitle">Loading request…</p>
+</div></div>
+<ol class="st-progress" id="stProgress" aria-label="Request progress">
+  <li><span class="dot">1</span>Submitted<small id="pgSubmitted"></small></li>
+  <li><span class="dot">2</span><span id="pgDecisionLabel">Captain decision</span><small id="pgDecision">Waiting for you</small></li>
+  <li><span class="dot">3</span>Ready for pickup<small id="pgReady">Staff sets release date</small></li>
+  <li><span class="dot">4</span>Claimed<small>Picked up by resident</small></li>
+</ol>
+<div class="st-next" id="stNext" hidden></div><div class="two-col"><section><div class="info-card"><h3>👤 Resident</h3><div class="info-list"><div><span>Resident name</span><strong id="residentName">-</strong></div><div><span>Address</span><strong id="residentAddress">-</strong></div><div><span>Contact number</span><strong id="residentContact">-</strong></div><div><span>Email</span><strong id="residentEmail">-</strong></div></div></div><div class="info-card"><h3>📄 Request Details</h3><div class="info-list"><div><span>Transaction</span><strong id="requestTransaction">-</strong></div><div><span>Document</span><strong id="requestDocument">-</strong></div><div><span>Price</span><strong id="requestPrice">-</strong></div><div><span>Suggested Release</span><strong id="requestSuggested">-</strong></div><div><span>Status</span><strong id="requestStatus">-</strong></div></div></div><div class="info-card"><h3>🎯 Purpose</h3><p id="requestPurpose" style="margin:0;line-height:1.7">-</p></div></section><section><div class="info-card" id="decisionCard" hidden><h3>⚖️ Your Decision</h3>
+  <p style="font-size:13px;color:#9a7a7d;margin:-4px 0 12px;">Approving sends the request to staff for processing. Declining ends the request. The resident is emailed either way.</p>
+  <form method="POST" id="decisionForm" novalidate>
+    <input type="hidden" name="decision" id="decisionValue">
+    <label class="form-label" for="captainNotes">Note to the resident <span id="notesReq" style="font-weight:400;color:var(--muted)">(optional for approval, required to decline)</span></label>
+    <textarea class="textarea" name="captain_notes" id="captainNotes" rows="3" maxlength="500" placeholder="e.g. Please bring your valid ID when claiming."></textarea>
+    <div id="decisionError" role="alert" style="display:none;color:#b42318;font-size:13px;margin-top:8px;"></div>
+    <div id="decisionConfirm" class="st-next" style="margin:14px 0 0;" hidden></div>
+    <div class="button-row" style="justify-content:flex-end;margin-top:14px;" id="decisionButtons">
+      <button class="btn btn-small btn-danger" type="button" data-decide="decline">✖ Decline</button>
+      <button class="btn btn-small" type="button" data-decide="approve">✓ Approve</button>
+    </div>
+  </form>
+</div>
+<div class="info-card" id="decisionDone" hidden></div><div class="info-card"><h3>🕘 Request History</h3><ol id="logList" class="st-timeline"></ol></div></section></div></main></div><nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home<span class="rs-badge" data-pending-badge hidden></span></a>
+    <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+    <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announce</a>
+    <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit</a>
+    <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/assets/js/common.js"></script>
+<script src="/assets/js/captain-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
-<script src="/assets/js/captain-request.js"></script><script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeNotif() {
-  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
-    d.classList.remove('show');
-  });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
-</script>
-</body></html>
+<script src="/assets/js/captain-request.js"></script></body></html>

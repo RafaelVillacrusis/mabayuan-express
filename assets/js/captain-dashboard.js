@@ -2,6 +2,7 @@ let socket;
 let allRows   = [];
 let sortCol   = 'suggested_release_date';
 let sortDir   = 'asc';
+let pendingFirst = true;   // requests needing the Captain are listed first until a column is sorted
 let currentPage = 1;
 const PAGE_SIZE = 10;
 
@@ -17,7 +18,9 @@ function setFilter(status) {
 async function loadMe() {
   const res = await fetch('/api/captain/me');
   const me  = await res.json();
-  document.getElementById('captainName').textContent = me.full_name;
+  document.getElementById('captainName').textContent = (me.full_name || 'Captain').split(' ')[0];
+  const t = document.getElementById('cpToday');
+  if (t) t.textContent = new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 async function loadCounts() {
@@ -35,6 +38,26 @@ async function loadCounts() {
     card.querySelector('.filter-value').textContent = map[card.dataset.status] || 0;
     card.classList.toggle('active', card.dataset.status === getFilter());
   });
+  const pending = Number(counts.pending_approval || 0);
+  if (window.cpSetPendingBadge) window.cpSetPendingBadge(pending);
+  document.getElementById('cpPendingCard')?.classList.toggle('st-attention', pending > 0);
+  const pc = document.getElementById('cpPendingCount');
+  if (pc) { pc.textContent = pending; pc.hidden = pending === 0; }
+  const banner = document.getElementById('cpPendingBanner');
+  if (banner) {
+    banner.hidden = false;
+    banner.classList.toggle('done', pending === 0);
+    banner.innerHTML = pending > 0
+      ? `<div><strong>⏳ ${pending} request${pending === 1 ? ' is' : 's are'} waiting for your decision</strong>Residents are notified by email once you approve or decline. <a href="?status=Pending%20Approval" id="cpShowPending" style="color:inherit;font-weight:700">Show them →</a></div>`
+      : '<div><strong>🎉 All caught up</strong>There are no requests waiting for your decision.</div>';
+    document.getElementById('cpShowPending')?.addEventListener('click', async e => {
+      e.preventDefault();
+      setFilter('Pending Approval');
+      await loadCounts();
+      renderTable();
+      document.getElementById('cpQueue').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 async function loadRequests() {
@@ -72,6 +95,10 @@ function getFilteredSorted() {
 
   // Sort
   rows.sort((a, b) => {
+    if (pendingFirst) {
+      const pa = a.status === 'Pending Approval', pb = b.status === 'Pending Approval';
+      if (pa !== pb) return pa ? -1 : 1;
+    }
     let va = a[sortCol] ?? '';
     let vb = b[sortCol] ?? '';
     // Numeric sort for price
@@ -110,10 +137,12 @@ function renderTable() {
           <td>${escapeHtml(row.document_name)}</td>
           <td>${peso(row.price_at_request)}</td>
           <td>${formatDate(row.suggested_release_date)}</td>
-          <td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${escapeHtml(row.status)}</span></td>
-          <td><a class="btn btn-small" href="/captain/request/${row.request_id}">View</a></td>
+          <td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${escapeHtml(row.status === 'Pending Approval' ? 'Needs decision' : row.status)}</span></td>
+          <td>${row.status === 'Pending Approval'
+            ? `<a class="btn btn-small" href="/captain/request/${row.request_id}">Review</a>`
+            : `<a class="btn btn-small btn-ghost" href="/captain/request/${row.request_id}">View</a>`}</td>
         </tr>`).join('')
-    : `<tr><td colspan="7" class="empty-state">No requests found.</td></tr>`;
+    : `<tr><td colspan="7" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
 
   // Render pagination using shared pg-row style
   const pgEl = document.getElementById('paginationRow');
@@ -206,6 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     th.style.cursor = 'pointer';
     th.addEventListener('click', () => {
       const col = th.dataset.col;
+      pendingFirst = false;
       if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       else { sortCol = col; sortDir = 'asc'; }
       currentPage = 1;

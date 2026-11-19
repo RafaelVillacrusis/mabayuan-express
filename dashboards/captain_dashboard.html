@@ -4,7 +4,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Captain Dashboard</title><link rel="stylesheet" href="/assets/css/style.css" />  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Dashboard — Mabayuan Express Captain</title><link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />  <style>
   /* ── Sort headers ── */
   #captainTable thead th[data-col] { cursor: pointer; user-select: none; white-space: nowrap; }
   #captainTable thead th[data-col]::after { content: ' ⇅'; opacity: .35; font-size: .8em; }
@@ -68,8 +70,9 @@
 
 
 </style>
-</head><body><div class="page-shell"><div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar"><div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+</head><body class="rs-portal st-portal" data-page="dashboard"><div class="page-shell"><header class="topbar rs-topbar">
+      <a class="brand" href="/captain/dashboard" aria-label="Mabayuan Express — captain dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -78,10 +81,36 @@
   <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg></div><div class="brand-copy"><div>Captain Dashboard</div><small>Approval and decline of requests</small></div></div><button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        <a href="/captain/dashboard">Dashboard</a><a href="/captain/analytics">Analytics</a><a href="/captain/messages">Messages</a><a href="/captain/audit-trail">Audit Trail</a><a href="/captain/ai-assistant">AI Assistant</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form></nav></header><main class="container content-area"><div class="dashboard-header"><div><h1>Welcome, <span id="captainName">Captain</span></h1><p>Review resident requests before they proceed to staff processing.</p></div></div><section class="filter-grid"><div class="filter-card active" data-status="all"><div class="filter-label">Total</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Pending Approval"><div class="filter-label">Pending Approval</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Approved"><div class="filter-label">Approved</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Declined"><div class="filter-label">Declined</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Ready for Pickup"><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Claimed"><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></section><section class="panel"><h2 style="margin-top:0">Requests for Captain Review</h2><div class="audit-filter-grid" id="dashFilterForm">
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
+        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">C</span><span class="rs-user-name" id="rsUserName">Captain</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
+          <a href="/captain/dashboard">🏠 Dashboard</a>
+          <a href="/captain/messages">📢 Send an announcement</a>
+          <a href="/captain/analytics">📈 Analytics report</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
+    </header><main class="container content-area"><div class="st-head"><div><span class="st-date" id="cpToday"></span><h1>Welcome, <span id="captainName">Captain</span> 👋</h1><p>Approve or decline resident document requests before staff process them.</p></div><div class="st-head-actions"><a class="btn btn-small btn-ghost" href="/captain/messages">📢 Send announcement</a><a class="btn btn-small btn-ghost" href="/captain/analytics">📈 View analytics</a></div></div><div class="st-next" id="cpPendingBanner" hidden></div><section class="filter-grid">
+  <div class="filter-card st-stat active" data-status="all"><span class="st-ico st-i-rose">📄</span><div><div class="filter-label">All Requests</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Pending Approval" id="cpPendingCard"><span class="st-ico st-i-amber">⏳</span><div><div class="filter-label">Needs Your Decision</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Approved"><span class="st-ico st-i-blue">⚙️</span><div><div class="filter-label">Approved</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Declined"><span class="st-ico st-i-red">✖️</span><div><div class="filter-label">Declined</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Ready for Pickup"><span class="st-ico st-i-green">📦</span><div><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Claimed"><span class="st-ico st-i-gray">✅</span><div><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></div>
+</section><section class="panel" id="cpQueue"><div class="st-section-head"><div><h2>📋 Document Requests <span class="st-count" id="cpPendingCount" hidden>0</span></h2><p id="cpQueueHint">Requests marked <strong>Needs decision</strong> are waiting for you. Click a card above to filter.</p></div></div><div class="audit-filter-grid" id="dashFilterForm">
   <input class="input" type="text" id="captainSearch" placeholder="Search transaction, resident, or document…" autocomplete="off" />
   <select class="select" id="statusDropdown">
     <option value="all">All Statuses</option>
@@ -114,58 +143,15 @@
     <tbody id="captainRequestRows"></tbody>
   </table>
 </div>
-<div id="paginationRow" class="pg-row"></div></section></main></div><script src="/socket.io/socket.io.js"></script><script src="/assets/js/common-pagination.js"></script>
+<div id="paginationRow" class="pg-row"></div></section></main></div><nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home<span class="rs-badge" data-pending-badge hidden></span></a>
+    <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+    <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announce</a>
+    <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit</a>
+    <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/socket.io/socket.io.js"></script><script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/captain-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
-<script src="/assets/js/captain-dashboard.js"></script><script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeNotif() {
-  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
-    d.classList.remove('show');
-  });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
-</script>
-</body></html>
+<script src="/assets/js/captain-dashboard.js"></script></body></html>

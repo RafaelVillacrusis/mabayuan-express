@@ -8,8 +8,8 @@
       ['/staff/ai-assistant', 'AI Assistant', '🤖', 'AI'],
     ],
     captain: [
-      ['/captain/dashboard', 'Dashboard', '🏠', 'Home'], ['/captain/analytics', 'Analytics', '📈', 'Analytics'],
-      ['/captain/messages', 'Messages', '📨', 'Messages'], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
+      ['/captain/dashboard', 'Dashboard', '🏠', 'Home', 'pending'], ['/captain/analytics', 'Analytics', '📈', 'Analytics'],
+      ['/captain/messages', 'Announcements', '📢', 'Announce'], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
       ['/captain/ai-assistant', 'AI Assistant', '🤖', 'AI'],
     ],
   };
@@ -75,6 +75,13 @@
     $('rsMenuName').textContent = name;
     $('rsMenuRole').textContent = me.role === 'captain' ? 'Barangay Captain' : 'Barangay Staff';
 
+    // captain: requests waiting for a decision
+    if (me.role === 'captain') {
+      fetch('/api/captain/counts').then(r => r.ok ? r.json() : {}).then(c => {
+        const n = Number(c.pending_approval || 0);
+        document.querySelectorAll('[data-seen-key="pending"]').forEach(b => { b.textContent = n > 9 ? '9+' : n; b.hidden = n === 0; });
+      }).catch(() => {});
+    }
     // unread staff messages badge
     if (me.role === 'staff') {
       fetch('/api/staff/inbox').then(r => r.ok ? r.json() : []).then(msgs => {
