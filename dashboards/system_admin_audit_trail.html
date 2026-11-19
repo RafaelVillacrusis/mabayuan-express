@@ -9,14 +9,15 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Audit Trail — Mabayuan Express</title>
+  <title>Audit Trail — Mabayuan Express Admin</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/admin.css" />
   <style>
     .audit-filter-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr auto; gap:10px; align-items:end; }
     .action-chip { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; background:#f5eded; color:#8b3d46; }
   </style>
 </head>
-<body>
+<body class="sa-portal" data-page="audit">
   <div class="sa-overlay" id="sidebarOverlay"></div>
 <div class="admin-shell">
   <aside class="admin-sidebar">
@@ -34,28 +35,33 @@
       <h2>Mabayuan Express</h2>
       <small>System Administrator</small>
     </div>
-    <nav class="admin-sidebar-nav">
+    <nav class="admin-sidebar-nav" aria-label="Main navigation">
       <div class="sa-nav-label">Overview</div>
-      <a class="sa-nav-item" href="/system-admin/dashboard"><span class="sa-icon">📊</span> Dashboard</a>
-      <div class="sa-nav-label">Management</div>
-      <a class="sa-nav-item" href="/system-admin/dashboard?section=documents"><span class="sa-icon">📄</span> Documents</a>
-      <div class="sa-nav-label">Tools</div>
-      <a class="sa-nav-item" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
-      <a class="sa-nav-item active" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
-      <a class="sa-nav-item" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Recent Requests</a>
-      <a class="sa-nav-item" href="/api/system-admin/backup"><span class="sa-icon">💾</span> Download Backup</a>
+      <a class="sa-nav-item" data-nav="overview" data-section="overview" href="/system-admin/dashboard"><span class="sa-icon">📊</span> Dashboard</a>
+      <div class="sa-nav-label">Manage</div>
+      <a class="sa-nav-item" data-nav="documents" data-section="documents" href="/system-admin/dashboard?section=documents"><span class="sa-icon">📄</span> Documents</a>
+      <a class="sa-nav-item" data-nav="rbac" href="/system-admin/rbac"><span class="sa-icon">👥</span> Users &amp; Roles</a>
+      <div class="sa-nav-label">Monitor</div>
+      <a class="sa-nav-item" data-nav="requests" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Requests</a>
+      <a class="sa-nav-item" data-nav="audit" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
+      <a class="sa-nav-item" data-nav="ai" data-section="ai" href="/system-admin/dashboard?section=ai"><span class="sa-icon">🤖</span> AI Usage</a>
+      <div class="sa-nav-label">System</div>
+      <a class="sa-nav-item sa-nav-backup" href="/api/system-admin/backup" title="Download a copy of all system records"><span class="sa-icon">💾</span> <span>Download Backup<span class="sa-nav-hint">Saves a copy of all records</span></span></a>
     </nav>
     <div class="admin-sidebar-footer">
-      <div class="sa-user" id="sidebarUser">System Administrator</div>
+      <div class="sa-user-card">
+        <div class="sa-avatar" id="sidebarAvatar">SA</div>
+        <div style="min-width:0"><strong id="sidebarUser">System Administrator</strong><span id="sidebarEmail"></span><span class="sa-online">IT Personnel · Online</span></div>
+      </div>
       <form action="/auth/logout" method="POST">
-        <button class="sa-btn sa-btn-ghost" style="width:100%;justify-content:center">Logout</button>
+        <button class="sa-logout" type="submit">↪ Log out</button>
       </form>
     </div>
   </aside>
 
   <div class="admin-main">
     <div class="admin-topbar">
-      <button class="sa-menu-toggle sa-menu-toggle--topbar" id="sidebarToggle" aria-label="Toggle menu">☰</button>
+      <button class="sa-menu-toggle sa-menu-toggle--topbar" id="sidebarToggle" aria-label="Open menu" aria-expanded="false">☰</button>
       <div class="admin-topbar-title">
         <div class="page-icon">📋</div>
         Audit Trail
@@ -74,7 +80,6 @@
           <h1>Audit Trail</h1>
           <p>Full system activity log with filters for actor, action, target, and date range.</p>
         </div>
-        <a href="/system-admin/dashboard" class="sa-btn sa-btn-ghost sa-btn-sm">← Back to Dashboard</a>
       </div>
 
       <!-- Filters -->
@@ -150,6 +155,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/admin-shell.js"></script>
 <script src="/assets/js/system-admin-audit-trail.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
@@ -165,47 +171,6 @@
     });
     observer.observe(document.getElementById('auditRows'), {childList:true});
   });
-</script>
-<script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-(function(){
-  var toggle = document.getElementById('sidebarToggle');
-  var sidebar = document.querySelector('.admin-sidebar');
-  var overlay = document.getElementById('sidebarOverlay');
-  if (!toggle || !sidebar) return;
-  function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); toggle.textContent='✕'; }
-  function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); toggle.textContent='☰'; }
-  toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
-  overlay.addEventListener('click', closeSidebar);
-  // Close on nav item click (mobile)
-  document.querySelectorAll('.sa-nav-item').forEach(function(item){
-    item.addEventListener('click', function(){ if(window.innerWidth <= 920) closeSidebar(); });
-  });
-})();
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
 </script>
 </body>
 </html>

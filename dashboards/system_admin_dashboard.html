@@ -9,15 +9,16 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>System Admin Dashboard — Mabayuan Express</title>
+  <title>Dashboard — Mabayuan Express Admin</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/admin.css" />
   <style>
     .sa-badge { display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600; }
     .sa-badge-active { background:#dcfce7;color:#166534; }
     .sa-badge-inactive { background:#f1f5f9;color:#64748b; }
   </style>
 </head>
-<body>
+<body class="sa-portal" data-page="dashboard">
 
 <!-- Edit Document Modal -->
 <div class="details-modal" id="editDocModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
@@ -77,35 +78,33 @@
       <h2>Mabayuan Express</h2>
       <small>System Administrator</small>
     </div>
-    <nav class="admin-sidebar-nav">
+    <nav class="admin-sidebar-nav" aria-label="Main navigation">
       <div class="sa-nav-label">Overview</div>
-      <button class="sa-nav-item active" onclick="showSection('overview',this)" id="nav-overview">
-        <span class="sa-icon">📊</span> Dashboard
-      </button>
-      <div class="sa-nav-label">Management</div>
-      <button class="sa-nav-item" onclick="showSection('documents',this)">
-        <span class="sa-icon">📄</span> Documents
-      </button>
-      <div class="sa-nav-label">Tools</div>
-      <a class="sa-nav-item" href="/system-admin/rbac"><span class="sa-icon">🔐</span> RBAC</a>
-      <a class="sa-nav-item" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
-      <a class="sa-nav-item" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Recent Requests</a>
-      <button class="sa-nav-item" onclick="showSection('ai',this);loadAiUsage()">
-        <span class="sa-icon">🤖</span> AI Usage
-      </button>
-      <a class="sa-nav-item" href="/api/system-admin/backup"><span class="sa-icon">💾</span> Download Backup</a>
+      <a class="sa-nav-item" data-nav="overview" data-section="overview" href="/system-admin/dashboard"><span class="sa-icon">📊</span> Dashboard</a>
+      <div class="sa-nav-label">Manage</div>
+      <a class="sa-nav-item" data-nav="documents" data-section="documents" href="/system-admin/dashboard?section=documents"><span class="sa-icon">📄</span> Documents</a>
+      <a class="sa-nav-item" data-nav="rbac" href="/system-admin/rbac"><span class="sa-icon">👥</span> Users &amp; Roles</a>
+      <div class="sa-nav-label">Monitor</div>
+      <a class="sa-nav-item" data-nav="requests" href="/system-admin/recent-requests"><span class="sa-icon">📥</span> Requests</a>
+      <a class="sa-nav-item" data-nav="audit" href="/system-admin/audit-trail"><span class="sa-icon">📋</span> Audit Trail</a>
+      <a class="sa-nav-item" data-nav="ai" data-section="ai" href="/system-admin/dashboard?section=ai"><span class="sa-icon">🤖</span> AI Usage</a>
+      <div class="sa-nav-label">System</div>
+      <a class="sa-nav-item sa-nav-backup" href="/api/system-admin/backup" title="Download a copy of all system records"><span class="sa-icon">💾</span> <span>Download Backup<span class="sa-nav-hint">Saves a copy of all records</span></span></a>
     </nav>
     <div class="admin-sidebar-footer">
-      <div class="sa-user" id="sidebarUser">System Administrator</div>
+      <div class="sa-user-card">
+        <div class="sa-avatar" id="sidebarAvatar">SA</div>
+        <div style="min-width:0"><strong id="sidebarUser">System Administrator</strong><span id="sidebarEmail"></span><span class="sa-online">IT Personnel · Online</span></div>
+      </div>
       <form action="/auth/logout" method="POST">
-        <button class="sa-btn sa-btn-ghost" style="width:100%;justify-content:center">Logout</button>
+        <button class="sa-logout" type="submit">↪ Log out</button>
       </form>
     </div>
   </aside>
 
   <div class="admin-main">
     <div class="admin-topbar">
-      <button class="sa-menu-toggle sa-menu-toggle--topbar" id="sidebarToggle" aria-label="Toggle menu">☰</button>
+      <button class="sa-menu-toggle sa-menu-toggle--topbar" id="sidebarToggle" aria-label="Open menu" aria-expanded="false">☰</button>
       <div class="admin-topbar-title">
         <div class="page-icon" id="topbarIcon">📊</div>
         <span id="pageTitle">Dashboard</span>
@@ -125,8 +124,9 @@
       <div class="sa-section active" id="view-overview">
         <div class="admin-page-header">
           <div>
+            <span class="st-date" id="saToday" style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--admin-bg,#8b3d46);margin-bottom:4px;"></span>
             <h1>Welcome, <span id="adminName">System Admin</span> 👋</h1>
-            <p>Here's an overview of your Mabayuan Express system.</p>
+            <p>Here's how Mabayuan Express is running today.</p>
           </div>
         </div>
 
@@ -141,7 +141,7 @@
           </div>
           <div class="sa-stat-card">
             <div class="sa-stat-icon wine">📄</div>
-            <div><div class="sa-stat-val" id="countDocuments">0</div><div class="sa-stat-label">Active Documents</div></div>
+            <div><div class="sa-stat-val" id="countDocuments">0</div><div class="sa-stat-label">Document Types Offered</div></div>
           </div>
           <div class="sa-stat-card">
             <div class="sa-stat-icon mauve">🔑</div>
@@ -149,27 +149,49 @@
           </div>
         </div>
 
+        <div class="sa-row2">
+          <div class="sa-panel">
+            <div class="sa-panel-header"><h2>📈 Request Pipeline</h2><a class="sa-panel-link" href="/system-admin/recent-requests">View requests →</a></div>
+            <div class="sa-panel-body">
+              <div class="sa-pipe" id="saPipeline"><p style="margin:0;color:#9a7a7d">Loading…</p></div>
+              <div class="sa-pipe-foot">Where every document request currently is, from submission to pickup.</div>
+            </div>
+          </div>
+          <div class="sa-panel">
+            <div class="sa-panel-header"><h2>🕘 Recent Activity</h2><a class="sa-panel-link" href="/system-admin/audit-trail">Full audit trail →</a></div>
+            <div class="sa-panel-body" style="padding-top:8px;padding-bottom:8px;">
+              <ul class="sa-activity" id="saActivity"><li><p style="color:#9a7a7d">Loading…</p></li></ul>
+            </div>
+          </div>
+        </div>
+
         <div class="sa-panel">
-          <div class="sa-panel-header"><h2>⚡ Quick Access</h2></div>
+          <div class="sa-panel-header"><h2>⚡ Quick Actions</h2></div>
           <div class="sa-panel-body">
             <div class="sa-quick-grid">
+              <a class="sa-quick-card" href="/system-admin/dashboard?section=documents" data-quick-section="documents">
+                <div class="qc-icon">📄</div>
+                <h3>Manage Documents</h3>
+                <p>Add document types and update fees or processing days.</p>
+                <div class="qc-arrow">Open documents →</div>
+              </a>
               <a class="sa-quick-card" href="/system-admin/rbac">
-                <div class="qc-icon">🔐</div>
-                <h3>Role-Based Access Control</h3>
-                <p>Manage user roles and permissions across the system.</p>
-                <div class="qc-arrow">Open RBAC →</div>
+                <div class="qc-icon">👥</div>
+                <h3>Users &amp; Roles</h3>
+                <p>Create staff and captain accounts and control what each role can do.</p>
+                <div class="qc-arrow">Manage users →</div>
               </a>
               <a class="sa-quick-card" href="/system-admin/audit-trail">
                 <div class="qc-icon">📋</div>
                 <h3>Audit Trail</h3>
-                <p>Browse all system actions with full timestamp logs.</p>
-                <div class="qc-arrow">View Logs →</div>
+                <p>See who did what and when across the whole system.</p>
+                <div class="qc-arrow">View logs →</div>
               </a>
-              <a class="sa-quick-card" href="/system-admin/recent-requests">
-                <div class="qc-icon">📥</div>
-                <h3>Recent Requests</h3>
-                <p>Monitor incoming document requests and their status.</p>
-                <div class="qc-arrow">View Requests →</div>
+              <a class="sa-quick-card" href="/api/system-admin/backup">
+                <div class="qc-icon">💾</div>
+                <h3>Download Backup</h3>
+                <p>Save a copy of all records. Do this regularly and keep it somewhere safe.</p>
+                <div class="qc-arrow">Download now →</div>
               </a>
             </div>
           </div>
@@ -251,6 +273,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/admin-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
 <script src="/assets/js/system-admin-dashboard.js"></script>
 <script>
@@ -309,9 +332,8 @@
 
   function showSection(name, btn) {
     document.querySelectorAll('.sa-section').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.sa-nav-item').forEach(el=>el.classList.remove('active'));
     document.getElementById('view-'+name).classList.add('active');
-    if(btn) btn.classList.add('active');
+    if (window.adminSetActive) window.adminSetActive(name);
     document.getElementById('pageTitle').textContent = sectionTitles[name]||name;
     document.getElementById('topbarIcon').textContent = sectionIcons[name]||'📊';
   }
@@ -369,52 +391,16 @@
   // Auto-open section from ?section= URL param (e.g. from sidebar links on sub-pages)
   document.addEventListener('DOMContentLoaded', function() {
     const section = new URLSearchParams(window.location.search).get('section');
-    if (section && ['documents','users','overview'].includes(section)) {
-      const btn = document.querySelector(`[onclick*="showSection('${section}"]`);
-      showSection(section, btn);
+    if (section && ['documents','ai','overview'].includes(section)) {
+      showSection(section);
+      if (section === 'ai') loadAiUsage();
     }
+    // Quick action cards that open a dashboard section
+    document.querySelectorAll('[data-quick-section]').forEach(a => a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(`.admin-sidebar-nav [data-section="${a.dataset.quickSection}"]`)?.click();
+    }));
   });
-</script>
-<script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-(function(){
-  var toggle = document.getElementById('sidebarToggle');
-  var sidebar = document.querySelector('.admin-sidebar');
-  var overlay = document.getElementById('sidebarOverlay');
-  if (!toggle || !sidebar) return;
-  function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); toggle.textContent='✕'; }
-  function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); toggle.textContent='☰'; }
-  toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
-  overlay.addEventListener('click', closeSidebar);
-  // Close on nav item click (mobile)
-  document.querySelectorAll('.sa-nav-item').forEach(function(item){
-    item.addEventListener('click', function(){ if(window.innerWidth <= 920) closeSidebar(); });
-  });
-})();
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
 </script>
 </body>
 </html>
