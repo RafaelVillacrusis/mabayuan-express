@@ -16,6 +16,9 @@
 /* `hidden` always wins over display rules on portal pages */
 .st-portal [hidden] { display:none !important; }
 
+/* Labels that aren't <label> elements (e.g. button groups) */
+.st-portal span.form-label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; }
+
 /* Table rows: keep text and buttons aligned */
 .st-portal .table td { vertical-align:middle; }
 

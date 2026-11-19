@@ -1,4 +1,4 @@
-/* AI Assistant page — report generator, inquiry classifier, inquiry log (staff & captain) */
+/* AI Report Generator page (staff & captain) */
 (function () {
   // [href, label, icon, short label for the phone tab bar, badge?]
   const NAV = {
@@ -21,13 +21,13 @@
   async function callApi(url, options = {}) {
     if (!navigator.onLine) throw new Error('You appear to be offline. Please check your internet connection.');
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), 60000);
     let res;
     try {
       res = await fetch(url, { ...options, signal: controller.signal });
     } catch (err) {
       throw new Error(err.name === 'AbortError'
-        ? 'The AI service took too long to respond. Please try again later.'
+        ? 'The report took too long to generate. Please try again in a moment.'
         : 'Connection error. Please check your internet connection and try again.');
     } finally {
       clearTimeout(timer);
@@ -100,26 +100,69 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
   })();
 
-  // ── Tabs ────────────────────────────────────────────────────────────────────
-  let inquiriesLoaded = false;
-  document.querySelectorAll('.ai-tab').forEach(tab => tab.addEventListener('click', () => {
-    document.querySelectorAll('.ai-tab').forEach(t => t.setAttribute('aria-selected', String(t === tab)));
-    document.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
-    if (tab.dataset.tab === 'inquiries' && !inquiriesLoaded) { inquiriesLoaded = true; loadInquiries(); }
-  }));
-
   // ── Report generator ────────────────────────────────────────────────────────
   const today = new Date();
-  $('dateTo').value = isoDate(today);
-  $('dateFrom').value = isoDate(new Date(today.getTime() - 29 * 86400000));
+  function setRange(fromDate, toDate, presetBtn) {
+    $('dateFrom').value = isoDate(fromDate);
+    $('dateTo').value = isoDate(toDate);
+    document.querySelectorAll('[data-preset]').forEach(b => b.classList.toggle('on', b === presetBtn));
+  }
+  const PRESETS = {
+    '30d': () => [new Date(today.getTime() - 29 * 86400000), today],
+    month: () => [new Date(today.getFullYear(), today.getMonth(), 1), today],
+    lastmonth: () => [new Date(today.getFullYear(), today.getMonth() - 1, 1), new Date(today.getFullYear(), today.getMonth(), 0)],
+    year: () => [new Date(today.getFullYear(), 0, 1), today],
+  };
+  document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+    const [f, t] = PRESETS[b.dataset.preset]();
+    setRange(f, t, b);
+  }));
+  setRange(...PRESETS['30d'](), document.querySelector('[data-preset="30d"]'));
+  $('dateTo').max = isoDate(today);
+  $('dateFrom').max = isoDate(today);
+  ['dateFrom', 'dateTo'].forEach(id => $(id).addEventListener('change', () =>
+    document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('on'))));
 
   function syncReportFields() {
     const isAnn = $('reportType').value === 'announcement';
     document.querySelectorAll('[data-for="range"]').forEach(el => { el.hidden = isAnn; });
     document.querySelectorAll('[data-for="announcement"]').forEach(el => { el.hidden = !isAnn; });
+    $('reportBtn').textContent = isAnn ? 'Draft announcement' : 'Generate report';
   }
   $('reportType').addEventListener('change', syncReportFields);
   syncReportFields();
+
+  // ── AI commentary (loads after the exact figures are already shown) ─────────
+  let commentaryRun = 0;
+  function setAiNote(ok, message) {
+    const note = $('reportNote');
+    note.className = ok ? 'ai-note ok' : 'ai-note';
+    note.innerHTML = ok
+      ? '✅ <strong>Figures are exact:</strong> calculated directly from the records. The overview, observations, and recommendations were written by AI, so review them before use.'
+      : `ℹ️ <strong>Figures are exact:</strong> calculated directly from the records. ${escapeHtml(message || '')}`;
+  }
+  async function loadCommentary(key, originalReport) {
+    const run = ++commentaryRun;
+    const note = $('reportNote');
+    note.className = 'ai-note';
+    note.innerHTML = '<span class="ai-spinner" style="display:inline-block;vertical-align:-3px"></span> <strong>Figures are ready and exact.</strong> Adding AI commentary in the background, so you can already read, copy, or print the report.';
+    try {
+      const data = await postJson('/api/ai/report/commentary', { key });
+      if (run !== commentaryRun) return;               // a newer report was generated meanwhile
+      if ($('reportOutput').value === originalReport) {
+        $('reportOutput').value = data.report;
+        setAiNote(true);
+      } else {
+        // the user already edited the report — don't overwrite their changes
+        note.className = 'ai-note ok';
+        note.innerHTML = '✨ <strong>AI commentary is ready.</strong> You have edited the report, so it was not replaced automatically. <button type="button" class="btn btn-small" id="insertAi" style="margin-left:6px">Replace with AI version</button>';
+        $('insertAi').addEventListener('click', () => { $('reportOutput').value = data.report; setAiNote(true); });
+      }
+    } catch (err) {
+      if (run !== commentaryRun) return;
+      setAiNote(false, err.message);
+    }
+  }
 
   $('reportForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -135,83 +178,49 @@
       body.date_to = $('dateTo').value;
       if (!body.date_from || !body.date_to) return showError($('reportError'), 'Please choose a date range.');
       if (body.date_from > body.date_to) return showError($('reportError'), 'The start date must be before the end date.');
+      if (body.date_to > isoDate(today)) return showError($('reportError'), 'The end date cannot be in the future.');
     }
     showError($('reportError'), '');
+    commentaryRun++;
     $('reportBtn').disabled = true;
     $('reportLoading').hidden = false;
+    $('reportLoadingText').textContent = type === 'announcement' ? 'Drafting announcement…' : 'Calculating figures…';
+    const slow = setTimeout(() => { $('reportLoadingText').textContent = type === 'announcement' ? 'Still drafting, the AI service is busy…' : 'Still calculating…'; }, 4000);
     const t0 = performance.now();
     try {
       const data = await postJson('/api/ai/report', body);
       const received = performance.now();
       $('reportOutput').value = data.report;
       $('reportOutputWrap').hidden = false;
+      const note = $('reportNote');
+      if (type === 'announcement') {
+        note.className = 'ai-note';
+        note.innerHTML = '⚠️ <strong>AI-generated draft.</strong> Check the details and fill in any [PLACEHOLDERS] before posting it.';
+      } else if (data.ai_used) {
+        setAiNote(true);
+      } else if (data.commentary_key) {
+        loadCommentary(data.commentary_key, data.report);
+      } else {
+        setAiNote(false, 'AI commentary is not available, so a plain summary was used.');
+      }
       $('reportMeta').textContent = `Generated in ${((received - t0) / 1000).toFixed(1)}s${data.cached ? ' (from cache)' : ''}`;
+      $('reportOutputWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
       reportRender(data.log_id, received);
     } catch (err) {
       showError($('reportError'), err.message);
     } finally {
+      clearTimeout(slow);
       $('reportBtn').disabled = false;
       $('reportLoading').hidden = true;
     }
   });
   $('copyReport').addEventListener('click', e => copyText($('reportOutput').value, e.currentTarget));
-
-  // ── Classifier ──────────────────────────────────────────────────────────────
-  $('classifyInput').addEventListener('input', () => { $('classifyCount').textContent = `${$('classifyInput').value.trim().length}/1000`; });
-  $('classifyForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const message = $('classifyInput').value.trim();
-    if (message.length < 3) return showError($('classifyError'), 'Please enter the resident message to classify.');
-    showError($('classifyError'), '');
-    $('classifyBtn').disabled = true;
-    $('classifyLoading').hidden = false;
-    try {
-      const data = await postJson('/api/ai/classify', { message });
-      const received = performance.now();
-      const r = data.result;
-      $('cCategory').textContent = r.category;
-      $('cSub').textContent = r.subcategory;
-      $('cIntent').textContent = r.intent;
-      $('cSummary').textContent = r.summary || '—';
-      $('cReply').value = r.suggested_reply || '';
-      $('classifyResult').hidden = false;
-      inquiriesLoaded = false;   // refresh the log next time it's opened
-      reportRender(data.log_id, received);
-    } catch (err) {
-      showError($('classifyError'), err.message);
-    } finally {
-      $('classifyBtn').disabled = false;
-      $('classifyLoading').hidden = true;
-    }
+  $('printReport').addEventListener('click', () => {
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!doctype html><title>Mabayuan Express Report</title><pre style="font:13px/1.6 ui-monospace,Consolas,monospace;white-space:pre-wrap;margin:32px">${escapeHtml($('reportOutput').value)}</pre>`);
+    w.document.close();
+    w.focus();
+    w.print();
   });
-  $('copyReply').addEventListener('click', e => copyText($('cReply').value, e.currentTarget));
-
-  // ── Inquiry log ─────────────────────────────────────────────────────────────
-  async function loadInquiries() {
-    const params = new URLSearchParams();
-    if ($('inqCategory').value) params.set('category', $('inqCategory').value);
-    if ($('inqFrom').value) params.set('from', $('inqFrom').value);
-    if ($('inqTo').value) params.set('to', $('inqTo').value);
-    const tbody = $('inqRows');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted)">Loading…</td></tr>';
-    try {
-      const data = await callApi(`/api/ai/inquiries?${params}`);
-      const sel = $('inqCategory');
-      if (sel.options.length === 1) data.categories.forEach(c => sel.add(new Option(c, c)));
-      $('inqCounts').innerHTML = data.counts.map(c => `<span class="ai-chipcount">${escapeHtml(c.category || 'Unclassified')} <b>${c.total}</b></span>`).join('');
-      tbody.innerHTML = data.inquiries.length
-        ? data.inquiries.map(i => `<tr>
-            <td style="white-space:nowrap">${formatDateTime(i.created_at)}</td>
-            <td class="ai-msgcell">${escapeHtml(i.message)}</td>
-            <td>${escapeHtml(i.category || '—')}</td>
-            <td>${escapeHtml(i.subcategory || '—')}</td>
-            <td>${escapeHtml(i.intent || '—')}</td>
-            <td class="ai-meta">${i.source === 'staff' ? 'Staff entry' : escapeHtml(i.resident_name || 'Public visitor')}</td>
-          </tr>`).join('')
-        : '<tr><td colspan="6" style="text-align:center;color:var(--muted)">No inquiries found.</td></tr>';
-    } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#b42318">${escapeHtml(err.message)}</td></tr>`;
-    }
-  }
-  ['inqCategory', 'inqFrom', 'inqTo'].forEach(id => $(id).addEventListener('change', loadInquiries));
 })();

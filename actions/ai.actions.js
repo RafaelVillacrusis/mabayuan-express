@@ -17,14 +17,21 @@ const pool = require('../db');
 const CONFIG = {
   apiKey:        process.env.GEMINI_API_KEY || '',
   model:         process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+  // Tried in order when the main model is overloaded, timing out, or retired
+  fallbackModels: (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.1-flash-lite,gemini-3.5-flash-lite')
+                    .split(',').map(s => s.trim()).filter(Boolean),
   thinkingLevel: process.env.GEMINI_THINKING_LEVEL || 'minimal',   // Gemini 3.x: minimal | low | medium | high
-  timeoutMs:     Number(process.env.GEMINI_TIMEOUT_MS || 20000),
+  timeoutMs:     Number(process.env.GEMINI_TIMEOUT_MS || 20000),   // per attempt
+  deadlineMs:    Number(process.env.GEMINI_DEADLINE_MS || 30000),  // whole request, across retries and fallbacks
   maxConcurrent: Number(process.env.GEMINI_MAX_CONCURRENT || 3),
   maxQueue:      Number(process.env.GEMINI_MAX_QUEUE || 25),
   rpm:           Number(process.env.GEMINI_RPM || 10),    // requests per minute across the whole app
   rpd:           Number(process.env.GEMINI_RPD || 250),   // requests per day across the whole app
-  maxRetries:    2,
+  maxRetries:    1,                                        // per model; fallback models handle the rest
 };
+
+// Errors after which another model may succeed
+const FALLBACK_CODES = new Set(['RATE_LIMITED', 'NETWORK', 'TIMEOUT', 'MODEL_UNAVAILABLE', 'EMPTY']);
 
 // ── Errors ────────────────────────────────────────────────────────────────────
 const ERRORS = {
@@ -36,6 +43,7 @@ const ERRORS = {
   TIMEOUT:         { status: 504, message: 'The AI assistant took too long to respond. Please try again later.' },
   NETWORK:         { status: 503, message: 'The AI service could not be reached. Please try again later.' },
   UNAVAILABLE:     { status: 503, message: 'The AI assistant is currently unavailable. Please contact the barangay office.' },
+  MODEL_UNAVAILABLE: { status: 503, message: 'The AI assistant is currently unavailable. Please try again later.' },
   BLOCKED:         { status: 422, message: 'I can only help with questions about Barangay Mabayuan services.' },
   EMPTY:           { status: 502, message: 'The AI assistant could not generate a response. Please try rephrasing your question.' },
   INTERNAL:        { status: 500, message: 'Something went wrong. Please try again later.' },
@@ -163,104 +171,129 @@ function invalid(message) {
 }
 
 // ── Core call ─────────────────────────────────────────────────────────────────
+function thinkingFor(model) {
+  // Gemini models "think" before answering by default, which makes simple answers slow.
+  if (/^gemini-[3-9]/.test(model)) return { thinkingLevel: CONFIG.thinkingLevel };
+  if (/2\.5-flash/.test(model)) return { thinkingBudget: 0 };
+  return null;
+}
+
 /**
- * Call Gemini generateContent.
+ * One model, with a retry for temporary errors. Throws AIError on failure.
+ */
+async function callModel(model, { system, contents, schema, maxTokens, temperature, attemptTimeoutMs }, deadline, countAttempt) {
+  const generationConfig = { temperature, maxOutputTokens: maxTokens };
+  if (schema) { generationConfig.responseMimeType = 'application/json'; generationConfig.responseSchema = schema; }
+  const thinking = thinkingFor(model);
+  if (thinking) generationConfig.thinkingConfig = thinking;
+  const buildBody = () => JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig });
+  let body = buildBody();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+  for (let attempt = 0; ; attempt++) {
+    const remaining = deadline - Date.now();
+    if (remaining < 1500) throw new AIError('TIMEOUT', 'deadline reached');
+    await reserveQuota();
+    countAttempt();
+    let response, json;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), Math.min(attemptTimeoutMs || CONFIG.timeoutMs, remaining));
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': CONFIG.apiKey },
+        body,
+        signal: controller.signal,
+      });
+      json = await response.json().catch(() => null);
+    } catch (err) {
+      clearTimeout(timer);
+      const code = err.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK';
+      if (attempt < CONFIG.maxRetries && code === 'NETWORK') { await sleep(backoffDelay(attempt)); continue; }
+      throw new AIError(code, err.message);
+    }
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      const status = response.status;
+      const msg = json?.error?.message || `HTTP ${status}`;
+      if (status === 401 || status === 403 || (status === 400 && /api key/i.test(msg))) {
+        disableKey(msg);
+        throw new AIError('UNAVAILABLE', msg);
+      }
+      // Model rejected our thinking setting — retry once without it
+      if (status === 400 && /thinking/i.test(msg) && generationConfig.thinkingConfig) {
+        delete generationConfig.thinkingConfig;
+        body = buildBody();
+        continue;
+      }
+      // Model retired or misspelled
+      if (status === 404) {
+        console.error(`[AI] Gemini model "${model}" is not available (${msg}). Update GEMINI_MODEL / GEMINI_FALLBACK_MODELS.`);
+        throw new AIError('MODEL_UNAVAILABLE', msg);
+      }
+      if (status === 429 || status >= 500) {
+        const retryAfter = parseRetryDelay(json);
+        const wait = backoffDelay(attempt, retryAfter);
+        if (attempt < CONFIG.maxRetries && (!retryAfter || retryAfter <= 10000) && Date.now() + wait < deadline - 3000) {
+          await sleep(wait);
+          continue;
+        }
+        throw new AIError(status === 429 ? 'RATE_LIMITED' : 'NETWORK', msg);
+      }
+      console.error('[AI] Gemini request error:', status, msg);
+      throw new AIError('INTERNAL', msg);
+    }
+
+    if (json?.promptFeedback?.blockReason) throw new AIError('BLOCKED', json.promptFeedback.blockReason);
+    const candidate = json?.candidates?.[0];
+    if (candidate?.finishReason === 'SAFETY') throw new AIError('BLOCKED', 'SAFETY');
+    const text = (candidate?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+    if (!text) throw new AIError('EMPTY', `finishReason=${candidate?.finishReason}`);
+    if (!schema) return text;
+    try { return JSON.parse(text); }
+    catch { throw new AIError('EMPTY', 'invalid JSON from model'); }
+  }
+}
+
+/**
+ * Call Gemini generateContent, falling back to backup models when the main one is
+ * overloaded, slow, or retired — all within one overall deadline.
  * @param {object} opts
  * @param {string} opts.system         system instruction
  * @param {Array}  opts.contents       Gemini contents array
  * @param {object} [opts.schema]       JSON response schema → returns parsed object
  * @param {number} [opts.maxTokens]
  * @param {number} [opts.temperature]
- * @returns {Promise<{ data: any, attempts: number, latencyMs: number }>}
+ * @param {number} [opts.deadlineMs]   total time allowed (default GEMINI_DEADLINE_MS)
+ * @param {number} [opts.attemptTimeoutMs] max time for one model attempt (default GEMINI_TIMEOUT_MS)
+ * @returns {Promise<{ data: any, attempts: number, latencyMs: number, model: string }>}
  */
-async function generate({ system, contents, schema, maxTokens = 1024, temperature = 0.3 }) {
+async function generate({ system, contents, schema, maxTokens = 1024, temperature = 0.3, deadlineMs = CONFIG.deadlineMs, attemptTimeoutMs }) {
   if (!CONFIG.apiKey) throw new AIError('UNAVAILABLE', 'GEMINI_API_KEY not set');
   if (Date.now() < keyDisabledUntil) throw new AIError('UNAVAILABLE', 'API key disabled after rejection');
 
   await acquireSlot();
   const started = Date.now();
+  const deadline = started + deadlineMs;
   let attempts = 0;
+  const models = [CONFIG.model, ...CONFIG.fallbackModels.filter(m => m !== CONFIG.model)];
+  let lastErr;
   try {
-    const generationConfig = { temperature, maxOutputTokens: maxTokens };
-    if (schema) { generationConfig.responseMimeType = 'application/json'; generationConfig.responseSchema = schema; }
-    // Gemini models "think" before answering by default, which makes simple answers slow.
-    // Keep thinking to a minimum: Gemini 3.x uses thinkingLevel, Gemini 2.5 Flash uses thinkingBudget.
-    if (/^gemini-[3-9]/.test(CONFIG.model)) generationConfig.thinkingConfig = { thinkingLevel: CONFIG.thinkingLevel };
-    else if (/2\.5-flash/.test(CONFIG.model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
-
-    const buildBody = () => JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents,
-      generationConfig,
-    });
-    let body = buildBody();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(CONFIG.model)}:generateContent`;
-
-    for (let attempt = 0; ; attempt++) {
-      await reserveQuota();
-      attempts++;
-      let response, json;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), CONFIG.timeoutMs);
+    for (const model of models) {
       try {
-        response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': CONFIG.apiKey },
-          body,
-          signal: controller.signal,
-        });
-        json = await response.json().catch(() => null);
+        const data = await callModel(model, { system, contents, schema, maxTokens, temperature, attemptTimeoutMs }, deadline, () => attempts++);
+        if (model !== CONFIG.model) console.warn(`[AI] Answered by fallback model ${model}`);
+        return { data, attempts, latencyMs: Date.now() - started, model };
       } catch (err) {
-        clearTimeout(timer);
-        const code = err.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK';
-        if (attempt < CONFIG.maxRetries && code === 'NETWORK') { await sleep(backoffDelay(attempt)); continue; }
-        throw new AIError(code, err.message);
+        lastErr = err;
+        if (!(err instanceof AIError) || !FALLBACK_CODES.has(err.code)) throw err;
+        if (deadline - Date.now() < 3000) break;
+        console.warn(`[AI] ${model} failed (${err.code}: ${String(err.message).slice(0, 120)}) — trying next model`);
       }
-      clearTimeout(timer);
-
-      if (!response.ok) {
-        const status = response.status;
-        const msg = json?.error?.message || `HTTP ${status}`;
-        if (status === 401 || status === 403 || (status === 400 && /api key/i.test(msg))) {
-          disableKey(msg);
-          throw new AIError('UNAVAILABLE', msg);
-        }
-        // Model rejected our thinking setting — retry once without it
-        if (status === 400 && /thinking/i.test(msg) && generationConfig.thinkingConfig) {
-          delete generationConfig.thinkingConfig;
-          body = buildBody();
-          continue;
-        }
-        // Model retired or misspelled
-        if (status === 404) {
-          console.error(`[AI] Gemini model "${CONFIG.model}" is not available — set GEMINI_MODEL to a current model. (${msg})`);
-          throw new AIError('UNAVAILABLE', msg);
-        }
-        if (status === 429 || status >= 500) {
-          const retryAfter = parseRetryDelay(json);
-          if (attempt < CONFIG.maxRetries && (!retryAfter || retryAfter <= 10000)) {
-            await sleep(backoffDelay(attempt, retryAfter));
-            continue;
-          }
-          throw new AIError(status === 429 ? 'RATE_LIMITED' : 'NETWORK', msg);
-        }
-        console.error('[AI] Gemini request error:', status, msg);
-        throw new AIError('INTERNAL', msg);
-      }
-
-      if (json?.promptFeedback?.blockReason) throw new AIError('BLOCKED', json.promptFeedback.blockReason);
-      const candidate = json?.candidates?.[0];
-      if (candidate?.finishReason === 'SAFETY') throw new AIError('BLOCKED', 'SAFETY');
-      const text = (candidate?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
-      if (!text) throw new AIError('EMPTY', `finishReason=${candidate?.finishReason}`);
-
-      let data = text;
-      if (schema) {
-        try { data = JSON.parse(text); }
-        catch { throw new AIError('EMPTY', 'invalid JSON from model'); }
-      }
-      return { data, attempts, latencyMs: Date.now() - started };
     }
+    if (lastErr && lastErr.code === 'MODEL_UNAVAILABLE') throw new AIError('UNAVAILABLE', lastErr.message);
+    throw lastErr || new AIError('INTERNAL', 'no model available');
   } catch (err) {
     err.attempts = attempts;
     err.latencyMs = Date.now() - started;
@@ -291,6 +324,7 @@ function liveStatus() {
   return {
     configured: !!CONFIG.apiKey,
     model: CONFIG.model,
+    fallback_models: CONFIG.fallbackModels,
     key_paused: now < keyDisabledUntil,
     active_requests: active,
     queued_requests: waiting.length,

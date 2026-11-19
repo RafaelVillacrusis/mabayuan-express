@@ -12,9 +12,11 @@
   <link rel="stylesheet" href="/assets/css/staff.css" />
   <style>
     [hidden] { display:none !important; }
-    .ai-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
-    .ai-tab { border:1.5px solid var(--border); background:#fff; color:var(--text); border-radius:999px; padding:9px 16px; font-weight:700; font-size:14px; cursor:pointer; }
-    .ai-tab[aria-selected="true"] { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .ai-presets { display:flex; gap:8px; flex-wrap:wrap; }
+    .ai-presets button { border:1.5px solid var(--border); background:#fff; color:var(--text); border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+    .ai-presets button:hover, .ai-presets button.on { border-color:var(--primary); color:var(--primary); background:#fdf2f3; }
+    .ai-note.ok { background:#e9f9ee; border-color:#a3d9b1; color:#16653a; }
+    .ai-output { min-height:520px; }
     .ai-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
     .ai-grid .full { grid-column:1 / -1; }
     .ai-note { background:#fdf4dc; border:1px solid #e8d48a; color:#5c4500; border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.55; margin:12px 0; }
@@ -64,32 +66,32 @@
   </header>
 
   <main class="container content-area">
-    <div class="dashboard-header">
+    <div class="st-head">
       <div>
-        <h1>AI Assistant</h1>
-        <p>Generate report drafts and organize resident inquiries with Google Gemini. Always review AI output before using it.</p>
+        <h1>🤖 AI Report Generator</h1>
+        <p>Create summary reports from Mabayuan Express records, or draft an announcement. Figures are calculated directly from the database; AI only writes the commentary.</p>
       </div>
     </div>
 
-    <div class="ai-tabs" role="tablist">
-      <button class="ai-tab" role="tab" aria-selected="true" data-tab="report">📝 Report Generator</button>
-      <button class="ai-tab" role="tab" aria-selected="false" data-tab="classify">🏷️ Inquiry Classifier</button>
-      <button class="ai-tab" role="tab" aria-selected="false" data-tab="inquiries">📥 Resident Inquiries</button>
-    </div>
-
-    <!-- ── Report Generator ── -->
-    <section class="panel" data-panel="report">
-      <div class="section-head"><div><h2 style="margin:0">Report Generator</h2>
-        <p class="section-subtitle">Summaries use aggregated system records only. No resident names or contact details are sent to the AI.</p></div></div>
+    <section class="panel">
       <form id="reportForm" novalidate>
         <div class="ai-grid">
-          <div>
-            <label class="form-label" for="reportType">Report type</label>
+          <div class="full">
+            <label class="form-label" for="reportType">What do you want to create?</label>
             <select class="select" id="reportType">
-              <option value="requests">Summary of document requests</option>
-              <option value="inquiries">Summary of frequently asked questions</option>
-              <option value="announcement">Draft announcement</option>
+              <option value="requests">📄 Summary of document requests</option>
+              <option value="inquiries">💬 Summary of resident questions (from the chatbot)</option>
+              <option value="announcement">📢 Draft an announcement</option>
             </select>
+          </div>
+          <div class="full" data-for="range">
+            <span class="form-label">Quick range</span>
+            <div class="ai-presets" role="group" aria-label="Quick date ranges">
+              <button type="button" data-preset="30d">Last 30 days</button>
+              <button type="button" data-preset="month">This month</button>
+              <button type="button" data-preset="lastmonth">Last month</button>
+              <button type="button" data-preset="year">This year</button>
+            </div>
           </div>
           <div data-for="range"><label class="form-label" for="dateFrom">From</label><input class="input" type="date" id="dateFrom"></div>
           <div data-for="range"><label class="form-label" for="dateTo">To</label><input class="input" type="date" id="dateTo"></div>
@@ -107,63 +109,19 @@
           </div>
         </div>
         <div class="ai-actions">
-          <button class="btn" type="submit" id="reportBtn">Generate draft</button>
-          <span class="ai-loading" id="reportLoading" hidden><span class="ai-spinner"></span> Generating… this can take a few seconds</span>
+          <button class="btn" type="submit" id="reportBtn">Generate report</button>
+          <span class="ai-loading" id="reportLoading" hidden><span class="ai-spinner"></span> <span id="reportLoadingText">Calculating figures…</span></span>
         </div>
       </form>
       <div class="ai-error" id="reportError" hidden></div>
       <div id="reportOutputWrap" hidden>
-        <div class="ai-note">⚠️ <strong>AI-generated draft.</strong> Check every figure and statement, and edit as needed before using it as an official report or announcement.</div>
+        <div class="ai-note" id="reportNote"></div>
         <textarea class="textarea input ai-output" id="reportOutput" aria-label="Generated report (editable)"></textarea>
         <div class="ai-actions">
-          <button class="btn btn-outline" type="button" id="copyReport">Copy text</button>
+          <button class="btn btn-outline" type="button" id="copyReport">📋 Copy text</button>
+          <button class="btn btn-outline" type="button" id="printReport">🖨 Print</button>
           <span class="ai-meta" id="reportMeta"></span>
         </div>
-      </div>
-    </section>
-
-    <!-- ── Inquiry Classifier ── -->
-    <section class="panel" data-panel="classify" hidden>
-      <div class="section-head"><div><h2 style="margin:0">Inquiry Classifier</h2>
-        <p class="section-subtitle">Paste a message a resident sent (walk-in note, text, or social media message) to categorize it and get a suggested reply. Chatbot questions are classified automatically.</p></div></div>
-      <form id="classifyForm" novalidate>
-        <label class="form-label" for="classifyInput">Resident message</label>
-        <textarea class="textarea input" id="classifyInput" rows="4" maxlength="1000" placeholder="I want to know how I can apply for a certificate of indigency."></textarea>
-        <div class="ai-actions">
-          <button class="btn" type="submit" id="classifyBtn">Classify</button>
-          <span class="ai-loading" id="classifyLoading" hidden><span class="ai-spinner"></span> Classifying…</span>
-          <span class="ai-meta" id="classifyCount">0/1000</span>
-        </div>
-      </form>
-      <div class="ai-error" id="classifyError" hidden></div>
-      <div id="classifyResult" hidden>
-        <div class="ai-result-grid">
-          <div><span>Category</span><strong id="cCategory"></strong></div>
-          <div><span>Subcategory</span><strong id="cSub"></strong></div>
-          <div><span>Intent</span><strong id="cIntent"></strong></div>
-        </div>
-        <p style="margin:12px 0 6px"><strong>Summary:</strong> <span id="cSummary"></span></p>
-        <label class="form-label" for="cReply" style="margin-top:10px">Suggested reply <span class="ai-meta">(review before sending)</span></label>
-        <textarea class="textarea input" id="cReply" rows="4"></textarea>
-        <div class="ai-actions"><button class="btn btn-outline" type="button" id="copyReply">Copy reply</button></div>
-      </div>
-    </section>
-
-    <!-- ── Resident Inquiries ── -->
-    <section class="panel" data-panel="inquiries" hidden>
-      <div class="section-head"><div><h2 style="margin:0">Resident Inquiries</h2>
-        <p class="section-subtitle">Questions residents asked the chatbot and messages classified by staff, grouped by AI category.</p></div></div>
-      <div class="ai-grid" style="margin-bottom:12px">
-        <div><label class="form-label" for="inqCategory">Category</label><select class="select" id="inqCategory"><option value="">All categories</option></select></div>
-        <div><label class="form-label" for="inqFrom">From</label><input class="input" type="date" id="inqFrom"></div>
-        <div><label class="form-label" for="inqTo">To</label><input class="input" type="date" id="inqTo"></div>
-      </div>
-      <div id="inqCounts" style="margin-bottom:10px"></div>
-      <div class="table-wrap">
-        <table class="table">
-          <thead><tr><th>Date</th><th>Message</th><th>Category</th><th>Subcategory</th><th>Intent</th><th>From</th></tr></thead>
-          <tbody id="inqRows"></tbody>
-        </table>
       </div>
     </section>
   </main>
