@@ -1,13 +1,16 @@
 /* AI Assistant page — report generator, inquiry classifier, inquiry log (staff & captain) */
 (function () {
+  // [href, label, icon, short label for the phone tab bar, badge?]
   const NAV = {
     staff: [
-      ['/staff/dashboard', 'Dashboard'], ['/staff/residents', 'Resident Records'], ['/staff/report', 'Report'],
-      ['/staff/inbox', 'Messages'], ['/staff/ai-assistant', 'AI Assistant'],
+      ['/staff/dashboard', 'Dashboard', '🏠', 'Home'], ['/staff/residents', 'Residents', '👥', 'Residents'],
+      ['/staff/report', 'Reports', '📊', 'Reports'], ['/staff/inbox', 'Messages', '📨', 'Messages', 'staff_inbox_last_seen'],
+      ['/staff/ai-assistant', 'AI Assistant', '🤖', 'AI'],
     ],
     captain: [
-      ['/captain/dashboard', 'Dashboard'], ['/captain/analytics', 'Analytics'], ['/captain/messages', 'Messages'],
-      ['/captain/audit-trail', 'Audit Trail'], ['/captain/ai-assistant', 'AI Assistant'],
+      ['/captain/dashboard', 'Dashboard', '🏠', 'Home'], ['/captain/analytics', 'Analytics', '📈', 'Analytics'],
+      ['/captain/messages', 'Messages', '📨', 'Messages'], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
+      ['/captain/ai-assistant', 'AI Assistant', '🤖', 'AI'],
     ],
   };
 
@@ -55,10 +58,40 @@
 
   // ── Nav ─────────────────────────────────────────────────────────────────────
   callApi('/api/ai/me').then(me => {
-    $('brandRole').textContent = me.role === 'captain' ? 'Captain Dashboard' : 'Staff Dashboard';
-    $('navLinks').innerHTML = (NAV[me.role] || []).map(([href, label]) =>
-      `<a href="${href}"${href.endsWith('/ai-assistant') ? ' style="font-weight:700"' : ''}>${label}</a>`).join('');
+    const items = NAV[me.role] || [];
+    const roleName = me.role === 'captain' ? 'Captain Portal' : 'Staff Portal';
+    $('brandRole').textContent = roleName;
+    $('rsBrand').href = items[0] ? items[0][0] : '/';
+    const link = ([href, label, icon, short, seenKey], mobile) =>
+      `<a href="${href}"${href.endsWith('/ai-assistant') ? ' aria-current="page"' : ''}><span class="rs-ico" aria-hidden="true">${icon}</span>${mobile ? short : label}` +
+      (seenKey ? `<span class="rs-badge" data-seen-key="${seenKey}" hidden></span>` : '') + '</a>';
+    $('rsNav').innerHTML = items.map(i => link(i, false)).join('');
+    $('rsBottom').innerHTML = items.map(i => link(i, true)).join('');
+
+    const name = me.full_name || (me.role === 'captain' ? 'Captain' : 'Staff');
+    const parts = name.trim().split(/\s+/);
+    $('rsAvatar').textContent = ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    $('rsUserName').textContent = parts[0];
+    $('rsMenuName').textContent = name;
+    $('rsMenuRole').textContent = me.role === 'captain' ? 'Barangay Captain' : 'Barangay Staff';
+
+    // unread staff messages badge
+    if (me.role === 'staff') {
+      fetch('/api/staff/inbox').then(r => r.ok ? r.json() : []).then(msgs => {
+        let seen = 0; try { seen = parseInt(localStorage.getItem('staff_inbox_last_seen') || '0', 10) || 0; } catch {}
+        const n = msgs.filter(m => m.message_id > seen).length;
+        document.querySelectorAll('[data-seen-key]').forEach(b => { b.textContent = n > 9 ? '9+' : n; b.hidden = n === 0; });
+      }).catch(() => {});
+    }
   }).catch(() => { window.location.href = '/login'; });
+
+  // Account menu
+  (function () {
+    const btn = $('rsUserBtn'), menu = $('rsUserMenu');
+    btn.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
+    document.addEventListener('click', e => { if (!menu.contains(e.target)) { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
+  })();
 
   // ── Tabs ────────────────────────────────────────────────────────────────────
   let inquiriesLoaded = false;

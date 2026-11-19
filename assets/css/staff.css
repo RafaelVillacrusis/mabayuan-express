@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Staff portal — page styles. Load after style.css and resident.css
+   (resident.css provides the shared shell: top nav, account menu, tab bar).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Five tabs on the mobile bar */
+@media (max-width:760px) {
+  .st-portal .rs-bottom { grid-template-columns:repeat(5,1fr); }
+  .st-portal .rs-bottom a { font-size:10.5px; }
+}
+@media (max-width:1100px) and (min-width:761px) {
+  .st-portal .rs-nav a { padding:9px 10px; font-size:13.5px; }
+  .st-portal .rs-user-name { display:none; }
+}
+
+/* Table rows: keep text and buttons aligned */
+.st-portal .table td { vertical-align:middle; }
+
+/* Never print the navigation */
+@media print { .rs-topbar, .rs-bottom, .rs-user-menu { display:none !important; } }
+
+/* ── Page header ─────────────────────────────────────────────────────── */
+.st-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+.st-head h1 { margin:0; font-size:clamp(22px,3vw,28px); }
+.st-head p { margin:6px 0 0; color:var(--muted); font-size:14.5px; }
+.st-date { display:block; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--primary); margin-bottom:4px; }
+.st-head-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+/* ── Stat cards with icons ───────────────────────────────────────────── */
+.st-stat { display:flex; align-items:center; gap:14px; }
+.st-stat .filter-value { margin-top:2px; }
+.st-ico { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:21px; flex-shrink:0; }
+.st-i-rose { background:#fbe9eb; } .st-i-blue { background:#e6effc; } .st-i-green { background:#e6f6ea; }
+.st-i-amber { background:#fdf4dc; } .st-i-gray { background:#efedf0; } .st-i-red { background:#fde8e8; }
+.filter-card.st-attention { border-color:#e8b9bf; background:#fff8f8; }
+.filter-card.st-attention .filter-value { color:var(--primary); }
+@media (max-width:700px) { .st-ico { width:38px; height:38px; font-size:18px; border-radius:12px; } }
+
+/* ── Section headings inside panels ──────────────────────────────────── */
+.st-section-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.st-section-head h2 { margin:0; font-size:18px; display:flex; align-items:center; gap:8px; }
+.st-section-head p { margin:4px 0 0; color:var(--muted); font-size:13.5px; }
+.st-count { background:var(--primary); color:#fff; border-radius:999px; font-size:12px; font-weight:800; padding:2px 9px; }
+.st-count[hidden] { display:none; }
+
+/* ── Toolbar (search + filters in one row) ───────────────────────────── */
+.st-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+.st-toolbar .st-search { flex:1 1 260px; position:relative; }
+.st-toolbar .st-search .input { width:100%; padding-left:38px; box-sizing:border-box; }
+.st-toolbar .st-search::before { content:'🔍'; position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.6; pointer-events:none; }
+.st-toolbar .select, .st-toolbar > .input { flex:0 1 190px; min-width:150px; }
+.st-toolbar .st-result { margin-left:auto; font-size:13px; color:var(--muted); }
+
+/* ── Request detail page ─────────────────────────────────────────────── */
+.st-crumb { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--primary); text-decoration:none; margin-bottom:8px; }
+.st-crumb:hover { text-decoration:underline; }
+.st-req-title { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.st-req-title h1 { font-family:inherit; }
+.st-progress { list-style:none; margin:0 0 20px; padding:18px 20px; display:grid; grid-template-columns:repeat(4,1fr); gap:6px;
+  background:#fff; border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-sm); }
+.st-progress li { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--muted); }
+.st-progress li:not(:last-child)::after { content:''; position:absolute; top:15px; left:calc(50% + 20px); right:calc(-50% + 20px); height:3px; border-radius:3px; background:#eadcdd; }
+.st-progress li.done:not(:last-child)::after { background:var(--primary); }
+.st-progress .dot { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; background:#f3ecec; border:2px solid #eadcdd; color:#8a7f80; font-size:13px; font-weight:800; position:relative; z-index:1; }
+.st-progress li.done .dot { background:var(--primary); border-color:var(--primary); color:#fff; }
+.st-progress li.current .dot { background:#fff; border-color:var(--primary); color:var(--primary); box-shadow:0 0 0 5px rgba(166,77,87,.15); }
+.st-progress li.done, .st-progress li.current { color:var(--text); }
+.st-progress small { font-weight:500; color:var(--muted); font-size:11.5px; }
+.st-next { display:flex; gap:12px; align-items:flex-start; background:#fdf4dc; border:1px solid #e8d48a; color:#5c4500; border-radius:14px; padding:12px 16px; margin-bottom:20px; font-size:14px; }
+.st-next[hidden] { display:none; }
+.st-next.done { background:#e9f9ee; border-color:#a3d9b1; color:#16653a; }
+.st-next strong { display:block; }
+.st-timeline { list-style:none; margin:0; padding:0; }
+.st-timeline li { position:relative; padding:0 0 16px 26px; }
+.st-timeline li::before { content:''; position:absolute; left:6px; top:6px; width:10px; height:10px; border-radius:50%; background:var(--primary); box-shadow:0 0 0 3px #fbe9eb; }
+.st-timeline li:not(:last-child)::after { content:''; position:absolute; left:10px; top:18px; bottom:0; width:2px; background:#eadcdd; }
+.st-timeline strong { display:block; font-size:14px; }
+.st-timeline .st-tl-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.st-timeline p { margin:4px 0 0; font-size:13.5px; color:#3d2326; }
+@media (max-width:600px) {
+  .st-progress { padding:14px 10px; }
+  .st-progress li { font-size:11px; }
+  .st-progress small { display:none; }
+}
+
+/* ── Messages page ───────────────────────────────────────────────────── */
+.st-portal .an-card .an-audience { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:2px 8px; background:#efedf0; color:#4a4250; margin-left:4px; }

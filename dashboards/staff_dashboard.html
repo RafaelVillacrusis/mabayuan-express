@@ -4,7 +4,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Staff Dashboard</title><link rel="stylesheet" href="/assets/css/style.css" />  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Dashboard — Mabayuan Express Staff</title><link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />  <style>
   /* ── Staff Processing Queue filter bar ── */
   #staffQueueFilter.audit-filter-grid {
     grid-template-columns: 2.5fr 1.4fr 1.2fr 1.2fr auto;
@@ -56,8 +58,9 @@
     #staffQueueFilter.audit-filter-grid { grid-template-columns: 1fr; }
   }
 </style>
-</head><body><div class="page-shell"><div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar"><div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+</head><body class="rs-portal st-portal" data-page="dashboard"><div class="page-shell"><header class="topbar rs-topbar">
+      <a class="brand" href="/staff/dashboard" aria-label="Mabayuan Express — staff dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -66,16 +69,41 @@
   <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg></div><div class="brand-copy"><div>Staff Dashboard</div><small>Resident approval, release date, claiming, printable report</small></div></div><button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        <a href="/staff/dashboard">Dashboard</a><a href="/staff/residents">Resident Records</a><a href="/staff/report">Report</a><a href="/staff/inbox" style="position:relative">Messages <span class="notif-badge" id="inboxBadge" style="display:none">0</span></a><a href="/staff/ai-assistant">AI Assistant</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form></nav></header><main class="container content-area"><div class="dashboard-header"><div><h1>Welcome, <span id="staffName">Staff</span></h1><p>Approve resident registrations and process approved document requests.</p></div><div class="notif-wrap"><button type="button" class="icon-button" id="staffNotifButton">🔔 <span class="notif-badge" id="staffNotifCount" style="display:none">0</span></button><div class="notif-dropdown" id="staffNotifDropdown">
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Staff Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/staff/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard</a>
+        <a href="/staff/residents" data-nav="residents"><span class="rs-ico" aria-hidden="true">👥</span>Residents</a>
+        <a href="/staff/report" data-nav="report"><span class="rs-ico" aria-hidden="true">📊</span>Reports</a>
+        <a href="/staff/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📨</span>Messages <span class="rs-badge" data-inbox-badge hidden></span></a>
+        <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">S</span><span class="rs-user-name" id="rsUserName">Staff</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Staff</strong><span id="rsMenuEmail"></span><span>Barangay Staff</span></div>
+          <a href="/staff/dashboard">🏠 Dashboard</a>
+          <a href="/staff/residents">👥 Resident records</a>
+          <a href="/staff/report">📊 Summary report</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
+    </header><main class="container content-area"><div class="st-head"><div><span class="st-date" id="stToday"></span><h1>Welcome back, <span id="staffName">Staff</span> 👋</h1><p>Verify new resident registrations and process approved document requests.</p></div><div class="notif-wrap"><button type="button" class="icon-button" id="staffNotifButton">🔔 <span class="notif-badge" id="staffNotifCount" style="display:none">0</span></button><div class="notif-dropdown" id="staffNotifDropdown">
             <button class="notif-close-btn" style="width:100%;padding:10px;background:#fdf6f7;border:1px solid #f0e4e5;border-radius:10px;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:center" onclick="document.getElementById('staffNotifDropdown').classList.remove('show')">✕ Close</button>
-            <div id="staffNotifList"><p style="padding:14px;color:var(--muted);font-size:.85rem">No messages yet.</p></div></div></div></div><section class="filter-grid"><div class="filter-card active" data-status="all"><div class="filter-label">Total</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Approved"><div class="filter-label">Approved</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Ready for Pickup"><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div><div class="filter-card" data-status="Claimed"><div class="filter-label">Claimed</div><div class="filter-value">0</div></div><div class="filter-card" data-static-card="pending-residents"><div class="filter-label">Pending Residents</div><div class="filter-value" id="pendingResidentsCount">0</div></div></section>
-<section class="panel"><div class="section-head"><div><h2 style="margin:0">Pending Resident Approvals</h2><p class="section-subtitle">Review each applicant's valid ID and Barangay Certificate of Residency before approving. Approved residents are notified by email.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Resident</th><th>Email</th><th>Phone</th><th>Address</th><th>Documents</th><th>Action</th></tr></thead><tbody id="pendingResidentsRows" data-empty-colspan="6"></tbody></table></div>
+            <div id="staffNotifList"><p style="padding:14px;color:var(--muted);font-size:.85rem">No messages yet.</p></div></div></div></div><section class="filter-grid">
+  <div class="filter-card st-stat active" data-status="all"><span class="st-ico st-i-rose">📄</span><div><div class="filter-label">All Requests</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Approved"><span class="st-ico st-i-blue">⚙️</span><div><div class="filter-label">To Process</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Ready for Pickup"><span class="st-ico st-i-green">📦</span><div><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-status="Claimed"><span class="st-ico st-i-gray">✅</span><div><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></div>
+  <div class="filter-card st-stat" data-static-card="pending-residents" id="pendingResidentsCard" role="link" tabindex="0" title="Go to pending resident approvals"><span class="st-ico st-i-amber">🧾</span><div><div class="filter-label">Residents to Verify</div><div class="filter-value" id="pendingResidentsCount">0</div></div></div>
+</section>
+<section class="panel" id="pendingResidentsSection"><div class="st-section-head"><div><h2>🧾 Residents to Verify <span class="st-count" id="pendingHeadCount" hidden>0</span></h2><p>Click <strong>Review</strong> to check each applicant's valid ID and Barangay Certificate of Residency before approving. Approved residents are notified by email.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Resident</th><th>Email</th><th>Phone</th><th>Address</th><th>Documents</th><th>Action</th></tr></thead><tbody id="pendingResidentsRows" data-empty-colspan="6" data-empty="🎉 All caught up — no registrations waiting for verification."></tbody></table></div>
       <div id="pendingResPg" class="pg-row" style="border-top:1px solid #f0e4e5;"></div></section>
-<section class="panel">
-  <h2 style="margin-top:0">Staff Processing Queue</h2>
+<section class="panel" id="queueSection">
+  <div class="st-section-head"><div><h2>📋 Document Request Queue</h2><p>Requests approved by the Captain. Open one to set its release date or mark it as claimed. Click a card above to filter.</p></div></div>
   <div class="audit-filter-grid" id="staffQueueFilter">
     <input class="input" type="text" id="staffQueueSearch" placeholder="Search transaction, resident, or document…" autocomplete="off" />
     <select class="select" id="staffQueueStatus">
@@ -104,62 +132,19 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody id="staffRequestRows" data-empty-colspan="7"></tbody>
+      <tbody id="staffRequestRows" data-empty-colspan="7" data-empty="No requests match these filters."></tbody>
     </table>
   </div>
   <div id="staffReqPg" class="pg-row" style="border-top:1px solid #f0e4e5;"></div>
-</section></main></div><script src="/socket.io/socket.io.js"></script><script src="/assets/js/common-pagination.js"></script>
+</section></main></div><nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/staff/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home</a>
+    <a href="/staff/residents" data-nav="residents"><span class="rs-ico" aria-hidden="true">👥</span>Residents</a>
+    <a href="/staff/report" data-nav="report"><span class="rs-ico" aria-hidden="true">📊</span>Reports</a>
+    <a href="/staff/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📨</span>Messages<span class="rs-badge" data-inbox-badge hidden></span></a>
+    <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/socket.io/socket.io.js"></script><script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/staff-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
-<script src="/assets/js/staff-dashboard.js"></script><script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeNotif() {
-  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
-    d.classList.remove('show');
-  });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
-</script>
-</body></html>
+<script src="/assets/js/staff-dashboard.js"></script></body></html>

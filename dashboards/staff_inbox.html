@@ -9,16 +9,18 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Messages - Staff</title>
+  <title>Messages — Mabayuan Express Staff</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />
   <style>
   </style>
 </head>
-<body>
+<body class="rs-portal st-portal" data-page="inbox">
   <div class="page-shell">
-    <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar">
-      <div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <header class="topbar rs-topbar">
+      <a class="brand" href="/staff/dashboard" aria-label="Mabayuan Express — staff dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -27,81 +29,52 @@
   <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg></div><div class="brand-copy"><div>Staff Dashboard</div><small>Resident approval, release date, claiming, printable report</small></div></div>
-      <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        
-        <a href="/staff/dashboard">Dashboard</a>
-        <a href="/staff/residents">Resident Records</a><a href="/staff/report">Report</a>
-        <a href="/staff/inbox">Messages</a>
-        <a href="/staff/ai-assistant">AI Assistant</a><form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Staff Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/staff/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard</a>
+        <a href="/staff/residents" data-nav="residents"><span class="rs-ico" aria-hidden="true">👥</span>Residents</a>
+        <a href="/staff/report" data-nav="report"><span class="rs-ico" aria-hidden="true">📊</span>Reports</a>
+        <a href="/staff/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📨</span>Messages <span class="rs-badge" data-inbox-badge hidden></span></a>
+        <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
       </nav>
-    </header>
-    <main class="container content-area">
-      <div class="dashboard-header">
-        <div>
-          <h1>Messages from Captain</h1>
-          <p>Announcements and updates sent by the barangay captain.</p>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">S</span><span class="rs-user-name" id="rsUserName">Staff</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Staff</strong><span id="rsMenuEmail"></span><span>Barangay Staff</span></div>
+          <a href="/staff/dashboard">🏠 Dashboard</a>
+          <a href="/staff/residents">👥 Resident records</a>
+          <a href="/staff/report">📊 Summary report</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>
-      <section class="panel">
-        <div id="inboxList"><p class="empty-state">Loading...</p></div>
-      </section>
+    </header>
+    <main class="container content-area">
+      <div class="st-head">
+        <div>
+          <h1>📨 Messages</h1>
+          <p>Announcements and instructions from the Barangay Captain.</p>
+        </div>
+      </div>
+      <div class="an-toolbar">
+        <input class="input" type="search" id="anSearch" placeholder="Search messages…" aria-label="Search messages">
+        <span class="an-count" id="anCount"></span>
+      </div>
+      <div class="an-list" id="inboxList" aria-live="polite"><div class="an-empty panel"><div>⏳</div>Loading messages…</div></div>
     </main>
   </div>
+  <nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/staff/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home</a>
+    <a href="/staff/residents" data-nav="residents"><span class="rs-ico" aria-hidden="true">👥</span>Residents</a>
+    <a href="/staff/report" data-nav="report"><span class="rs-ico" aria-hidden="true">📊</span>Reports</a>
+    <a href="/staff/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📨</span>Messages<span class="rs-badge" data-inbox-badge hidden></span></a>
+    <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
   <script src="/assets/js/common.js"></script>
+<script src="/assets/js/staff-shell.js"></script>
   <script src="/assets/js/staff-inbox.js"></script>
-<script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/login"); })
-        .catch(function() { window.location.replace("/login"); });
-    }
-  });
-})();
-</script>
-<script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeNotif() {
-  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
-    d.classList.remove('show');
-  });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
-</script>
 </body>
 </html>

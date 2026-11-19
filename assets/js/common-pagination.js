@@ -20,11 +20,11 @@ function createPaginator(tbodyId, paginationId, pageSize = 10) {
 
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
+    // Optional friendly message: <tbody data-empty="Nothing to review right now.">
+    const emptyText = tbody.dataset.empty || 'No records found.';
     tbody.innerHTML = slice.length
       ? slice.map((row, i) => _renderRow(row, i)).join('')
-      : tbody.dataset.emptyColspan
-        ? `<tr><td colspan="${tbody.dataset.emptyColspan}" class="empty-state">No records found.</td></tr>`
-        : `<tr><td colspan="99" class="empty-state">No records found.</td></tr>`;
+      : `<tr><td colspan="${tbody.dataset.emptyColspan || 99}" class="empty-state">${emptyText}</td></tr>`;
 
     _renderPagination(total, tp, start, slice.length);
   }

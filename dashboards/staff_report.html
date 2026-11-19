@@ -6,8 +6,10 @@
   <link rel="manifest" href="/assets/manifest.json">
   <meta name="theme-color" content="#a64d57">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <title>Summary Report — Mabayuan Express</title>
+  <title>Summary Report — Mabayuan Express Staff</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />
   <link rel="stylesheet" href="/assets/css/print-template.css" />
   <style>
     /* ── Report page specific styles ── */
@@ -208,41 +210,43 @@
     .print-footer { display: none; }
   </style>
 </head>
-<body class="no-footer">
+<body class="no-footer rs-portal st-portal" data-page="report">
 
 <div class="page-shell">
-  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;">
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
-          <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
-          <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
-          <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="26" cy="28" r="7" fill="#fff"/>
-          <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
+  <header class="topbar rs-topbar">
+      <a class="brand" href="/staff/dashboard" aria-label="Mabayuan Express — staff dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Staff Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/staff/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard</a>
+        <a href="/staff/residents" data-nav="residents"><span class="rs-ico" aria-hidden="true">👥</span>Residents</a>
+        <a href="/staff/report" data-nav="report"><span class="rs-ico" aria-hidden="true">📊</span>Reports</a>
+        <a href="/staff/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📨</span>Messages <span class="rs-badge" data-inbox-badge hidden></span></a>
+        <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">S</span><span class="rs-user-name" id="rsUserName">Staff</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Staff</strong><span id="rsMenuEmail"></span><span>Barangay Staff</span></div>
+          <a href="/staff/dashboard">🏠 Dashboard</a>
+          <a href="/staff/residents">👥 Resident records</a>
+          <a href="/staff/report">📊 Summary report</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
       </div>
-      <div class="brand-copy">
-        <div>Staff Dashboard</div>
-        <small>Summary Report</small>
-      </div>
-    </div>
-    <button class="nav-toggle no-print" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-    <nav class="top-links" id="topNav">
-      <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-      <a href="/staff/dashboard">Dashboard</a>
-      <a href="/staff/residents">Resident Records</a>
-      <a href="/staff/report" style="font-weight:700;">Report</a>
-      <a href="/staff/inbox" style="position:relative">Messages</a>
-      <a href="/staff/ai-assistant">AI Assistant</a><form action="/auth/logout" method="POST">
-        <button class="btn btn-small btn-ghost">Logout</button>
-      </form>
-    </nav>
-  </header>
+    </header>
 
   <main class="container content-area">
 
@@ -268,7 +272,6 @@
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;" class="no-print">
         <button onclick="printAllRows()" class="btn btn-small" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);">🖨 Print / Save PDF</button>
-        <a href="/staff/dashboard" class="btn btn-small" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3);">← Back</a>
       </div>
     </div>
 
@@ -345,8 +348,16 @@
   </main>
 </div>
 
-<script src="/assets/js/common-pagination.js"></script>
+<nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/staff/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home</a>
+    <a href="/staff/residents" data-nav="residents"><span class="rs-ico" aria-hidden="true">👥</span>Residents</a>
+    <a href="/staff/report" data-nav="report"><span class="rs-ico" aria-hidden="true">📊</span>Reports</a>
+    <a href="/staff/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📨</span>Messages<span class="rs-badge" data-inbox-badge hidden></span></a>
+    <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
+<script src="/assets/js/staff-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
 <script>
   let allRows = [];
@@ -464,15 +475,6 @@
     }, 1500);
   }
 
-  /* ── Mobile nav ── */
-  function openNav()  { document.getElementById('topNav').classList.add('open'); document.getElementById('navOverlay').classList.add('open'); }
-  function closeNav() { document.getElementById('topNav').classList.remove('open'); document.getElementById('navOverlay').classList.remove('open'); }
-  document.querySelectorAll('.top-links a').forEach(a => a.addEventListener('click', () => { if (window.innerWidth <= 680) closeNav(); }));
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => { navigator.serviceWorker.register("/assets/sw.js"); });
-  }
 </script>
 </body>
 </html>

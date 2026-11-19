@@ -8,6 +8,8 @@
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <title>AI Assistant — Mabayuan Express</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css" />
   <style>
     [hidden] { display:none !important; }
     .ai-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
@@ -31,11 +33,10 @@
     .ai-meta { font-size:12px; color:var(--muted); }
   </style>
 </head>
-<body>
+<body class="rs-portal st-portal" data-page="ai">
 <div class="page-shell">
-  <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-  <header class="topbar">
-    <div class="brand">
+  <header class="topbar rs-topbar">
+    <a class="brand" id="rsBrand" href="/" aria-label="Mabayuan Express">
       <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;">
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
@@ -48,14 +49,18 @@
           <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
       </div>
-      <div class="brand-copy"><div id="brandRole">Dashboard</div><small>AI Assistant</small></div>
+      <div class="brand-copy"><div>Mabayuan Express</div><small id="brandRole">Portal</small></div>
+    </a>
+    <nav class="rs-nav" id="rsNav" aria-label="Main navigation"></nav>
+    <div class="rs-user">
+      <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+        <span class="rs-avatar" id="rsAvatar">·</span><span class="rs-user-name" id="rsUserName"></span><span class="rs-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="rs-user-menu" id="rsUserMenu" hidden>
+        <div class="rs-user-info"><strong id="rsMenuName"></strong><span id="rsMenuRole"></span></div>
+        <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+      </div>
     </div>
-    <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-    <nav class="top-links" id="topNav">
-      <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-      <span id="navLinks"></span>
-      <form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
-    </nav>
   </header>
 
   <main class="container content-area">
@@ -164,11 +169,8 @@
   </main>
 </div>
 
+<nav class="rs-bottom" id="rsBottom" aria-label="Quick navigation"></nav>
 <script src="/assets/js/common.js"></script>
-<script>
-  function openNav() { document.getElementById('topNav').classList.add('open'); document.getElementById('navOverlay').classList.add('open'); document.body.style.overflow = 'hidden'; }
-  function closeNav() { document.getElementById('topNav').classList.remove('open'); document.getElementById('navOverlay').classList.remove('open'); document.body.style.overflow = ''; }
-</script>
 <script src="/assets/js/ai-assistant.js"></script>
 <script>
   if ("serviceWorker" in navigator) {

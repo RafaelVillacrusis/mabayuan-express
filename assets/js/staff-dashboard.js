@@ -5,8 +5,8 @@ let staffSortCol = 'suggested_release_date', staffSortDir = 'asc';
 let socket;
 function getFilter() { return new URLSearchParams(window.location.search).get('status') || 'all'; }
 function setFilter(status) { const url = new URL(window.location.href); status === 'all' ? url.searchParams.delete('status') : url.searchParams.set('status', status); window.history.replaceState({}, '', url); }
-async function loadMe() { const res = await fetch('/api/staff/me'); const me = await res.json(); document.getElementById('staffName').textContent = me.full_name; }
-async function loadCounts() { const res = await fetch('/api/staff/counts'); const counts = await res.json(); const map = { all: counts.total_requests || 0, Approved: counts.approved_count || 0, 'Ready for Pickup': counts.ready_count || 0, Claimed: counts.claimed_count || 0 }; document.querySelectorAll('.filter-card[data-status]').forEach(card => { card.querySelector('.filter-value').textContent = map[card.dataset.status] || 0; card.classList.toggle('active', card.dataset.status === getFilter()); }); document.getElementById('pendingResidentsCount').textContent = counts.pending_residents || 0; }
+async function loadMe() { const res = await fetch('/api/staff/me'); const me = await res.json(); document.getElementById('staffName').textContent = (me.full_name || 'Staff').split(' ')[0]; const t = document.getElementById('stToday'); if (t) t.textContent = new Date().toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
+async function loadCounts() { const res = await fetch('/api/staff/counts'); const counts = await res.json(); const map = { all: counts.total_requests || 0, Approved: counts.approved_count || 0, 'Ready for Pickup': counts.ready_count || 0, Claimed: counts.claimed_count || 0 }; document.querySelectorAll('.filter-card[data-status]').forEach(card => { card.querySelector('.filter-value').textContent = map[card.dataset.status] || 0; card.classList.toggle('active', card.dataset.status === getFilter()); }); const pend = Number(counts.pending_residents || 0); document.getElementById('pendingResidentsCount').textContent = pend; document.getElementById('pendingResidentsCard')?.classList.toggle('st-attention', pend > 0); const hc = document.getElementById('pendingHeadCount'); if (hc) { hc.textContent = pend; hc.hidden = pend === 0; } }
 async function loadRequests() {
   const res = await fetch('/api/staff/requests?status=all');
   allStaffRequests = await res.json();
@@ -298,6 +298,7 @@ async function loadInboxBadge() {
   const badge = document.getElementById('inboxBadge');
   const bellCount = document.getElementById('staffNotifCount');
   if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+  if (window.stSetInboxBadge) window.stSetInboxBadge(unread);
   if (bellCount) { bellCount.textContent = unread; bellCount.style.display = unread > 0 ? '' : 'none'; }
   return msgs;
 }
@@ -336,6 +337,11 @@ function showCaptainNotification(payload) {
   banner._timeout = setTimeout(() => { if (banner.parentNode) banner.remove(); }, 12000);
 }
 document.addEventListener('DOMContentLoaded', async () => {
+  // "Residents to Verify" card jumps to the pending list
+  const pendCard = document.getElementById('pendingResidentsCard');
+  const goPending = () => document.getElementById('pendingResidentsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  pendCard?.addEventListener('click', goPending);
+  pendCard?.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goPending(); } });
   await loadMe();
   await refreshAll();
   connectSocket();
