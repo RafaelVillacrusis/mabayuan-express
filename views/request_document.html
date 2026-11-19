@@ -9,16 +9,17 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Request Document</title>
+  <title>Request a Document — Mabayuan Express</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
   <style>
   </style>
 </head>
-<body>
+<body class="rs-portal" data-page="request">
   <div class="page-shell">
-    <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar">
-      <div class="brand"><div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <header class="topbar rs-topbar">
+      <a class="brand" href="/resident/dashboard" aria-label="Mabayuan Express — go to dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -27,121 +28,114 @@
   <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg></div><div class="brand-copy"><div>Mabayuan Express</div><small>Resident request form</small></div></div>
-      <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        
-        <a href="/resident/dashboard">Dashboard</a>
-        <a href="/resident/request">Request Document</a>
-        <form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Resident Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/resident/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard</a>
+        <a href="/resident/request" data-nav="request"><span class="rs-ico" aria-hidden="true">📝</span>Request Document</a>
+        <a href="/resident/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📢</span>Announcements <span class="rs-badge" data-inbox-badge hidden></span></a>
       </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">R</span><span class="rs-user-name" id="rsUserName">Resident</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Resident</strong><span id="rsMenuEmail"></span></div>
+          <a href="/resident/dashboard">🏠 My dashboard</a>
+          <a href="/resident/request">📝 Request a document</a>
+          <a href="/help/faq">❓ Help &amp; FAQ</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
     </header>
     <main class="container content-area">
-      <section class="panel" style="max-width:860px;margin:0 auto;">
-        <a href="/resident/dashboard" class="btn btn-small btn-ghost" style="margin-bottom:16px;">&larr; Back</a>
-        <h1 style="margin-top:0">Request a Document</h1>
-        <form action="/api/resident/requests" method="POST">
-          <div class="form-grid">
-            <div class="full">
-              <label class="form-label">Document</label>
-              <select class="select" id="documentSelect" name="document_id" required>
-                <option value="">Select a document</option>
-              </select>
+      <div class="rs-page-head">
+        <div>
+          <a class="rs-crumb" href="/resident/dashboard">← Back to dashboard</a>
+          <h1>Request a Document</h1>
+          <p>Fill in the form below. You'll get a transaction number once your request is submitted.</p>
+        </div>
+      </div>
+
+      <div class="rq-layout">
+        <form class="panel" id="requestForm" action="/api/resident/requests" method="POST" novalidate>
+          <section class="rq-section">
+            <h2 class="rq-step"><span class="rq-step-num">1</span>Choose a document</h2>
+            <label class="form-label" for="documentSelect">Document</label>
+            <select class="select" id="documentSelect" name="document_id" required>
+              <option value="">Select a document…</option>
+            </select>
+            <div class="rq-doc-desc" id="docDescription" hidden></div>
+          </section>
+
+          <section class="rq-section">
+            <h2 class="rq-step"><span class="rq-step-num">2</span>Purpose of the request</h2>
+            <div class="rq-purposes" id="purposeOptions" role="radiogroup" aria-label="Purpose">
+              <label><input type="radio" name="purpose" value="Employment" required><span>Employment</span></label>
+              <label><input type="radio" name="purpose" value="School requirement"><span>School requirement</span></label>
+              <label><input type="radio" name="purpose" value="Scholarship"><span>Scholarship</span></label>
+              <label><input type="radio" name="purpose" value="Bank or loan application"><span>Bank / Loan</span></label>
+              <label><input type="radio" name="purpose" value="Medical or financial assistance"><span>Medical / Financial assistance</span></label>
+              <label><input type="radio" name="purpose" value="Business requirement"><span>Business</span></label>
+              <label><input type="radio" name="purpose" value="Government transaction"><span>Government transaction</span></label>
+              <label><input type="radio" name="purpose" value="Others"><span>Others</span></label>
             </div>
-            <div>
-              <label class="form-label">Price</label>
-              <input class="input" id="documentPrice" disabled placeholder="Auto-filled">
+            <label class="form-label" for="purposeDetails" style="margin-top:14px">Additional details <span id="detailsReq" style="color:var(--muted);font-weight:400">(optional)</span></label>
+            <textarea class="textarea" id="purposeDetails" name="purpose_details" rows="3" maxlength="300" placeholder="e.g. Requirement for job application at ABC Company"></textarea>
+            <div class="rq-hint"><span id="detailsCount">0</span>/300 characters</div>
+          </section>
+
+          <section class="rq-section">
+            <h2 class="rq-step"><span class="rq-step-num">3</span>Contact details</h2>
+            <label class="form-label" for="contactNumber">Mobile number</label>
+            <div class="ph-phone-wrap">
+              <div class="ph-phone-prefix">🇵🇭 +63</div>
+              <input class="input" name="contact_number" id="contactNumber"
+                type="tel" inputmode="numeric" maxlength="10"
+                placeholder="9XXXXXXXXX" pattern="9[0-9]{9}"
+                title="Must be 10 digits starting with 9"
+                oninput="phPhoneInput(this)"
+                onblur="phPhoneValidate(this)"
+                required>
             </div>
-            <div>
-              <label class="form-label">Estimated processing time</label>
-              <input class="input" id="processingDays" disabled placeholder="Auto-filled">
-            </div>
-            <div class="full">
-              <label class="form-label">Suggested release date</label>
-              <input class="input" id="suggestedRelease" disabled placeholder="Auto-computed when request is created">
-            </div>
-            <div>
-              <label class="form-label">Contact number</label>
-              <div class="ph-phone-wrap">
-                <div class="ph-phone-prefix">🇵🇭 +63</div>
-                <input class="input" name="contact_number" id="contactNumber"
-                  type="tel" inputmode="numeric" maxlength="10"
-                  placeholder="9XXXXXXXXX" pattern="9[0-9]{9}"
-                  title="Must be 10 digits starting with 9"
-                  oninput="phPhoneInput(this)"
-                  onblur="phPhoneValidate(this)"
-                  required>
-              </div>
-              <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
-            </div>
-            <div class="full">
-              <label class="form-label">Purpose</label>
-              <input class="input" name="purpose" required>
-            </div>
-            <div class="full">
-              <label class="form-label">Additional details</label>
-              <textarea class="textarea" name="purpose_details"></textarea>
-            </div>
-          </div>
-          <div class="form-actions"><button class="btn">Submit request</button></div>
+            <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
+            <div class="rq-hint">We'll use this number if the barangay needs to contact you about this request.</div>
+          </section>
+
+          <div class="rq-error" id="formError" role="alert" hidden></div>
+          <button class="btn rq-submit" type="submit" id="submitBtn">Submit request</button>
         </form>
-      </section>
+
+        <aside class="panel rq-summary" aria-live="polite">
+          <h3>🧾 Request summary</h3>
+          <div class="rq-sum-row"><span>Document</span><span id="sumDocument">—</span></div>
+          <div class="rq-sum-row"><span>Purpose</span><span id="sumPurpose">—</span></div>
+          <div class="rq-sum-row"><span>Processing time</span><span id="processingDays">—</span></div>
+          <div class="rq-sum-row"><span>Estimated release</span><span id="suggestedRelease">—</span></div>
+          <div class="rq-sum-row rq-sum-total"><span>Fee</span><span id="documentPrice">—</span></div>
+          <div class="rq-next">
+            <strong>What happens next?</strong>
+            <ol>
+              <li>The Barangay Captain reviews your request.</li>
+              <li>Staff prepare your document and set the release date.</li>
+              <li>You get an email and a notification when it's ready.</li>
+              <li>Pick it up at the Barangay Hall with your transaction number.</li>
+            </ol>
+          </div>
+        </aside>
+      </div>
     </main>
   </div>
+    <nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/resident/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home</a>
+    <a href="/resident/request" data-nav="request"><span class="rs-ico" aria-hidden="true">📝</span>Request</a>
+    <a href="/resident/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📢</span>News<span class="rs-badge" data-inbox-badge hidden></span></a>
+    <button type="button" data-nav="assistant"><span class="rs-ico" aria-hidden="true">💬</span>Assistant</button>
+  </nav>
   <script src="/assets/js/common.js"></script>
+  <script src="/assets/js/resident-shell.js"></script>
   <script src="/assets/js/ai-chat.js" defer></script>
   <script src="/assets/js/request-document.js"></script>
-<script>
-(function(){
-  // Block back button — replace history so back goes nowhere useful
-  history.pushState(null, "", window.location.href);
-  window.addEventListener("popstate", function() {
-    history.pushState(null, "", window.location.href);
-  });
-  // If page is restored from browser cache (bfcache), verify session is still alive
-  window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      fetch("/api/session-check", { credentials: "include" })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { if (!d.ok) window.location.replace(d.redirect || "/resident/login"); })
-        .catch(function() { window.location.replace("/resident/login"); });
-    }
-  });
-})();
-</script>
-<script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeNotif() {
-  document.querySelectorAll('.notif-dropdown').forEach(function(d) {
-    d.classList.remove('show');
-  });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
-</script>
 </body>
 </html>

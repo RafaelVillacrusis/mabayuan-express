@@ -1,31 +1,68 @@
-function audienceLabel(a) {
-  if (a === 'all') return 'Everyone';
-  if (a === 'resident') return 'Residents';
-  if (a === 'staff') return 'Staff';
-  return a;
+/* Announcements page — captain messages to residents */
+let allAnnouncements = [];
+let previouslySeen = 0;
+
+function timeAgo(value) {
+  const diff = (Date.now() - new Date(value).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+  if (diff < 7 * 86400) { const d = Math.floor(diff / 86400); return `${d} day${d === 1 ? '' : 's'} ago`; }
+  return formatDate(value);
+}
+
+function renderAnnouncements() {
+  const q = (document.getElementById('anSearch').value || '').trim().toLowerCase();
+  const list = document.getElementById('inboxList');
+  const items = q
+    ? allAnnouncements.filter(m => `${m.subject} ${m.body}`.toLowerCase().includes(q))
+    : allAnnouncements;
+
+  document.getElementById('anCount').textContent = allAnnouncements.length
+    ? (q ? `${items.length} of ${allAnnouncements.length} announcements` : `${allAnnouncements.length} announcement${allAnnouncements.length === 1 ? '' : 's'}`)
+    : '';
+
+  if (!allAnnouncements.length) {
+    list.innerHTML = `<div class="an-empty panel"><div>📭</div><strong>No announcements yet</strong>
+      Barangay news and advisories will appear here.</div>`;
+    return;
+  }
+  if (!items.length) {
+    list.innerHTML = `<div class="an-empty panel"><div>🔍</div><strong>No matches</strong>
+      No announcements match “${escapeHtml(q)}”.</div>`;
+    return;
+  }
+  list.innerHTML = items.map(m => {
+    const isNew = m.message_id > previouslySeen;
+    return `<article class="an-card${isNew ? ' is-new' : ''}">
+      <div class="an-icon" aria-hidden="true">📢</div>
+      <div class="an-body">
+        <h2 class="an-title">${isNew ? '<span class="an-new">NEW</span>' : ''}<span>${escapeHtml(m.subject)}</span></h2>
+        <div class="an-meta">${escapeHtml(m.captain_name || 'Barangay Captain')} · <time datetime="${escapeHtml(m.created_at)}" title="${escapeHtml(formatDateTime(m.created_at))}">${timeAgo(m.created_at)}</time></div>
+        <p class="an-text">${escapeHtml(m.body)}</p>
+      </div>
+    </article>`;
+  }).join('');
 }
 
 async function loadInbox() {
-  const res = await fetch('/api/resident/inbox');
-  const msgs = await res.json();
-
-  if (msgs.length > 0) {
-    localStorage.setItem('inbox_last_seen', String(msgs[0].message_id));
+  const list = document.getElementById('inboxList');
+  try {
+    const res = await fetch('/api/resident/inbox');
+    if (!res.ok) throw new Error();
+    allAnnouncements = await res.json();
+    previouslySeen = window.rsInboxLastSeen ? window.rsInboxLastSeen() : 0;
+    if (allAnnouncements.length) {
+      try { localStorage.setItem('inbox_last_seen', String(allAnnouncements[0].message_id)); } catch {}
+    }
+    renderAnnouncements();
+  } catch {
+    list.innerHTML = `<div class="an-empty panel"><div>⚠️</div><strong>Couldn't load announcements</strong>
+      Please check your internet connection and refresh the page.</div>`;
   }
-
-  document.getElementById('inboxList').innerHTML = msgs.length
-    ? msgs.map(m => `
-      <div style="border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px;background:var(--surface)">
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap;margin-bottom:6px">
-          <strong style="font-size:1rem">${escapeHtml(m.subject)}</strong>
-          <span style="font-size:12px;color:var(--muted);white-space:nowrap">${formatDateTime(m.created_at)}</span>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-          From: <strong>${escapeHtml(m.captain_name || 'Captain')}</strong> &nbsp;&middot;&nbsp; To: ${audienceLabel(m.target_audience)}
-        </div>
-        <p style="margin:0;white-space:pre-wrap;line-height:1.65;font-size:.9rem">${escapeHtml(m.body)}</p>
-      </div>`).join('')
-    : '<p class="empty-state">No messages yet.</p>';
 }
 
-document.addEventListener('DOMContentLoaded', loadInbox);
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('anSearch').addEventListener('input', renderAnnouncements);
+  loadInbox();
+});

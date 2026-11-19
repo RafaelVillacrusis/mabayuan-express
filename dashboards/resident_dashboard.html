@@ -9,8 +9,9 @@
   <meta name="apple-mobile-web-app-title" content="Mabayuan">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resident Dashboard</title>
+  <title>Dashboard — Mabayuan Express</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
   <style>
     /* ── Resident dashboard layout ── */
     .rd-hero {
@@ -167,7 +168,7 @@
     .status-pending { background: #fff1d8; color: #8a5a00; }
   </style>
 </head>
-<body class="no-footer">
+<body class="no-footer rs-portal" data-page="dashboard">
 
   <!-- Delete Confirmation Modal -->
   <div class="details-modal" id="deleteModal">
@@ -202,10 +203,9 @@
   </div>
 
   <div class="page-shell">
-    <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <header class="topbar rs-topbar">
+      <a class="brand" href="/resident/dashboard" aria-label="Mabayuan Express — go to dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
   <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
   <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
@@ -215,17 +215,25 @@
   <circle cx="26" cy="28" r="7" fill="#fff"/>
   <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg></div>
-        <div class="brand-copy"><div>Resident Dashboard</div><small>Track your requests</small></div>
-      </div>
-      <button class="nav-toggle" id="navToggle" onclick="openNav()" aria-label="Open menu">☰</button>
-      <nav class="top-links" id="topNav">
-        <button class="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
-        
-        <a href="/resident/dashboard">Dashboard</a>
-        <a href="/resident/request">Request Document</a>
-        <a href="/resident/inbox" style="position:relative">Messages <span class="notif-badge" id="inboxBadge" style="display:none">0</span></a>
-        <form action="/auth/logout" method="POST"><button class="btn btn-small btn-ghost">Logout</button></form>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Resident Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/resident/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard</a>
+        <a href="/resident/request" data-nav="request"><span class="rs-ico" aria-hidden="true">📝</span>Request Document</a>
+        <a href="/resident/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📢</span>Announcements <span class="rs-badge" data-inbox-badge hidden></span></a>
       </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">R</span><span class="rs-user-name" id="rsUserName">Resident</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Resident</strong><span id="rsMenuEmail"></span></div>
+          <a href="/resident/dashboard">🏠 My dashboard</a>
+          <a href="/resident/request">📝 Request a document</a>
+          <a href="/help/faq">❓ Help &amp; FAQ</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
     </header>
     <main class="container content-area">
       <section class="rd-hero">
@@ -320,8 +328,15 @@
     </main>
   </div>
 
+    <nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/resident/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home</a>
+    <a href="/resident/request" data-nav="request"><span class="rs-ico" aria-hidden="true">📝</span>Request</a>
+    <a href="/resident/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📢</span>News<span class="rs-badge" data-inbox-badge hidden></span></a>
+    <button type="button" data-nav="assistant"><span class="rs-ico" aria-hidden="true">💬</span>Assistant</button>
+  </nav>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/assets/js/common.js"></script>
+  <script src="/assets/js/resident-shell.js"></script>
   <script src="/assets/js/ai-chat.js" defer></script>
   <script src="/assets/js/resident-dashboard.js"></script>
   <script>
@@ -421,47 +436,13 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetails(); });
   </script>
-  <script>
-  (function(){
-    history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", function() {
-      history.pushState(null, "", window.location.href);
-    });
-    window.addEventListener("pageshow", function(e) {
-      if (e.persisted) {
-        fetch("/api/session-check", { credentials: "include" })
-          .then(function(r){ return r.json(); })
-          .then(function(d){ if (!d.ok) window.location.replace(d.redirect || "/login"); })
-          .catch(function(){ window.location.replace("/login"); });
-      }
-    });
-  })();
-  </script>
 <script>
-/* ── Mobile hamburger nav ── */
-function openNav() {
-  document.getElementById('topNav').classList.add('open');
-  document.getElementById('navOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeNav() {
-  var nav = document.getElementById('topNav');
-  var overlay = document.getElementById('navOverlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
 function closeNotif() {
   document.querySelectorAll('.notif-dropdown').forEach(function(d) {
     d.classList.remove('show');
   });
 }
 document.addEventListener('DOMContentLoaded', function() {
-  // Close drawer when any nav link is tapped
-  document.querySelectorAll('.top-links a').forEach(function(a) {
-    a.addEventListener('click', closeNav);
-  });
-
   // Check if resident's valid ID is missing and show re-upload banner
   fetch('/api/resident/me')
     .then(r => r.json())
@@ -499,13 +480,6 @@ async function submitReupload(input) {
     statusEl.textContent = '❌ Upload failed. Please try again.';
   }
 }
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/assets/sw.js");
-    });
-  }
 </script>
 </body>
 </html>

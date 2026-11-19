@@ -20,7 +20,7 @@ function pushStatus(status) {
 async function loadResidentProfile() {
   const res = await fetch('/api/resident/profile');
   const data = await res.json();
-  document.getElementById('residentName').textContent = `${data.first_name} ${data.last_name}`;
+  document.getElementById('residentName').textContent = data.first_name || `${data.first_name} ${data.last_name}`;
   connectResidentSocket(data.resident_id);
 }
 
@@ -126,10 +126,7 @@ async function loadInboxBadge() {
   const lastSeen = parseInt(localStorage.getItem('inbox_last_seen') || '0', 10);
   renderAnnouncements(msgs, lastSeen);
   const unread = msgs.filter(m => m.message_id > lastSeen).length;
-  const badge = document.getElementById('inboxBadge');
-  if (!badge) return;
-  badge.textContent = unread;
-  badge.style.display = unread > 0 ? '' : 'none';
+  if (window.rsSetInboxBadge) window.rsSetInboxBadge(unread);
 }
 
 function connectResidentSocket(residentId) {
