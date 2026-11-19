@@ -19,6 +19,7 @@ const { getFilteredAuditLogs, createAuditLog } = require('../actions/audit.actio
 const { sendRequestApprovedEmail, sendRequestDeclinedEmail } = require('../actions/email.actions');
 
 const { sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
+const docs = require('../actions/document.actions');
 
 const router = express.Router();
 
@@ -401,6 +402,43 @@ router.post('/api/captain/messages/:id/end', requireRole('captain'), async (req,
     console.error(err);
     res.status(500).json({ error: 'Could not update the announcement.' });
   }
+});
+
+/* ================= DOCUMENT CONFIGURATION ================= */
+router.get('/captain/documents', requireRole('captain'), (req, res) =>
+  res.sendFile(path.join(__dirname, '../dashboards/captain_documents.html'))
+);
+
+router.get('/api/captain/documents', requireRole('captain'), async (req, res) => {
+  try { res.json(await docs.listDocumentsWithUsage()); }
+  catch (err) { console.error(err); res.status(500).json({ error: 'Could not load documents.' }); }
+});
+
+router.post('/api/captain/documents', requireRole('captain'), async (req, res) => {
+  try {
+    const v = await docs.validateDocument(req.body);
+    if (v.error) return res.status(400).json(v);
+    const doc = await docs.createDocument(req.session.user, v.data);
+    res.json({ ok: true, document: doc });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not add the document.' }); }
+});
+
+router.put('/api/captain/documents/:id', requireRole('captain'), async (req, res) => {
+  try {
+    const v = await docs.validateDocument(req.body, Number(req.params.id));
+    if (v.error) return res.status(400).json(v);
+    const doc = await docs.updateDocument(req.session.user, req.params.id, v.data);
+    if (!doc) return res.status(404).json({ error: 'Document not found.' });
+    res.json({ ok: true, document: doc });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not save the document.' }); }
+});
+
+router.delete('/api/captain/documents/:id', requireRole('captain'), async (req, res) => {
+  try {
+    const r = await docs.deleteDocument(req.session.user, req.params.id);
+    if (r.error) return res.status(r.status).json({ error: r.error });
+    res.json({ ok: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Could not delete the document.' }); }
 });
 
 module.exports = router;

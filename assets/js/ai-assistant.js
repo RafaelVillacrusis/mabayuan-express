@@ -9,7 +9,7 @@
     ],
     captain: [
       ['/captain/dashboard', 'Dashboard', '🏠', 'Home', 'pending'], ['/captain/analytics', 'Analytics', '📈', 'Analytics'],
-      ['/captain/messages', 'Announcements', '📢', 'Announce'], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
+      ['/captain/messages', 'Announcements', '📢', 'Announce'], ['/captain/documents', 'Documents', '📄', 'Docs'], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
       ['/captain/ai-assistant', 'AI Assistant', '🤖', 'AI'],
     ],
   };

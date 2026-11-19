@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document Configuration — Mabayuan Express Captain</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css?v=4" />
+  <style>
+    .dc-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+    .dc-stats .filter-card { cursor:default; }
+    @media (max-width:900px) { .dc-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    .dc-doc { display:flex; flex-direction:column; gap:2px; }
+    .dc-doc strong { font-size:14.5px; }
+    .dc-doc small { color:var(--muted); font-size:12.5px; line-height:1.45; }
+    .dc-fee { font-weight:800; white-space:nowrap; }
+    .dc-fee.free { color:#16653a; }
+    .dc-muted { color:var(--muted); font-size:12.5px; }
+    .dc-actions { display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
+    tr.dc-off td { background:#faf8f8; }
+    tr.dc-off .dc-doc strong { color:#7b6e70; }
+    /* availability switch */
+    .dc-switch { display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; font-weight:700; user-select:none; white-space:nowrap; position:relative; }
+    .dc-switch input { position:absolute; opacity:0; width:1px; height:1px; }
+    .dc-track { width:38px; height:22px; border-radius:999px; background:#d9cfd1; position:relative; transition:background .15s; flex-shrink:0; }
+    .dc-track::after { content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .15s; }
+    .dc-switch input:checked + .dc-track { background:#2f9e5b; }
+    .dc-switch input:checked + .dc-track::after { transform:translateX(16px); }
+    .dc-switch input:focus-visible + .dc-track { outline:3px solid #f4c2c8; outline-offset:2px; }
+    .dc-switch input:disabled + .dc-track { opacity:.5; }
+    .dc-on { color:#16653a; } .dc-off-label { color:#7b6e70; }
+    /* modal */
+    .dc-modal { position:fixed; inset:0; z-index:5000; background:rgba(30,12,15,.55); display:grid; place-items:center; padding:16px; }
+    .dc-modal[hidden] { display:none; }
+    .dc-box { background:#fff; border-radius:18px; width:min(620px,100%); max-height:calc(100vh - 32px); display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden; margin:0; }
+    .dc-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 22px; border-bottom:1px solid var(--border); }
+    .dc-head h2 { margin:0; font-size:18px; }
+    .dc-close { border:0; background:#f3ecec; border-radius:50%; width:34px; height:34px; font-size:16px; cursor:pointer; }
+    .dc-body { padding:18px 22px; overflow:auto; display:grid; gap:14px; }
+    .dc-row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media (max-width:560px) { .dc-row2 { grid-template-columns:1fr; } }
+    .dc-body .input, .dc-body .textarea { width:100%; box-sizing:border-box; }
+    .dc-body .input.bad, .dc-body .textarea.bad { border-color:#dc2626; }
+    .dc-prefix { display:flex; align-items:stretch; }
+    .dc-prefix span { display:grid; place-items:center; padding:0 12px; background:#f6efef; border:1px solid var(--border); border-right:0; border-radius:10px 0 0 10px; font-weight:800; color:#5b4648; }
+    .dc-prefix .input { border-radius:0 10px 10px 0; }
+    .dc-hint { font-size:12px; color:var(--muted); margin-top:5px; }
+    .dc-preview { background:#fdf8f8; border:1px dashed #e3cfd2; border-radius:12px; padding:12px 14px; font-size:13px; }
+    .dc-preview b { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:6px; }
+    .dc-preview .pv-select { background:#fff; border:1px solid var(--border); border-radius:10px; padding:9px 12px; font-size:14px; }
+    .dc-preview .pv-meta { margin-top:6px; color:#3d2326; }
+    .dc-warn { background:#fdf4dc; border:1px solid #e8d48a; color:#5c4500; border-radius:10px; padding:9px 12px; font-size:12.5px; }
+    .dc-warn[hidden], .dc-err[hidden] { display:none; }
+    .dc-err { background:#fef2f2; border:1px solid #fecaca; color:#b42318; border-radius:10px; padding:9px 12px; font-size:13px; }
+    .dc-foot { display:flex; justify-content:flex-end; gap:8px; padding:12px 22px; border-top:1px solid var(--border); }
+    .dc-toast { position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:#2d1518; color:#fff; padding:10px 18px; border-radius:999px; font-size:13.5px; font-weight:600; z-index:6000; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+    .dc-toast[hidden] { display:none; }
+  </style>
+</head>
+<body class="rs-portal st-portal" data-page="documents">
+<div class="page-shell">
+  <header class="topbar rs-topbar">
+      <a class="brand" href="/captain/dashboard" aria-label="Mabayuan Express — captain dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
+        <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
+        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">C</span><span class="rs-user-name" id="rsUserName">Captain</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
+          <a href="/captain/dashboard">🏠 Dashboard</a>
+          <a href="/captain/messages">📢 Send an announcement</a>
+          <a href="/captain/analytics">📈 Analytics report</a>
+          <a href="/captain/documents">📄 Document configuration</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
+    </header>
+
+  <main class="container content-area">
+    <div class="st-head">
+      <div>
+        <h1>📄 Document Configuration</h1>
+        <p>Choose which documents residents can request online, and set each one's fee and processing time.</p>
+      </div>
+      <div class="st-head-actions"><button type="button" class="btn btn-small" id="addDocBtn">＋ Add document</button></div>
+    </div>
+
+    <section class="dc-stats">
+      <div class="filter-card st-stat"><span class="st-ico st-i-rose">📄</span><div><div class="filter-label">Document types</div><div class="filter-value" id="statTotal">0</div></div></div>
+      <div class="filter-card st-stat"><span class="st-ico st-i-green">✅</span><div><div class="filter-label">Available to residents</div><div class="filter-value" id="statOn">0</div></div></div>
+      <div class="filter-card st-stat"><span class="st-ico st-i-gray">⏸️</span><div><div class="filter-label">Unavailable</div><div class="filter-value" id="statOff">0</div></div></div>
+      <div class="filter-card st-stat"><span class="st-ico st-i-amber">⏳</span><div><div class="filter-label">Open requests</div><div class="filter-value" id="statOpen">0</div></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="st-toolbar">
+        <div class="st-search"><input class="input" id="docSearch" type="search" placeholder="Search documents…" autocomplete="off" aria-label="Search documents"></div>
+        <select class="select" id="docFilter" aria-label="Filter by availability">
+          <option value="all">All documents</option>
+          <option value="on">Available</option>
+          <option value="off">Unavailable</option>
+        </select>
+        <span class="st-result" id="docResult"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Document</th><th>Fee</th><th>Processing</th><th>Requests</th><th>Available to residents</th><th style="text-align:right">Actions</th></tr></thead>
+          <tbody id="docRows"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="dc-muted" style="margin:12px 0 0">💡 Fee and processing-time changes apply to <strong>new</strong> requests only. Requests already submitted keep the fee shown when the resident applied.</p>
+    </section>
+  </main>
+
+  <div class="dc-modal" id="docModal" hidden role="dialog" aria-modal="true" aria-labelledby="docModalTitle">
+    <form class="dc-box" id="docForm" novalidate>
+      <div class="dc-head"><h2 id="docModalTitle">Add document</h2><button type="button" class="dc-close" data-close aria-label="Close">✕</button></div>
+      <div class="dc-body">
+        <div class="dc-err" id="docError" role="alert" hidden></div>
+        <div>
+          <label class="form-label" for="fName">Document name</label>
+          <input class="input" id="fName" name="document_name" maxlength="120" placeholder="e.g. Barangay Clearance" required>
+        </div>
+        <div>
+          <label class="form-label" for="fDesc">Description <span style="font-weight:400;color:var(--muted)">(optional — shown to residents)</span></label>
+          <textarea class="textarea" id="fDesc" name="description" rows="2" maxlength="300" placeholder="e.g. Certifies that the resident has no derogatory record in the barangay."></textarea>
+          <div class="dc-hint"><span id="fDescCount">0</span>/300</div>
+        </div>
+        <div class="dc-row2">
+          <div>
+            <label class="form-label" for="fPrice">Fee</label>
+            <div class="dc-prefix"><span>₱</span><input class="input" id="fPrice" name="price" type="number" min="0" max="100000" step="0.01" inputmode="decimal" placeholder="0.00" required></div>
+            <div class="dc-hint">Enter 0 if the document is free.</div>
+          </div>
+          <div>
+            <label class="form-label" for="fDays">Processing time (working days)</label>
+            <input class="input" id="fDays" name="processing_days" type="number" min="0" max="60" step="1" inputmode="numeric" placeholder="e.g. 3" required>
+            <div class="dc-hint">Enter 0 for same-day release.</div>
+          </div>
+        </div>
+        <label class="dc-switch"><input type="checkbox" id="fActive" checked><span class="dc-track"></span><span id="fActiveLabel">Available — residents can request it</span></label>
+        <div class="dc-warn" id="docWarn" hidden></div>
+        <div class="dc-preview"><b>Residents will see</b><div class="pv-select" id="pvOption">—</div><div class="pv-meta" id="pvMeta"></div></div>
+      </div>
+      <div class="dc-foot"><button type="button" class="btn btn-small btn-ghost" data-close>Cancel</button><button type="submit" class="btn btn-small" id="docSave">Save document</button></div>
+    </form>
+  </div>
+  <div class="dc-toast" id="dcToast" role="status" hidden></div>
+</div>
+  <nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home<span class="rs-badge" data-pending-badge hidden></span></a>
+    <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+    <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announce</a>
+    <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Docs</a>
+    <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit</a>
+    <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/assets/js/common.js?v=3"></script>
+  <script src="/assets/js/captain-shell.js"></script>
+  <script src="/assets/js/delete-modal.js"></script>
+  <script src="/assets/js/captain-documents.js?v=1"></script>
+</body>
+</html>

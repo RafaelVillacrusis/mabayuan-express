@@ -7,9 +7,12 @@
 @media (max-width:760px) {
   .st-portal .rs-bottom { grid-template-columns:repeat(5,1fr); }
   .st-portal .rs-bottom a { font-size:10.5px; }
+  .st-portal .rs-bottom:has(> :nth-child(6)) { grid-template-columns:repeat(6,1fr); }
+  .st-portal .rs-bottom:has(> :nth-child(6)) a { font-size:9.5px; padding-left:0; padding-right:0; }
 }
 @media (max-width:1100px) and (min-width:761px) {
   .st-portal .rs-nav a { padding:9px 10px; font-size:13.5px; }
+  .st-portal .rs-nav:has(> :nth-child(6)) .rs-ico { display:none; }
   .st-portal .rs-user-name { display:none; }
 }
 
