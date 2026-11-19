@@ -12,7 +12,7 @@
   <title>Document Configuration — Mabayuan Express Captain</title>
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/resident.css" />
-  <link rel="stylesheet" href="/assets/css/staff.css?v=4" />
+  <link rel="stylesheet" href="/assets/css/staff.css?v=5" />
   <style>
     .dc-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
     .dc-stats .filter-card { cursor:default; }
@@ -85,6 +85,7 @@
         <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
         <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
         <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
+        <a href="/captain/rbac" data-nav="rbac"><span class="rs-ico" aria-hidden="true">🔐</span>Access</a>
         <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
         <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
       </nav>
@@ -98,6 +99,7 @@
           <a href="/captain/messages">📢 Send an announcement</a>
           <a href="/captain/analytics">📈 Analytics report</a>
           <a href="/captain/documents">📄 Document configuration</a>
+          <a href="/captain/rbac">🔐 User access (RBAC)</a>
           <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>

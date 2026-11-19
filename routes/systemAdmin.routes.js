@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
-const { requireRole } = require('../middleware/auth');
+const { requireRole, forgetUserRole } = require('../middleware/auth');
 const { getRoleCounts, getRequestsByRole } = require('../actions/request.actions');
 const { getRecentAuditLogs, getFilteredAuditLogs, createAuditLog } = require('../actions/audit.actions');
 const { refreshRoleDashboards } = require('../actions/notification.actions');
@@ -153,6 +153,7 @@ router.post('/api/system-admin/users', requireRole('system_admin'), async (req, 
 router.post('/api/system-admin/users/:id/update-role', requireRole('system_admin'), async (req, res) => {
   const targetId = Number(req.params.id);
   const { role } = req.body;
+  if (!['staff', 'captain', 'system_admin'].includes(role)) return res.status(400).json({ error: 'Invalid role.' });
   if (targetId === Number(req.session.user.user_id) && role !== 'system_admin') {
     return res.status(400).json({ error: 'You cannot remove your own system admin role.' });
   }
@@ -162,6 +163,7 @@ router.post('/api/system-admin/users/:id/update-role', requireRole('system_admin
   );
   if (!existing) return res.status(404).json({ error: 'User not found.' });
   await pool.query(`UPDATE users SET role = $1 WHERE user_id = $2`, [role, targetId]);
+  forgetUserRole(targetId);
   await createAuditLog({
     actorUserId: req.session.user.user_id,
     actorRole: 'system_admin',
@@ -186,6 +188,7 @@ router.post('/api/system-admin/users/:id/delete', requireRole('system_admin'), a
   );
   if (!existing) return res.status(404).json({ error: 'User not found.' });
   await pool.query(`DELETE FROM users WHERE user_id = $1`, [targetId]);
+  forgetUserRole(targetId);
   await createAuditLog({
     actorUserId: req.session.user.user_id,
     actorRole: 'system_admin',

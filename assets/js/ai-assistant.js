@@ -9,7 +9,7 @@
     ],
     captain: [
       ['/captain/dashboard', 'Dashboard', '🏠', 'Home', 'pending'], ['/captain/analytics', 'Analytics', '📈', 'Analytics'],
-      ['/captain/messages', 'Announcements', '📢', 'Announce'], ['/captain/documents', 'Documents', '📄', 'Docs'], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
+      ['/captain/messages', 'Announcements', '📢', 'Announce'], ['/captain/documents', 'Documents', '📄', 'Docs'], ['/captain/rbac', 'Access', '🔐', null], ['/captain/audit-trail', 'Audit Trail', '📋', 'Audit'],
       ['/captain/ai-assistant', 'AI Assistant', '🤖', 'AI'],
     ],
   };
@@ -66,7 +66,7 @@
       `<a href="${href}"${href.endsWith('/ai-assistant') ? ' aria-current="page"' : ''}><span class="rs-ico" aria-hidden="true">${icon}</span>${mobile ? short : label}` +
       (seenKey ? `<span class="rs-badge" data-seen-key="${seenKey}" hidden></span>` : '') + '</a>';
     $('rsNav').innerHTML = items.map(i => link(i, false)).join('');
-    $('rsBottom').innerHTML = items.map(i => link(i, true)).join('');
+    $('rsBottom').innerHTML = items.filter(i => i[3] !== null).map(i => link(i, true)).join(''); // null short label = top nav only
 
     const name = me.full_name || (me.role === 'captain' ? 'Captain' : 'Staff');
     const parts = name.trim().split(/\s+/);

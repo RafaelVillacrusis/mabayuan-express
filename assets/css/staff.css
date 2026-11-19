@@ -16,6 +16,16 @@
   .st-portal .rs-user-name { display:none; }
 }
 
+/* Seven top-nav links (captain): drop icons on mid-size screens so everything fits */
+@media (max-width:1360px) and (min-width:761px) {
+  .st-portal .rs-nav:has(> :nth-child(7)) .rs-ico { display:none; }
+  .st-portal .rs-nav:has(> :nth-child(7)) a { padding:9px 10px; }
+}
+@media (max-width:1180px) and (min-width:761px) {
+  .st-portal .rs-topbar:has(.rs-nav > :nth-child(7)) .rs-user-name { display:none; }
+  .st-portal .rs-nav:has(> :nth-child(7)) a { font-size:13px; padding:8px 8px; }
+}
+
 /* `hidden` always wins over display rules on portal pages */
 .st-portal [hidden] { display:none !important; }
 

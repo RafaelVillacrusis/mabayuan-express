@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Access (RBAC) — Mabayuan Express Captain</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  <link rel="stylesheet" href="/assets/css/staff.css?v=5" />
+  <style>
+    .rb-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+    .rb-stats .filter-card { cursor:default; }
+    @media (max-width:900px) { .rb-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    .rb-roles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+    @media (max-width:1100px) { .rb-roles { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:600px) { .rb-roles { grid-template-columns:1fr; } }
+    .rb-role { border:1px solid var(--border); border-radius:14px; padding:14px 16px; background:#fff; border-top:4px solid var(--rc); }
+    .rb-role h3 { margin:0; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .rb-role > p { margin:4px 0 10px; font-size:12.5px; color:var(--muted); }
+    .rb-role ul { list-style:none; margin:0; padding:0; display:grid; gap:5px; font-size:13px; }
+    .rb-role li { display:flex; gap:7px; align-items:flex-start; }
+    .rb-yes { color:#16653a; font-weight:800; } .rb-no { color:#b42318; font-weight:800; } .rb-part { color:#a16207; font-weight:800; }
+    .rb-tag { font-size:10.5px; font-weight:800; border-radius:999px; padding:2px 8px; background:var(--rbg); color:var(--rc); white-space:nowrap; }
+    .r-system_admin { --rc:#7c2d38; --rbg:#fbe9eb; }
+    .r-captain { --rc:#9a5b00; --rbg:#fdf4dc; }
+    .r-staff { --rc:#1d4ed8; --rbg:#e6effc; }
+    .r-resident { --rc:#16653a; --rbg:#e6f6ea; }
+    .rb-pill { display:inline-block; font-size:12px; font-weight:800; border-radius:999px; padding:3px 10px; background:var(--rbg); color:var(--rc); white-space:nowrap; }
+    .rb-filter { display:flex; gap:6px; flex-wrap:wrap; }
+    .rb-filter button { border:1px solid var(--border); background:#fff; border-radius:999px; padding:6px 14px; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; color:#4a3a3c; }
+    .rb-filter button.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .rb-user { display:flex; align-items:center; gap:10px; }
+    .rb-avatar { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:800; background:var(--rbg); color:var(--rc); flex-shrink:0; }
+    .rb-user strong { display:block; font-size:14px; }
+    .rb-user small { color:var(--muted); font-size:12px; word-break:break-all; }
+    .rb-you { font-size:10.5px; font-weight:800; background:#2d1518; color:#fff; border-radius:999px; padding:1px 7px; margin-left:6px; vertical-align:middle; }
+    .rb-actions { display:flex; gap:6px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
+    .rb-actions { flex-wrap:nowrap; }
+    .rb-actions .select { width:auto; flex:0 0 120px; height:34px; padding:0 10px; font-size:13px; }
+    @media (max-width:700px) { .rb-actions { flex-wrap:wrap; } }
+    .rb-locked { font-size:12px; color:var(--muted); display:inline-flex; align-items:center; gap:5px; }
+    .rb-modal { position:fixed; inset:0; z-index:5000; background:rgba(30,12,15,.55); display:grid; place-items:center; padding:16px; }
+    .rb-modal[hidden] { display:none; }
+    .rb-box { background:#fff; border-radius:18px; width:min(560px,100%); max-height:calc(100vh - 32px); display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden; margin:0; }
+    .rb-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 22px; border-bottom:1px solid var(--border); }
+    .rb-head h2 { margin:0; font-size:18px; }
+    .rb-close { border:0; background:#f3ecec; border-radius:50%; width:34px; height:34px; font-size:16px; cursor:pointer; }
+    .rb-body { padding:18px 22px; overflow:auto; display:grid; gap:14px; }
+    .rb-body .input { width:100%; box-sizing:border-box; }
+    .rb-body .input.bad { border-color:#dc2626; }
+    .rb-role-pick { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .rb-role-pick label { border:2px solid var(--border); border-radius:12px; padding:10px 12px; cursor:pointer; display:block; }
+    .rb-role-pick input { position:absolute; opacity:0; }
+    .rb-role-pick label:has(input:checked) { border-color:var(--primary); background:#fdf6f6; }
+    .rb-role-pick label:has(input:focus-visible) { outline:3px solid #f4c2c8; outline-offset:2px; }
+    .rb-role-pick strong { display:block; font-size:14px; }
+    .rb-role-pick span { font-size:12px; color:var(--muted); }
+    .rb-pwd { position:relative; }
+    .rb-pwd .input { padding-right:76px; }
+    .rb-pwd button { position:absolute; right:6px; top:50%; transform:translateY(-50%); border:0; background:#f3ecec; border-radius:8px; padding:5px 9px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+    .rb-hint { font-size:12px; color:var(--muted); margin-top:5px; }
+    .rb-err { background:#fef2f2; border:1px solid #fecaca; color:#b42318; border-radius:10px; padding:9px 12px; font-size:13px; }
+    .rb-err[hidden] { display:none; }
+    .rb-foot { display:flex; justify-content:flex-end; gap:8px; padding:12px 22px; border-top:1px solid var(--border); }
+    .rb-toast { position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:#2d1518; color:#fff; padding:10px 18px; border-radius:999px; font-size:13.5px; font-weight:600; z-index:6000; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+    .rb-toast[hidden] { display:none; }
+    .rb-policy { margin:0; padding-left:18px; font-size:13px; line-height:1.8; color:#3d2326; }
+  </style>
+</head>
+<body class="rs-portal st-portal" data-page="rbac">
+<div class="page-shell">
+  <header class="topbar rs-topbar">
+      <a class="brand" href="/captain/dashboard" aria-label="Mabayuan Express — captain dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
+        <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
+        <a href="/captain/rbac" data-nav="rbac"><span class="rs-ico" aria-hidden="true">🔐</span>Access</a>
+        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">C</span><span class="rs-user-name" id="rsUserName">Captain</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
+          <a href="/captain/dashboard">🏠 Dashboard</a>
+          <a href="/captain/messages">📢 Send an announcement</a>
+          <a href="/captain/analytics">📈 Analytics report</a>
+          <a href="/captain/documents">📄 Document configuration</a>
+          <a href="/captain/rbac">🔐 User access (RBAC)</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
+    </header>
+
+  <main class="container content-area">
+    <div class="st-head">
+      <div>
+        <h1>🔐 User Access (RBAC)</h1>
+        <p>See who can use the system and what each role can do. You can add, change and remove <strong>Staff</strong> and <strong>Captain</strong> accounts.</p>
+      </div>
+      <div class="st-head-actions"><button type="button" class="btn btn-small" id="addUserBtn">＋ Add user</button></div>
+    </div>
+
+    <section class="rb-stats">
+      <div class="filter-card st-stat"><span class="st-ico st-i-rose">👥</span><div><div class="filter-label">Personnel accounts</div><div class="filter-value" id="statTotal">0</div></div></div>
+      <div class="filter-card st-stat"><span class="st-ico st-i-amber">⚓</span><div><div class="filter-label">Captains</div><div class="filter-value" id="statCaptain">0</div></div></div>
+      <div class="filter-card st-stat"><span class="st-ico st-i-blue">🗂️</span><div><div class="filter-label">Staff</div><div class="filter-value" id="statStaff">0</div></div></div>
+      <div class="filter-card st-stat"><span class="st-ico st-i-gray">🔑</span><div><div class="filter-label">System admins</div><div class="filter-value" id="statAdmin">0</div></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="st-section-head"><div><h2>👤 Personnel Accounts</h2><p>Role changes and removals take effect within 30 seconds, even if the person is logged in.</p></div></div>
+      <div class="st-toolbar">
+        <div class="st-search"><input class="input" id="userSearch" type="search" placeholder="Search name or email…" autocomplete="off" aria-label="Search accounts"></div>
+        <div class="rb-filter" id="roleFilter">
+          <button type="button" class="on" data-role="all">All</button>
+          <button type="button" data-role="captain">Captain</button>
+          <button type="button" data-role="staff">Staff</button>
+          <button type="button" data-role="system_admin">System Admin</button>
+        </div>
+        <span class="st-result" id="userResult"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Name</th><th>Role</th><th>Added</th><th style="text-align:right">Manage</th></tr></thead>
+          <tbody id="userRows"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="st-section-head"><div><h2>📋 Roles &amp; Permissions</h2><p>What each role can do in Mabayuan Express.</p></div></div>
+      <div class="rb-roles">
+        <div class="rb-role r-system_admin"><h3>System Admin <span class="rb-tag">Highest</span></h3><p>Runs and maintains the platform.</p><ul>
+          <li><span class="rb-yes">✓</span>Manage all accounts, including admins</li>
+          <li><span class="rb-yes">✓</span>Configure document types</li>
+          <li><span class="rb-yes">✓</span>Full audit trail &amp; AI usage</li>
+          <li><span class="rb-yes">✓</span>Export system backup</li>
+          <li><span class="rb-no">✗</span>Approve or decline requests</li></ul></div>
+        <div class="rb-role r-captain"><h3>Captain <span class="rb-tag">Elevated</span></h3><p>Leads the barangay office.</p><ul>
+          <li><span class="rb-yes">✓</span>Approve or decline requests</li>
+          <li><span class="rb-yes">✓</span>Configure document types</li>
+          <li><span class="rb-part">◐</span>Manage Staff &amp; Captain accounts</li>
+          <li><span class="rb-yes">✓</span>Announcements, analytics, audit trail</li>
+          <li><span class="rb-no">✗</span>Manage System Admins or backups</li></ul></div>
+        <div class="rb-role r-staff"><h3>Staff <span class="rb-tag">Standard</span></h3><p>Day-to-day processing.</p><ul>
+          <li><span class="rb-yes">✓</span>Verify resident registrations</li>
+          <li><span class="rb-yes">✓</span>Set release dates &amp; mark claimed</li>
+          <li><span class="rb-yes">✓</span>Print documents &amp; reports</li>
+          <li><span class="rb-no">✗</span>Approve or decline requests</li>
+          <li><span class="rb-no">✗</span>Manage accounts or documents</li></ul></div>
+        <div class="rb-role r-resident"><h3>Resident <span class="rb-tag">Limited</span></h3><p>Registers on the public site.</p><ul>
+          <li><span class="rb-yes">✓</span>Request documents with a valid ID</li>
+          <li><span class="rb-yes">✓</span>Track their own requests</li>
+          <li><span class="rb-yes">✓</span>Read announcements</li>
+          <li><span class="rb-no">✗</span>See other residents' data</li>
+          <li><span class="rb-no">✗</span>Open any personnel page</li></ul></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="st-section-head"><div><h2>🛡️ Access Rules</h2></div></div>
+      <ul class="rb-policy">
+        <li>Every page and API checks the user's role — anyone without access gets <strong>403 Forbidden</strong>.</li>
+        <li>Captains can't create, change or delete <strong>System Admin</strong> accounts, and can't change or delete their own account.</li>
+        <li>New passwords need at least 8 characters with a letter and a number.</li>
+        <li>Every account change is recorded in the <strong>Audit Trail</strong> with who made it and when.</li>
+        <li>Residents use a separate login and can never open personnel pages.</li>
+      </ul>
+    </section>
+  </main>
+
+  <div class="rb-modal" id="userModal" hidden role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+    <form class="rb-box" id="userForm" novalidate>
+      <div class="rb-head"><h2 id="userModalTitle">Add user</h2><button type="button" class="rb-close" data-close aria-label="Close">✕</button></div>
+      <div class="rb-body">
+        <div class="rb-err" id="userError" role="alert" hidden></div>
+        <div><label class="form-label" for="uName">Full name</label><input class="input" id="uName" maxlength="120" placeholder="e.g. Juan Dela Cruz" autocomplete="off"></div>
+        <div><label class="form-label" for="uEmail">Email</label><input class="input" id="uEmail" type="email" maxlength="160" placeholder="name@example.com" autocomplete="off"><div class="rb-hint">They'll use this email to log in.</div></div>
+        <div>
+          <span class="form-label">Role</span>
+          <div class="rb-role-pick">
+            <label><input type="radio" name="uRole" value="staff" checked><strong>🗂️ Staff</strong><span>Processes requests and verifies residents</span></label>
+            <label><input type="radio" name="uRole" value="captain"><strong>⚓ Captain</strong><span>Approves requests, manages the office</span></label>
+          </div>
+        </div>
+        <div>
+          <label class="form-label" for="uPassword">Temporary password</label>
+          <div class="rb-pwd"><input class="input" id="uPassword" type="password" autocomplete="new-password" placeholder="At least 8 characters"><button type="button" id="pwdToggle">Show</button></div>
+          <div class="rb-hint" id="pwdHint">Use at least 8 characters with a letter and a number. Share it with the person privately.</div>
+        </div>
+      </div>
+      <div class="rb-foot"><button type="button" class="btn btn-small btn-ghost" data-close>Cancel</button><button type="submit" class="btn btn-small" id="userSave">Create account</button></div>
+    </form>
+  </div>
+  <div class="rb-toast" id="rbToast" role="status" hidden></div>
+</div>
+  <nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home<span class="rs-badge" data-pending-badge hidden></span></a>
+    <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
+    <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announce</a>
+    <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Docs</a>
+    <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit</a>
+    <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
+  </nav>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/assets/js/common.js?v=3"></script>
+  <script src="/assets/js/captain-shell.js"></script>
+  <script src="/assets/js/delete-modal.js"></script>
+  <script src="/assets/js/captain-rbac.js?v=1"></script>
+</body>
+</html>
