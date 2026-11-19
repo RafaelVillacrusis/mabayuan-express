@@ -1,7 +1,11 @@
 let staffReqPg, pendingResPg;
 let pendingResidentsById = new Map();
 let allStaffRequests = [];
-let staffSortCol = 'suggested_release_date', staffSortDir = 'asc';
+// Queue order: FIFO (oldest request first) by default, or newest first. Remembered on this device.
+function readPref(key, fallback) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } }
+function savePref(key, value) { try { localStorage.setItem(key, value); } catch { /* private mode */ } }
+let staffSortCol = 'created_at', staffSortDir = readPref('st_request_order', 'fifo') === 'newest' ? 'desc' : 'asc';
+let staffNeedsFirst = readPref('st_needs_first', '1') === '1';   // "Approved" (needs a release date) on top
 let socket;
 function getFilter() { return new URLSearchParams(window.location.search).get('status') || 'all'; }
 function setFilter(status) { const url = new URL(window.location.href); status === 'all' ? url.searchParams.delete('status') : url.searchParams.set('status', status); window.history.replaceState({}, '', url); }
@@ -36,17 +40,37 @@ function getStaffQueueFiltered() {
   });
 
   rows.sort((a, b) => {
+    if (staffNeedsFirst) {
+      const na = a.status === 'Approved', nb = b.status === 'Approved';
+      if (na !== nb) return na ? -1 : 1;
+    }
     let va = a[staffSortCol] ?? '', vb = b[staffSortCol] ?? '';
     va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
     if (va < vb) return staffSortDir === 'asc' ? -1 : 1;
     if (va > vb) return staffSortDir === 'asc' ?  1 : -1;
-    return 0;
+    // Same value: keep submission order (FIFO), reversed for "Newest first"
+    const ta = String(a.created_at || ''), tb = String(b.created_at || '');
+    const tie = ta < tb ? -1 : ta > tb ? 1 : (a.request_id - b.request_id);
+    return staffSortCol === 'created_at' && staffSortDir === 'desc' ? -tie : tie;
   });
 
   return rows;
 }
 
+function syncStaffOrderControls() {
+  const sel = document.getElementById('staffQueueOrder');
+  if (!sel) return;
+  sel.value = staffSortCol === 'created_at' ? (staffSortDir === 'asc' ? 'fifo' : 'newest') : 'custom';
+  const colName = (document.querySelector(`#staffQueueTable th[data-col="${staffSortCol}"]`) || {}).textContent || staffSortCol;
+  document.getElementById('staffQueueOrderNote').textContent = sel.value === 'fifo'
+    ? 'First come, first served — the request waiting longest is at the top.'
+    : sel.value === 'newest' ? 'Most recent requests are at the top.'
+    : `Sorted by ${colName.trim()} (${staffSortDir === 'asc' ? 'ascending' : 'descending'}). Choose an order to go back.`;
+  document.getElementById('staffQueueNeedsFirst').checked = staffNeedsFirst;
+}
+
 function renderStaffQueue() {
+  syncStaffOrderControls();
   const rows = getStaffQueueFiltered();
   // Update sort indicators
   document.querySelectorAll('#staffQueueTable thead th[data-col]').forEach(th => {
@@ -55,7 +79,7 @@ function renderStaffQueue() {
   });
   if (!staffReqPg) staffReqPg = createPaginator('staffRequestRows', 'staffReqPg', 10);
   staffReqPg.setRows(rows, row => `<tr>
-    <td>${escapeHtml(row.transaction_no)}</td>
+    <td>${row.created_at ? formatDate(row.created_at) : '-'}</td>
     <td>${escapeHtml(row.resident_name)}</td>
     <td>${escapeHtml(row.document_name)}</td>
     <td>${formatDate(row.suggested_release_date)}</td>
@@ -568,8 +592,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       const col = th.dataset.col;
       if (staffSortCol === col) staffSortDir = staffSortDir === 'asc' ? 'desc' : 'asc';
       else { staffSortCol = col; staffSortDir = 'asc'; }
+      if (col === 'created_at') savePref('st_request_order', staffSortDir === 'asc' ? 'fifo' : 'newest');
       renderStaffQueue();
     });
+  });
+
+  // Order: FIFO / newest first
+  document.getElementById('staffQueueOrder')?.addEventListener('change', e => {
+    if (e.target.value === 'custom') return;
+    staffSortCol = 'created_at';
+    staffSortDir = e.target.value === 'newest' ? 'desc' : 'asc';
+    savePref('st_request_order', e.target.value);
+    renderStaffQueue();
+  });
+  document.getElementById('staffQueueNeedsFirst')?.addEventListener('change', e => {
+    staffNeedsFirst = e.target.checked;
+    savePref('st_needs_first', staffNeedsFirst ? '1' : '0');
+    renderStaffQueue();
   });
   const bellBtn = document.getElementById('staffNotifButton');
   const dropdown = document.getElementById('staffNotifDropdown');

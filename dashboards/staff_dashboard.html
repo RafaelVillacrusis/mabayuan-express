@@ -6,12 +6,12 @@
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Dashboard — Mabayuan Express Staff</title><link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/resident.css" />
-  <link rel="stylesheet" href="/assets/css/staff.css" />  <style>
+  <link rel="stylesheet" href="/assets/css/staff.css?v=5" />  <style>
   /* ── Staff Processing Queue filter bar ── */
   #staffQueueFilter.audit-filter-grid {
-    grid-template-columns: 2.5fr 1.4fr 1.2fr 1.2fr auto;
+    grid-template-columns: 2fr 1.15fr 1.35fr 1fr 1fr auto;
     gap: 10px;
-    align-items: center;
+    align-items: end;
     padding: 10px 14px;
     background: #fff;
     border: 1px solid var(--border);
@@ -33,6 +33,12 @@
   }
   #staffQueueFilter input[type="date"].input { padding: 0 10px; cursor: pointer; }
   #staffQueueFilter .select { cursor: pointer; }
+  .sq-field { display:flex; flex-direction:column; gap:4px; min-width:0; margin:0; }
+  .sq-field > span { font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .sq-order-row { grid-column:1 / -1; display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); }
+  .sq-order-row label { display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; color:#4a3a3c; }
+  .sq-order-row input { width:16px; height:16px; accent-color:var(--primary); margin:0; }
+  .sq-order-row strong { color:var(--primary); }
   #staffQueueFilter .input:focus,
   #staffQueueFilter .select:focus {
     outline: none;
@@ -105,25 +111,36 @@
 <section class="panel" id="queueSection">
   <div class="st-section-head"><div><h2>📋 Document Request Queue</h2><p>Requests approved by the Captain. Open one to set its release date or mark it as claimed. Click a card above to filter.</p></div></div>
   <div class="audit-filter-grid" id="staffQueueFilter">
-    <input class="input" type="text" id="staffQueueSearch" placeholder="Search transaction, resident, or document…" autocomplete="off" />
+    <input class="input" type="text" id="staffQueueSearch" placeholder="Search resident, document, or transaction no.…" autocomplete="off" />
     <select class="select" id="staffQueueStatus">
       <option value="all">All Statuses</option>
       <option value="Approved">Approved</option>
       <option value="Ready for Pickup">Ready for Pickup</option>
       <option value="Claimed">Claimed</option>
     </select>
-    <input class="input" type="date" id="staffQueueDateFrom" />
-    <input class="input" type="date" id="staffQueueDateTo" />
+    <label class="sq-field"><span>Order</span>
+      <select class="select" id="staffQueueOrder" title="Choose the order requests are listed in">
+        <option value="fifo">Oldest first (FIFO)</option>
+        <option value="newest">Newest first</option>
+        <option value="custom" hidden>By column</option>
+      </select>
+    </label>
+    <label class="sq-field"><span>Release from</span><input class="input" type="date" id="staffQueueDateFrom" title="Suggested release on or after" /></label>
+    <label class="sq-field"><span>Release to</span><input class="input" type="date" id="staffQueueDateTo" title="Suggested release on or before" /></label>
     <div class="audit-filter-actions">
       <button class="btn btn-small" id="staffQueueApply">Apply</button>
       <button class="btn btn-small btn-ghost" id="staffQueueReset">Reset</button>
+    </div>
+    <div class="sq-order-row">
+      <label><input type="checkbox" id="staffQueueNeedsFirst" checked> Show requests <strong>needing a release date</strong> first</label>
+      <span id="staffQueueOrderNote"></span>
     </div>
   </div>
   <div class="table-wrap">
     <table class="table" id="staffQueueTable">
       <thead>
         <tr>
-          <th data-col="transaction_no">Transaction</th>
+          <th data-col="created_at">Request Date</th>
           <th data-col="resident_name">Resident</th>
           <th data-col="document_name">Document</th>
           <th data-col="suggested_release_date">Suggested Release</th>
@@ -147,4 +164,4 @@
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/staff-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
-<script src="/assets/js/staff-dashboard.js"></script></body></html>
+<script src="/assets/js/staff-dashboard.js?v=5"></script></body></html>

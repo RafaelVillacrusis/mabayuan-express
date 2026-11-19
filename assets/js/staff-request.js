@@ -13,15 +13,11 @@ async function loadRequest() {
   document.getElementById('requestStatus').textContent = req.status;
   document.getElementById('requestPurpose').textContent = req.purpose || '-';
   renderRequestValidId(req, 'staff');
-  document.getElementById('releaseDateInput').value = req.release_date ? new Date(req.release_date).toISOString().slice(0,10) : (req.suggested_release_date ? new Date(req.suggested_release_date).toISOString().slice(0,10) : '');
+  const initial = req.release_date || req.suggested_release_date;
+  setReleaseDate(initial ? new Date(initial).toISOString().slice(0, 10) : '');
   document.getElementById('staffNotesRelease').value = req.staff_notes || '';
   document.getElementById('staffNotesClaim').value = req.staff_notes || '';
   document.getElementById('printReportLink').href = `/staff/request/${requestId}/report`;
-  document.getElementById('printDocLink').href = `/staff/request/${requestId}/document`;
-
-  // Show Print Official Document button only after Captain approves
-  const printDocStatuses = ['Approved', 'Ready for Pickup', 'Claimed'];
-  document.getElementById('printDocCard').style.display = printDocStatuses.includes(req.status) ? '' : 'none';
 
   renderRequestHeader(req);
   document.getElementById('logList').innerHTML = renderHistory(data.logs || []);
@@ -40,22 +36,20 @@ document.addEventListener('DOMContentLoaded', async()=>{
   showStatusMessage('pageMessage');
   await loadRequest();
 
-  // Prevent selecting past dates for release date
+  // Release date must be today (Philippine time) or later
   const todayPHT = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const releaseDateInput = document.getElementById('releaseDateInput');
-  releaseDateInput.min = todayPHT;
-  // If pre-filled value is in the past, reset it to today
-  if (releaseDateInput.value && releaseDateInput.value < todayPHT) {
-    releaseDateInput.value = todayPHT;
-  }
+  document.getElementById('releaseDatePicker').min = todayPHT;
+  const current = document.getElementById('releaseDateInput').value;
+  if (!current || current < todayPHT) setReleaseDate(todayPHT);
+  setupReleaseDateField(todayPHT);
 
   // Intercept release form — validate date before submitting
   document.getElementById('releaseForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const chosenDate = releaseDateInput.value;
-    if (!chosenDate || chosenDate < todayPHT) {
-      alert(`Release date cannot be in the past. Please choose ${todayPHT} or later.`);
-      releaseDateInput.value = todayPHT;
+    const problem = checkReleaseDate(todayPHT);
+    if (problem) {
+      showReleaseHint(problem, 'bad');
+      document.getElementById('releaseDateText').focus();
       return;
     }
     const btn = document.getElementById('releaseBtn');
@@ -150,3 +144,68 @@ document.addEventListener('DOMContentLoaded', () => {
     if (b) { b.disabled = true; b.textContent = 'Saving…'; }
   });
 });
+
+/* ── Release date field: typed as mm/dd/yy, stored as YYYY-MM-DD ───── */
+const pad2 = n => String(n).padStart(2, '0');
+// "YYYY-MM-DD" → "mm/dd/yy"
+function isoToMdy(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? `${m[2]}/${m[3]}/${m[1].slice(2)}` : '';
+}
+// "mm/dd/yy" → "YYYY-MM-DD", or '' if it isn't a real date
+function mdyToIso(text) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(text || '');
+  if (!m) return '';
+  const [mm, dd, yyyy] = [Number(m[1]), Number(m[2]), 2000 + Number(m[3])];
+  const d = new Date(Date.UTC(yyyy, mm - 1, dd));
+  if (d.getUTCFullYear() !== yyyy || d.getUTCMonth() !== mm - 1 || d.getUTCDate() !== dd) return '';
+  return `${yyyy}-${pad2(mm)}-${pad2(dd)}`;
+}
+function longDate(iso) {
+  return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+function showReleaseHint(msg, kind) {
+  const h = document.getElementById('releaseDateHint');
+  h.textContent = msg;
+  h.className = 'rd-hint' + (kind ? ' ' + kind : '');
+  document.getElementById('releaseDateText').classList.toggle('bad', kind === 'bad');
+}
+function setReleaseDate(iso) {
+  document.getElementById('releaseDateInput').value = iso;
+  document.getElementById('releaseDateText').value = isoToMdy(iso);
+  document.getElementById('releaseDatePicker').value = iso;
+  if (iso) showReleaseHint(`📅 ${longDate(iso)}`, 'ok');
+}
+/** Returns an error message, or '' when the typed date is valid. Keeps the hidden field in sync. */
+function checkReleaseDate(minIso) {
+  const text = document.getElementById('releaseDateText').value.trim();
+  const iso = mdyToIso(text);
+  document.getElementById('releaseDateInput').value = iso;
+  if (!text) return 'Please enter the release date (mm/dd/yy).';
+  if (!/^\d{2}\/\d{2}\/\d{2}$/.test(text)) return 'Use the format mm/dd/yy, e.g. 11/25/26.';
+  if (!iso) return `${text} is not a valid date.`;
+  if (iso < minIso) return `The release date can't be in the past. Choose ${isoToMdy(minIso)} or later.`;
+  return '';
+}
+function setupReleaseDateField(minIso) {
+  const text = document.getElementById('releaseDateText');
+  const picker = document.getElementById('releaseDatePicker');
+  // Type digits only; slashes are added automatically → mm/dd/yy
+  text.addEventListener('input', () => {
+    const digits = text.value.replace(/\D/g, '').slice(0, 6);
+    text.value = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 6)].filter(Boolean).join('/');
+    if (digits.length < 6) { document.getElementById('releaseDateInput').value = ''; showReleaseHint('Type the date as mm/dd/yy, e.g. 11/25/26, or use the calendar.'); return; }
+    const problem = checkReleaseDate(minIso);
+    if (problem) showReleaseHint(problem, 'bad');
+    else { picker.value = document.getElementById('releaseDateInput').value; showReleaseHint(`📅 ${longDate(picker.value)}`, 'ok'); }
+  });
+  document.getElementById('releaseDateCal').addEventListener('click', () => {
+    try { picker.showPicker(); } catch { picker.style.pointerEvents = 'auto'; picker.focus(); picker.click(); }
+  });
+  picker.addEventListener('change', () => {
+    if (!picker.value) return;
+    setReleaseDate(picker.value);
+    const problem = checkReleaseDate(minIso);
+    if (problem) showReleaseHint(problem, 'bad');
+  });
+}
