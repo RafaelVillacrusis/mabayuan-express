@@ -47,6 +47,25 @@ router.get('/api/public/documents', async (req, res) => {
   res.json(rows);
 });
 
+// Public barangay announcements for the landing page — only messages meant for residents/everyone
+router.get('/api/public/announcements', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 5, 1), 10);
+    const rows = await getInboxMessages('resident', limit);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json(rows.map(m => ({
+      id: m.message_id,
+      subject: m.subject,
+      body: m.body,
+      created_at: m.created_at,
+      posted_by: m.captain_name || 'Barangay Captain',
+    })));
+  } catch (err) {
+    console.error('Public announcements error:', err);
+    res.status(500).json({ error: 'Could not load announcements.' });
+  }
+});
+
 /* ================= PROFILE ================= */
 router.get('/api/resident/profile', requireResident, async (req, res) => {
   const result = await pool.query(

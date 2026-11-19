@@ -383,8 +383,9 @@
       </script>
 
       <!-- Philippine Holidays Calendar -->
-      <section id="ph-holidays-section" style="margin-top:2.5rem;margin-bottom:3.5rem;">
-        <div style="background:#fff;border:1px solid #ddd2d3;border-radius:20px;box-shadow:0 8px 28px rgba(68,29,34,.08);padding:2rem 2rem 1.75rem;max-width:520px;margin:0 auto;">
+      <section id="ph-holidays-section" class="lp-board">
+        <!-- Philippine Holidays Calendar -->
+        <div class="lp-card lp-cal-card">
 
           <h2 class="section-title" style="font-size:20px;text-align:center;margin-bottom:0.25rem;">Philippine Holidays</h2>
           <p style="text-align:center;color:#736a6b;margin-top:0.25rem;margin-bottom:1.25rem;font-size:0.88rem;">Official regular and special non-working holidays</p>
@@ -417,7 +418,116 @@
           </div>
 
         </div>
+
+        <!-- Barangay Announcements -->
+        <div class="lp-card lp-ann-card" aria-labelledby="lpAnnTitle">
+          <h2 class="section-title" id="lpAnnTitle" style="font-size:20px;margin:0;text-align:center;">Barangay Announcements</h2>
+          <p class="lp-ann-sub">Latest news and advisories from Barangay Mabayuan</p>
+          <div class="lp-ann-list" id="lpAnnList" aria-live="polite">
+            <div class="lp-ann-empty">Loading announcements…</div>
+          </div>
+          <div class="lp-ann-foot">
+            Residents also receive these in their account.
+            <a href="/login">Log in</a> or <a href="/resident/register">create an account</a>.
+          </div>
+        </div>
       </section>
+
+      <style>
+        .lp-board {
+          display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:24px; align-items:stretch;
+          max-width:1100px; margin:2.5rem auto 3.5rem;
+        }
+        .lp-card {
+          background:#fff; border:1px solid #ddd2d3; border-radius:20px;
+          box-shadow:0 8px 28px rgba(68,29,34,.08); padding:2rem 2rem 1.75rem; min-width:0;
+        }
+        .lp-ann-card { display:flex; flex-direction:column; }
+        .lp-ann-sub { color:#736a6b; margin:0.25rem 0 1.25rem; font-size:0.88rem; text-align:center; }
+        .lp-ann-list { flex:1; display:flex; flex-direction:column; gap:12px; max-height:520px; overflow-y:auto; padding-right:4px; }
+        .lp-ann-item { display:flex; gap:14px; padding:14px; border:1px solid #f0e4e5; border-radius:16px; background:#fdf8f8; transition:box-shadow .2s, transform .2s; }
+        .lp-ann-item:hover { box-shadow:0 10px 22px rgba(68,29,34,.08); transform:translateY(-1px); }
+        .lp-ann-date {
+          flex-shrink:0; width:54px; height:58px; border-radius:12px; background:var(--primary,#a64d57); color:#fff;
+          display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05;
+        }
+        .lp-ann-date span { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; opacity:.9; }
+        .lp-ann-date strong { font-size:1.35rem; }
+        .lp-ann-body { min-width:0; flex:1; }
+        .lp-ann-body h3 { margin:0; font-size:0.98rem; color:#2b1a1c; line-height:1.35; display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; }
+        .lp-ann-new { background:#ffd166; color:#4a1e24; font-size:0.62rem; font-weight:800; letter-spacing:.05em; border-radius:999px; padding:2px 7px; margin-top:2px; }
+        .lp-ann-meta { font-size:0.76rem; color:#8a7f80; margin:3px 0 6px; }
+        .lp-ann-text {
+          margin:0; font-size:0.86rem; line-height:1.6; color:#3d2326; white-space:pre-line; overflow-wrap:anywhere;
+          display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+        }
+        .lp-ann-item.expanded .lp-ann-text { -webkit-line-clamp:unset; display:block; }
+        .lp-ann-more { background:none; border:none; padding:0; margin-top:4px; color:var(--primary,#a64d57); font-weight:700; font-size:0.8rem; cursor:pointer; }
+        .lp-ann-empty { text-align:center; color:#8a7f80; font-size:0.9rem; padding:2.2rem 1rem; border:1px dashed #e4d4d6; border-radius:16px; }
+        .lp-ann-empty div { font-size:2rem; margin-bottom:0.4rem; }
+        .lp-ann-foot { margin-top:1.1rem; padding-top:0.75rem; border-top:1px solid #f0e8e9; font-size:0.8rem; color:#736a6b; text-align:center; }
+        .lp-ann-foot a { color:var(--primary,#a64d57); font-weight:700; }
+        @media (max-width:860px) {
+          .lp-board { grid-template-columns:minmax(0,1fr); gap:18px; }
+          .lp-card { padding:1.4rem 1.1rem 1.25rem; }
+          .lp-ann-list { max-height:none; }
+        }
+      </style>
+
+      <script>
+        (function () {
+          var NEW_DAYS = 7;
+          var ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+          function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ESC[c]; }); }
+          function ago(d) {
+            var s = (Date.now() - d.getTime()) / 1000;
+            if (s < 3600) return Math.max(1, Math.floor(s / 60)) + ' min ago';
+            if (s < 86400) return Math.floor(s / 3600) + ' hr ago';
+            if (s < 7 * 86400) { var n = Math.floor(s / 86400); return n + ' day' + (n === 1 ? '' : 's') + ' ago'; }
+            return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+          }
+          function render(items) {
+            var list = document.getElementById('lpAnnList');
+            if (!list) return;
+            if (!items.length) {
+              list.innerHTML = '<div class="lp-ann-empty"><div>📭</div>No announcements yet. Check back soon for barangay news and advisories.</div>';
+              return;
+            }
+            list.innerHTML = items.map(function (a) {
+              var d = new Date(a.created_at);
+              var isNew = (Date.now() - d.getTime()) < NEW_DAYS * 86400000;
+              var body = a.body || '';
+              var isLong = body.length > 160 || body.split('\n').length > 3;
+              return '<article class="lp-ann-item">' +
+                '<div class="lp-ann-date" aria-hidden="true"><span>' + d.toLocaleDateString('en-PH', { month: 'short' }) + '</span><strong>' + d.getDate() + '</strong></div>' +
+                '<div class="lp-ann-body">' +
+                  '<h3>' + (isNew ? '<span class="lp-ann-new">NEW</span>' : '') + '<span>' + esc(a.subject) + '</span></h3>' +
+                  '<div class="lp-ann-meta">' + esc(a.posted_by) + ' · <time datetime="' + esc(a.created_at) + '">' + ago(d) + '</time></div>' +
+                  '<p class="lp-ann-text">' + esc(body) + '</p>' +
+                  (isLong ? '<button type="button" class="lp-ann-more" aria-expanded="false">Read more</button>' : '') +
+                '</div></article>';
+            }).join('');
+            list.querySelectorAll('.lp-ann-more').forEach(function (btn) {
+              btn.addEventListener('click', function () {
+                var item = btn.closest('.lp-ann-item');
+                var open = item.classList.toggle('expanded');
+                btn.textContent = open ? 'Show less' : 'Read more';
+                btn.setAttribute('aria-expanded', String(open));
+              });
+            });
+          }
+          function load() {
+            fetch('/api/public/announcements?limit=5')
+              .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
+              .then(render)
+              .catch(function () {
+                var list = document.getElementById('lpAnnList');
+                if (list) list.innerHTML = '<div class="lp-ann-empty"><div>⚠️</div>Announcements could not be loaded right now. Please try again later.</div>';
+              });
+          }
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load); else load();
+        })();
+      </script>
 
       <style>
         #cal-table th {
@@ -513,7 +623,6 @@
             // Eid'l Fitr & Eid'l Adha (approximate 2026)
             { month:2,  day:20, name:"Eid'l Fitr",                  type:"regular" },
             { month:4,  day:27, name:"Eid'l Adha",                  type:"regular" },
-            { month:7,  day:21, name:"Ninoy Aquino Day",            type:"regular" },
             { month:7,  day:31, name:"National Heroes Day",         type:"regular" },
             { month:10, day:1,  name:"All Saints' Day",             type:"regular" },
             { month:10, day:30, name:"Bonifacio Day",               type:"regular" },
@@ -522,11 +631,11 @@
             // Special Non-Working Holidays
             { month:0,  day:2,  name:"Day After New Year's Day",    type:"special" },
             { month:1,  day:14, name:"Valentine's Day",             type:"special" },
-            { month:1,  day:17, name:"Chinese New Year (Year of the Snake)", type:"special" },
+            { month:1,  day:17, name:"Chinese New Year (Year of the Horse)", type:"special" },
             { month:3,  day:4,  name:"Black Saturday",              type:"special" },
             { month:7,  day:21, name:"Ninoy Aquino Day",            type:"special" },
             { month:10, day:2,  name:"All Souls' Day",              type:"special" },
-            { month:10, day:31, name:"All Saints' Day Eve",         type:"special" },
+            { month:9,  day:31, name:"All Saints' Day Eve",         type:"special" },
             { month:11, day:8,  name:"Immaculate Conception",       type:"special" },
             { month:11, day:24, name:"Christmas Eve",               type:"special" },
             { month:11, day:31, name:"New Year's Eve",              type:"special" },
