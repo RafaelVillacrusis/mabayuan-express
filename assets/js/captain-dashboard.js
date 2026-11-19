@@ -132,10 +132,9 @@ function renderTable() {
   tbody.innerHTML = pageRows.length
     ? pageRows.map(row => `
         <tr>
-          <td>${escapeHtml(row.transaction_no)}</td>
+          <td>${row.created_at ? formatDate(row.created_at) : '-'}</td>
           <td>${escapeHtml(row.resident_name)}</td>
           <td>${escapeHtml(row.document_name)}</td>
-          <td>${row.created_at ? formatDate(row.created_at) : '-'}</td>
           <td>${peso(row.price_at_request)}</td>
           <td>${formatDate(row.suggested_release_date)}</td>
           <td><span class="status-pill status-${row.status.toLowerCase().replace(/[^a-z]+/g,'-')}">${escapeHtml(row.status === 'Pending Approval' ? 'Needs decision' : row.status)}</span></td>
@@ -145,7 +144,7 @@ function renderTable() {
             ? `<button type="button" class="btn btn-small btn-ghost cp-id-btn" data-id-view="${row.request_id}" title="View the valid ID uploaded with this request">🪪 ID</button>`
             : ''}</td>
         </tr>`).join('')
-    : `<tr><td colspan="8" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
+    : `<tr><td colspan="7" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
 
   // Render pagination using shared pg-row style
   const pgEl = document.getElementById('paginationRow');
