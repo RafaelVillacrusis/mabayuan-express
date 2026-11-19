@@ -183,3 +183,7 @@
   .an-icon { width:36px; height:36px; font-size:17px; border-radius:11px; }
   .an-toolbar .input { max-width:none; }
 }
+
+/* Announcement images */
+.an-img, .rd-ann-img { display:block; width:100%; max-width:520px; max-height:320px; object-fit:cover; border-radius:12px; border:1px solid var(--border); margin:8px 0; background:#f3ecec; }
+.rd-ann-img { max-height:180px; }

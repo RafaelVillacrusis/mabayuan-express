@@ -103,14 +103,14 @@ function announceMessage(msg) {
  * Save an announcement. With a future publishAt it is scheduled (residents/staff
  * don't see it and aren't notified until then). expiresAt hides it afterwards.
  */
-async function sendCaptainMessage({ captainUserId, targetAudience, subject, body, publishAt = null, expiresAt = null }) {
+async function sendCaptainMessage({ captainUserId, targetAudience, subject, body, publishAt = null, expiresAt = null, imagePath = null }) {
   const now = new Date();
   const scheduled = publishAt && publishAt > now;
   const { rows } = await pool.query(
-    `INSERT INTO captain_messages (captain_user_id, target_audience, subject, body, publish_at, expires_at, notified_at)
-     VALUES ($1, $2, $3, $4, COALESCE($5::timestamptz, NOW()), $6, CASE WHEN $7 THEN NULL ELSE NOW() END)
-     RETURNING message_id, target_audience, subject, body, created_at, publish_at, expires_at`,
-    [captainUserId, targetAudience, subject, body, scheduled ? publishAt : null, expiresAt, !!scheduled]
+    `INSERT INTO captain_messages (captain_user_id, target_audience, subject, body, publish_at, expires_at, notified_at, image_path)
+     VALUES ($1, $2, $3, $4, COALESCE($5::timestamptz, NOW()), $6, CASE WHEN $7 THEN NULL ELSE NOW() END, $8)
+     RETURNING message_id, target_audience, subject, body, created_at, publish_at, expires_at, (image_path IS NOT NULL) AS has_image`,
+    [captainUserId, targetAudience, subject, body, scheduled ? publishAt : null, expiresAt, !!scheduled, imagePath]
   );
   const msg = rows[0];
   if (!scheduled) announceMessage(msg);
@@ -124,7 +124,7 @@ async function sendCaptainMessage({ captainUserId, targetAudience, subject, body
     description: scheduled
       ? `Captain scheduled announcement "${subject}" for ${targetAudience}, to publish ${msg.publish_at.toISOString()}.`
       : `Captain sent message "${subject}" to audience: ${targetAudience}.`,
-    metadata: { target_audience: targetAudience, subject, body, publish_at: msg.publish_at, expires_at: msg.expires_at }
+    metadata: { target_audience: targetAudience, subject, body, publish_at: msg.publish_at, expires_at: msg.expires_at, has_image: !!imagePath }
   });
 
   return { ...msg, scheduled: !!scheduled };
@@ -161,6 +161,7 @@ async function getCaptainMessages({ limit = 50 } = {}) {
   const { rows } = await pool.query(
     `SELECT cm.message_id, cm.target_audience, cm.subject, cm.body, cm.created_at,
             COALESCE(cm.publish_at, cm.created_at) AS publish_at, cm.expires_at,
+            (cm.image_path IS NOT NULL) AS has_image,
             CASE WHEN COALESCE(cm.publish_at, cm.created_at) > NOW() THEN 'scheduled'
                  WHEN cm.expires_at IS NOT NULL AND cm.expires_at <= NOW() THEN 'expired'
                  ELSE 'live' END AS state,
@@ -180,6 +181,7 @@ async function getInboxMessages(role, limit = 100) {
   const { rows } = await pool.query(
     `SELECT cm.message_id, cm.target_audience, cm.subject, cm.body,
             COALESCE(cm.publish_at, cm.created_at) AS created_at, cm.expires_at,
+            (cm.image_path IS NOT NULL) AS has_image,
             u.full_name AS captain_name
      FROM captain_messages cm
      LEFT JOIN users u ON u.user_id = cm.captain_user_id
@@ -193,7 +195,39 @@ async function getInboxMessages(role, limit = 100) {
   return rows;
 }
 
+/** Live announcements addressed to Everyone — shown on the public landing page. */
+async function getPublicAnnouncements(limit = 50) {
+  const { rows } = await pool.query(
+    `SELECT cm.message_id, cm.subject, cm.body,
+            COALESCE(cm.publish_at, cm.created_at) AS created_at, cm.expires_at,
+            (cm.image_path IS NOT NULL) AS has_image,
+            u.full_name AS captain_name
+     FROM captain_messages cm
+     LEFT JOIN users u ON u.user_id = cm.captain_user_id
+     WHERE cm.target_audience = 'all'
+       AND COALESCE(cm.publish_at, cm.created_at) <= NOW()
+       AND (cm.expires_at IS NULL OR cm.expires_at > NOW())
+     ORDER BY COALESCE(cm.publish_at, cm.created_at) DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return rows;
+}
+
+/** One announcement with its visibility state (for serving its image). */
+async function getAnnouncementForImage(messageId) {
+  const { rows } = await pool.query(
+    `SELECT message_id, target_audience, image_path,
+            (COALESCE(publish_at, created_at) <= NOW() AND (expires_at IS NULL OR expires_at > NOW())) AS is_live
+     FROM captain_messages WHERE message_id = $1`,
+    [messageId]
+  );
+  return rows[0] || null;
+}
+
 module.exports = {
+  getPublicAnnouncements,
+  getAnnouncementForImage,
   createResidentNotification,
   getResidentNotifications,
   markNotificationsRead,

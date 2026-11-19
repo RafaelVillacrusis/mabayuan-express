@@ -36,6 +36,23 @@
     .audience-badge.staff { background: #f5f3ff; color: #6d28d9; }
     .audience-badge.all { background: #ecfdf5; color: #065f46; }
     .msg-log-body { font-size: 0.88rem; color: var(--text, #374151); margin-bottom: 6px; white-space: pre-wrap; }
+    /* Announcement image */
+    .img-drop { position:relative; display:flex; align-items:center; gap:14px; border:2px dashed #e3cfd2; border-radius:12px; background:#fdf8f8; padding:12px 14px; cursor:pointer; }
+    .img-drop:hover, .img-drop.drag { border-color:var(--primary); background:#fbeff0; }
+    .img-drop.bad { border-color:#dc2626; background:#fef2f2; }
+    .form-row label.img-drop { display:flex; margin:0; font-weight:400; color:inherit; font-size:inherit; }
+    .img-drop input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .img-drop-icon { font-size:28px; }
+    .img-drop-text { font-size:0.86rem; color:#3d2326; display:flex; flex-direction:column; gap:2px; }
+    .img-drop-text small { color:var(--muted,#6b7280); font-size:0.76rem; }
+    .img-preview { display:flex; gap:14px; align-items:center; border:1px solid var(--border,#e5e7eb); border-radius:12px; padding:10px; background:#fff; }
+    .img-preview[hidden], .img-drop[hidden] { display:none; }
+    .img-preview img { width:160px; height:100px; object-fit:cover; border-radius:8px; background:#f3ecec; flex-shrink:0; }
+    .img-preview-info { display:flex; flex-direction:column; gap:6px; font-size:0.84rem; min-width:0; }
+    .img-preview-info strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .img-preview-info span { color:var(--muted,#6b7280); font-size:0.78rem; }
+    .msg-log-img { display:block; margin:6px 0 8px; max-width:320px; width:100%; max-height:200px; object-fit:cover; border-radius:10px; border:1px solid var(--border,#e5e7eb); }
+    @media (max-width:560px) { .img-preview { flex-direction:column; align-items:flex-start; } .img-preview img { width:100%; height:160px; } }
     .msg-log-meta { font-size: 0.78rem; color: var(--text-muted, #9ca3af); }
     .empty-log { text-align: center; color: var(--text-muted, #9ca3af); padding: 32px; }
 
@@ -122,7 +139,7 @@
     <div class="st-head">
       <div>
         <h1>📢 Announcements</h1>
-        <p>Send news and advisories to residents, staff, or everyone. Post now or schedule ahead, and choose when each one expires. Announcements for <strong>Residents</strong> or <strong>Everyone</strong> also appear on the website's home page while they're live.</p>
+        <p>Send news and advisories to residents, staff, or everyone. Post now or schedule ahead, and choose when each one expires. Announcements sent to <strong>Everyone</strong> also appear on the website's home page while they're live. Add an image to make a poster-style announcement.</p>
       </div>
     </div>
 
@@ -147,8 +164,23 @@
       </div>
 
       <div class="form-row">
-        <label for="msgBody">Message</label>
+        <label for="msgBody">Message <span style="font-weight:400">(optional when you add an image)</span></label>
         <textarea id="msgBody" placeholder="Write your announcement here…" maxlength="2000"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label>Image <span style="font-weight:400">(optional)</span></label>
+        <label class="img-drop" id="imgDrop">
+          <input type="file" id="msgImage" accept="image/jpeg,image/png,image/webp,image/gif">
+          <span class="img-drop-icon" aria-hidden="true">🖼️</span>
+          <span class="img-drop-text"><strong>Add a photo or poster</strong><small>Tap to choose, or drag an image here · JPG, PNG, WEBP or GIF · max 5MB</small></span>
+        </label>
+        <div class="img-preview" id="imgPreview" hidden>
+          <img id="imgPreviewImg" alt="Selected announcement image">
+          <div class="img-preview-info"><strong id="imgPreviewName"></strong><span id="imgPreviewSize"></span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn btn-small btn-ghost" id="imgChange">Change</button><button type="button" class="btn btn-small btn-ghost" id="imgRemove" style="color:#b42318">Remove</button></div>
+          </div>
+        </div>
       </div>
 
       <div class="when-grid">
@@ -220,6 +252,6 @@
   <script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/captain-shell.js"></script>
-<script src="/assets/js/captain-messages.js?v=1"></script>
+<script src="/assets/js/captain-messages.js?v=2"></script>
 </body>
 </html>

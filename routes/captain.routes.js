@@ -19,7 +19,10 @@ const {
 const { getFilteredAuditLogs, createAuditLog } = require('../actions/audit.actions');
 const { sendRequestApprovedEmail, sendRequestDeclinedEmail } = require('../actions/email.actions');
 
-const { sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
+const { sendStoredFile, FILE_NOT_FOUND_PAGE, uploadToStorage, removeFromStorage } = require('../actions/upload.actions');
+const multer = require('multer');
+const announcementUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } }).single('image');
+const ANNOUNCEMENT_IMAGE_MIME = /^image\/(jpeg|png|webp|gif)$/;
 const docs = require('../actions/document.actions');
 
 const router = express.Router();
@@ -323,11 +326,29 @@ function endOfPhDay(v) {                // "YYYY-MM-DD" → start of the next da
   return d;
 }
 
-router.post('/api/captain/messages', requireRole('captain'), async (req, res) => {
+// Accepts JSON (text only) or multipart form data with an optional "image" file
+router.post('/api/captain/messages', requireRole('captain'), (req, res, next) => {
+  announcementUpload(req, res, err => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'The image must be 5MB or smaller.' : 'The image upload failed. Please try again.';
+      return res.status(400).json({ error: msg, field: 'image' });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const { target_audience, subject, body, publish_at, expires_on } = req.body;
-    if (!target_audience || !subject || !String(subject).trim() || !body || !String(body).trim()) {
-      return res.status(400).json({ error: 'Please enter a subject and a message.' });
+    const hasImage = !!req.file;
+    if (!target_audience || !subject || !String(subject).trim()) {
+      return res.status(400).json({ error: 'Please enter a subject.', field: 'subject' });
+    }
+    if (!hasImage && (!body || !String(body).trim())) {
+      return res.status(400).json({ error: 'Please write a message or add an image.', field: 'body' });
+    }
+    if (String(subject).trim().length > 200) return res.status(400).json({ error: 'The subject must be 200 characters or fewer.', field: 'subject' });
+    if (String(body || '').trim().length > 2000) return res.status(400).json({ error: 'The message must be 2,000 characters or fewer.', field: 'body' });
+    if (hasImage && !ANNOUNCEMENT_IMAGE_MIME.test(req.file.mimetype)) {
+      return res.status(400).json({ error: 'The image must be a JPG, PNG, WEBP or GIF file.', field: 'image' });
     }
     const validAudiences = ['resident', 'staff', 'all'];
     if (!validAudiences.includes(target_audience)) {
@@ -352,16 +373,29 @@ router.post('/api/captain/messages', requireRole('captain'), async (req, res) =>
       if (expiresAt <= start) return res.status(400).json({ error: 'The expiry date must be on or after the day the announcement is published.', field: 'expires_on' });
     }
 
-    const msg = await sendCaptainMessage({
-      captainUserId: req.session.user.user_id,
-      targetAudience: target_audience,
-      subject: String(subject).trim(),
-      body: String(body).trim(),
-      publishAt,
-      expiresAt
-    });
+    let imagePath = null;
+    if (hasImage) {
+      imagePath = await uploadToStorage(req.file, 'announcements', `captain-${req.session.user.user_id}`);
+      if (!imagePath) return res.status(500).json({ error: 'The image could not be saved. Please try again.', field: 'image' });
+    }
 
-    res.json({ ok: true, message_id: msg.message_id, scheduled: msg.scheduled, publish_at: msg.publish_at, expires_at: msg.expires_at });
+    let msg;
+    try {
+      msg = await sendCaptainMessage({
+        captainUserId: req.session.user.user_id,
+        targetAudience: target_audience,
+        subject: String(subject).trim(),
+        body: String(body || '').trim(),
+        publishAt,
+        expiresAt,
+        imagePath
+      });
+    } catch (err) {
+      if (imagePath) removeFromStorage(imagePath);   // don't leave an orphaned image
+      throw err;
+    }
+
+    res.json({ ok: true, message_id: msg.message_id, scheduled: msg.scheduled, publish_at: msg.publish_at, expires_at: msg.expires_at, has_image: !!imagePath });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not send message.' });
@@ -372,7 +406,7 @@ router.post('/api/captain/messages', requireRole('captain'), async (req, res) =>
 router.post('/api/captain/messages/:id/end', requireRole('captain'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT message_id, subject, COALESCE(publish_at, created_at) AS publish_at, expires_at
+      `SELECT message_id, subject, COALESCE(publish_at, created_at) AS publish_at, expires_at, image_path
        FROM captain_messages WHERE message_id = $1`, [req.params.id]);
     const msg = rows[0];
     if (!msg) return res.status(404).json({ error: 'Announcement not found.' });
@@ -380,6 +414,7 @@ router.post('/api/captain/messages/:id/end', requireRole('captain'), async (req,
     let action;
     if (new Date(msg.publish_at) > new Date()) {
       await pool.query('DELETE FROM captain_messages WHERE message_id = $1', [msg.message_id]);
+      if (msg.image_path) removeFromStorage(msg.image_path);
       action = 'cancelled';
     } else if (msg.expires_at && new Date(msg.expires_at) <= new Date()) {
       return res.status(400).json({ error: 'This announcement has already expired.' });

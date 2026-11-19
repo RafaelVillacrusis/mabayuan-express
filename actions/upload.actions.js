@@ -53,7 +53,7 @@ async function removeFromStorage(storedPath) {
  * Stream a stored file (Supabase "supabase:bucket/name" or legacy local "/uploads/…") to the response.
  * Returns false when the file could not be found (nothing has been sent yet).
  */
-async function sendStoredFile(res, storedPath) {
+async function sendStoredFile(res, storedPath, { cache = false } = {}) {
   if (!storedPath || storedPath.startsWith('missing:')) return false;
 
   if (storedPath.startsWith('supabase:')) {
@@ -66,7 +66,7 @@ async function sendStoredFile(res, storedPath) {
     }
     res.setHeader('Content-Type', MIME_BY_EXT[path.extname(fileName).toLowerCase()] || data.type || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${path.basename(fileName)}"`);
-    res.setHeader('Cache-Control', 'private, no-store');
+    if (!cache) res.setHeader('Cache-Control', 'private, no-store');
     res.send(Buffer.from(await data.arrayBuffer()));
     return true;
   }

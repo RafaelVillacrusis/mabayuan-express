@@ -97,7 +97,8 @@ function renderAnnouncements(msgs, lastSeen) {
     <li>
       <div class="rd-ann-title">${m.message_id > lastSeen ? '<span class="rd-ann-new">NEW</span>' : ''}<span>${escapeHtml(m.subject)}</span></div>
       <div class="rd-ann-meta">${formatDate(m.created_at)}${m.captain_name ? ` · ${escapeHtml(m.captain_name)}` : ''}</div>
-      <p class="rd-ann-body">${escapeHtml(m.body)}</p>
+      ${m.has_image ? `<a href="/api/announcements/${m.message_id}/image" target="_blank" rel="noopener"><img class="rd-ann-img" src="/api/announcements/${m.message_id}/image" alt="" loading="lazy"></a>` : ''}
+      ${m.body ? `<p class="rd-ann-body">${escapeHtml(m.body)}</p>` : ''}
     </li>`).join('')
     : '<li class="rd-muted">No announcements yet. Barangay news and advisories will appear here.</li>';
 }

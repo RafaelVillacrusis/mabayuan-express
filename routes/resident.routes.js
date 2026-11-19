@@ -19,7 +19,9 @@ const {
   getResidentNotifications,
   markNotificationsRead,
   refreshRoleDashboards,
-  getInboxMessages
+  getInboxMessages,
+  getPublicAnnouncements,
+  getAnnouncementForImage
 } = require('../actions/notification.actions');
 const { createAuditLog } = require('../actions/audit.actions');
 const { VALID_ID_TYPES, ALLOWED_UPLOAD_MIME, uploadToStorage, removeFromStorage, sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
@@ -48,22 +50,44 @@ router.get('/api/public/documents', async (req, res) => {
   res.json(rows);
 });
 
-// Public barangay announcements for the landing page — only messages meant for residents/everyone
+// Public barangay announcements for the landing page — live announcements the Captain sent to Everyone
 router.get('/api/public/announcements', async (req, res) => {
   try {
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 5, 1), 10);
-    const rows = await getInboxMessages('resident', limit);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 50);
+    const rows = await getPublicAnnouncements(limit);
     res.set('Cache-Control', 'public, max-age=60');
     res.json(rows.map(m => ({
       id: m.message_id,
       subject: m.subject,
       body: m.body,
       created_at: m.created_at,
+      expires_at: m.expires_at,
+      image_url: m.has_image ? `/api/announcements/${m.message_id}/image` : null,
       posted_by: m.captain_name || 'Barangay Captain',
     })));
   } catch (err) {
     console.error('Public announcements error:', err);
     res.status(500).json({ error: 'Could not load announcements.' });
+  }
+});
+
+// Announcement image. Live "Everyone" announcements are public; others need a matching login.
+router.get('/api/announcements/:id/image', async (req, res) => {
+  try {
+    if (!/^\d+$/.test(req.params.id)) return res.status(404).send('Image not found.');
+    const msg = await getAnnouncementForImage(req.params.id);
+    if (!msg || !msg.image_path) return res.status(404).send('Image not found.');
+    const role = req.session.resident ? 'resident' : (req.session.user && req.session.user.role);
+    const isPublic = msg.target_audience === 'all' && msg.is_live;
+    const allowed = isPublic
+      || role === 'captain' || role === 'system_admin'
+      || (msg.is_live && (msg.target_audience === 'all' || msg.target_audience === role));
+    if (!allowed) return res.status(404).send('Image not found.');
+    res.set('Cache-Control', isPublic ? 'public, max-age=3600' : 'private, max-age=3600');
+    if (!(await sendStoredFile(res, msg.image_path, { cache: true }))) res.status(404).send('Image not found.');
+  } catch (err) {
+    console.error('Announcement image error:', err);
+    if (!res.headersSent) res.status(500).send('Could not load the image.');
   }
 });
 

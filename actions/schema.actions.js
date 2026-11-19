@@ -17,6 +17,7 @@ async function ensureSchema() {
       ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS publish_at  TIMESTAMPTZ;
       ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS expires_at  TIMESTAMPTZ;
       ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ;
+      ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS image_path  TEXT;
       UPDATE captain_messages SET publish_at = created_at, notified_at = created_at WHERE publish_at IS NULL;
       CREATE INDEX IF NOT EXISTS idx_captain_messages_publish ON captain_messages (publish_at DESC);
 

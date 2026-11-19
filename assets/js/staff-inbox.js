@@ -43,7 +43,8 @@ function renderMessages() {
         <h2 class="an-title">${isNew ? '<span class="an-new">NEW</span>' : ''}<span>${escapeHtml(m.subject)}</span></h2>
         <div class="an-meta">${escapeHtml(m.captain_name || 'Barangay Captain')} · <time datetime="${escapeHtml(m.created_at)}" title="${escapeHtml(formatDateTime(m.created_at))}">${timeAgo(m.created_at)}</time>
           <span class="an-audience">To: ${escapeHtml(audienceLabel(m.target_audience))}</span></div>
-        <p class="an-text">${escapeHtml(m.body)}</p>
+        ${m.has_image ? `<a href="/api/announcements/${m.message_id}/image" target="_blank" rel="noopener"><img class="an-img" src="/api/announcements/${m.message_id}/image" alt="" loading="lazy"></a>` : ''}
+        ${m.body ? `<p class="an-text">${escapeHtml(m.body)}</p>` : ''}
       </div>
     </article>`;
   }).join('');

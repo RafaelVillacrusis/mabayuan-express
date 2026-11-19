@@ -6,6 +6,9 @@ let postMode = 'now';      // 'now' | 'later'
 let expiryMode = 'never';  // 'never' | 'date'
 let allMessages = [];
 let stateFilter = 'all';
+let imagePreviewUrl = null;
+const IMAGE_MIME = /^image\/(jpeg|png|webp|gif)$/;
+const MAX_IMAGE = 5 * 1024 * 1024;
 
 // "YYYY-MM-DDTHH:mm" for a Date, in PH time
 function phDateTimeValue(d) {
@@ -123,7 +126,8 @@ function updateSummary() {
   const when = postMode === 'later' && $('publishAt').value ? `on <strong>${escapeHtml(fmtDateTime(pub))}</strong>` : '<strong>right away</strong>';
   const until = lastDay ? `until the end of <strong>${escapeHtml(fmtDate(fromPhDate(lastDay)))}</strong>` : '<strong>until you take it down</strong>';
   box.className = 'when-summary' + (postMode === 'later' ? ' sched' : '');
-  box.innerHTML = `${postMode === 'later' ? '🗓' : '📢'} Will be posted to <strong>${audience}</strong> ${when} and shown ${until}.`;
+  const onSite = $('targetAudience').value === 'all' ? ' It will also appear on the website\'s home page.' : '';
+  box.innerHTML = `${postMode === 'later' ? '🗓' : '📢'} Will be posted to <strong>${audience}</strong> ${when} and shown ${until}.${onSite}`;
   $('sendBtn').textContent = postMode === 'later' ? '🗓 Schedule Announcement' : '📢 Post Announcement';
   return error;
 }
@@ -138,14 +142,21 @@ async function sendMessage() {
   const target = $('targetAudience').value;
   const subject = $('msgSubject').value.trim();
   const body = $('msgBody').value.trim();
+  const image = $('msgImage').files[0] || null;
   if (!subject) { showSendError('Please enter a subject.'); return $('msgSubject').focus(); }
-  if (!body) { showSendError('Please enter the message.'); return $('msgBody').focus(); }
+  if (!body && !image) { showSendError('Please write a message or add an image.'); return $('msgBody').focus(); }
+  const imgProblem = imageProblem(image);
+  if (imgProblem) return showSendError(imgProblem);
   const problem = updateSummary();
   if (problem) return showSendError(problem);
 
-  const payload = { target_audience: target, subject, body };
-  if (postMode === 'later') payload.publish_at = $('publishAt').value;
-  if (expiryMode === 'date') payload.expires_on = $('expiresOn').value;
+  const payload = new FormData();
+  payload.set('target_audience', target);
+  payload.set('subject', subject);
+  payload.set('body', body);
+  if (postMode === 'later') payload.set('publish_at', $('publishAt').value);
+  if (expiryMode === 'date') payload.set('expires_on', $('expiresOn').value);
+  if (image) payload.set('image', image);
 
   const btn = $('sendBtn');
   const label = btn.textContent;
@@ -153,13 +164,14 @@ async function sendMessage() {
   btn.textContent = postMode === 'later' ? 'Scheduling…' : 'Posting…';
   try {
     const res = await fetch('/api/captain/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      method: 'POST', body: payload,
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) { showSendError(json.error || 'Could not send the announcement.'); return; }
 
     $('msgSubject').value = '';
     $('msgBody').value = '';
+    clearImage();
     const succ = $('sendSuccess');
     succ.textContent = json.scheduled
       ? `✅ Announcement scheduled for ${fmtDateTime(json.publish_at)}.`
@@ -215,7 +227,8 @@ function renderMessages() {
           <span class="state-badge ${m.state}">${STATE_LABEL[m.state]}</span>
           ${audienceBadge(m.target_audience)}
         </div>
-        <div class="msg-log-body">${escapeHtml(m.body)}</div>
+        ${m.has_image ? `<a href="/api/announcements/${m.message_id}/image" target="_blank" rel="noopener"><img class="msg-log-img" src="/api/announcements/${m.message_id}/image" alt="Image for ${escapeHtml(m.subject)}" loading="lazy"></a>` : ''}
+        ${m.body ? `<div class="msg-log-body">${escapeHtml(m.body)}</div>` : ''}
         <div class="msg-dates"><span>🗓 ${pubLabel} <strong>${escapeHtml(fmtDateTime(m.publish_at))}</strong></span><span>⏳ ${expiry}</span></div>
         <div class="msg-log-foot">
           <div class="msg-log-meta">By ${escapeHtml(m.captain_name || 'Captain')} · created ${escapeHtml(fmtDateTime(m.created_at))}</div>
@@ -269,3 +282,37 @@ document.addEventListener('DOMContentLoaded', () => {
   // Scheduled announcements go live on their own — refresh the list every minute
   setInterval(loadMessages, 60000);
 });
+
+// ── Announcement image ─────────────────────────────────────────────────────
+function imageProblem(file) {
+  if (!file) return '';
+  if (!IMAGE_MIME.test(file.type)) return 'The image must be a JPG, PNG, WEBP or GIF file.';
+  if (file.size > MAX_IMAGE) return 'The image must be 5MB or smaller.';
+  return '';
+}
+function clearImage() {
+  $('msgImage').value = '';
+  renderImage();
+}
+function renderImage() {
+  const file = $('msgImage').files[0];
+  if (imagePreviewUrl) { URL.revokeObjectURL(imagePreviewUrl); imagePreviewUrl = null; }
+  const problem = imageProblem(file);
+  $('imgDrop').classList.toggle('bad', !!problem);
+  if (problem) { showSendError(problem); $('msgImage').value = ''; }
+  const ok = file && !problem;
+  $('imgDrop').hidden = !!ok;
+  $('imgPreview').hidden = !ok;
+  if (ok) {
+    imagePreviewUrl = URL.createObjectURL(file);
+    $('imgPreviewImg').src = imagePreviewUrl;
+    $('imgPreviewName').textContent = file.name;
+    $('imgPreviewSize').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    showSendError('');
+  }
+}
+$('msgImage').addEventListener('change', renderImage);
+$('imgRemove').addEventListener('click', clearImage);
+$('imgChange').addEventListener('click', () => $('msgImage').click());
+['dragenter', 'dragover'].forEach(ev => $('imgDrop').addEventListener(ev, () => $('imgDrop').classList.add('drag')));
+['dragleave', 'drop'].forEach(ev => $('imgDrop').addEventListener(ev, () => $('imgDrop').classList.remove('drag')));
