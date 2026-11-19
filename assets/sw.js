@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mabayuan-express-v1';
+const CACHE_NAME = 'mabayuan-express-v2';
 const STATIC_ASSETS = [
   '/',
   '/assets/css/style.css',
@@ -42,16 +42,19 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first for static assets (CSS, JS, fonts, images)
+  // Stale-while-revalidate for static assets (CSS, JS, fonts, images):
+  // serve the cached copy instantly, then refresh it so updates show up on the next load
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
       caches.match(request).then(cached => {
-        if (cached) return cached;
-        return fetch(request).then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+        const network = fetch(request).then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
           return response;
-        });
+        }).catch(() => cached);
+        return cached || network;
       })
     );
   }

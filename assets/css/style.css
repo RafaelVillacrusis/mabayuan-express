@@ -62,6 +62,10 @@ img { max-width: 100%; display: block; }
 .page-shell { min-height:100vh; display:flex; flex-direction:column; }
 .page-shell > .container, .page-shell > main { flex:1 0 auto; }
 .container { width:min(1120px, calc(100% - 32px)); margin:0 auto; }
+/* Dashboard pages (resident, staff, captain) use the full screen width */
+@media (min-width:701px) {
+  .container.content-area { width:calc(100% - 64px); }
+}
 
 /* ── Topbar ── */
 .topbar {
