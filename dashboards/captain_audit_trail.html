@@ -62,7 +62,7 @@
 
     <section class="panel">
       <div class="audit-filter-grid" id="auditFilterForm">
-        <input class="input" type="text" id="searchFilter" placeholder="Search transaction, resident, or document…" autocomplete="off" />
+        <input class="input" type="text" id="searchFilter" placeholder="Search resident or document…" autocomplete="off" />
         <select class="select" id="actionFilter">
           <option value="">All actions</option>
           <option value="SET_RELEASE_DATE">Set Release Date</option>
@@ -85,7 +85,6 @@
           <thead>
             <tr>
               <th>Date &amp; Time</th>
-              <th>Transaction</th>
               <th>Document</th>
               <th>Resident</th>
               <th>Action</th>
@@ -93,7 +92,7 @@
               <th>Details</th>
             </tr>
           </thead>
-          <tbody id="auditRows" data-empty-colspan="7"></tbody>
+          <tbody id="auditRows" data-empty-colspan="6"></tbody>
         </table>
       </div>
       <div id="auditPg" class="pg-row" style="border-top:1px solid #f0e4e5;"></div>
@@ -112,6 +111,6 @@
 <script src="/assets/js/common-pagination.js"></script>
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/captain-shell.js"></script>
-<script src="/assets/js/captain-audit-trail.js"></script>
+<script src="/assets/js/captain-audit-trail.js?v=3"></script>
 </body>
 </html>

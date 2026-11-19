@@ -29,7 +29,6 @@ function detailsHtml(row) {
 function renderAuditRow(row) {
   return `<tr>
     <td style="white-space:nowrap">${formatDateTime(row.created_at)}</td>
-    <td>${escapeHtml(row.transaction_no || '—')}</td>
     <td>${escapeHtml(row.document_name  || '—')}</td>
     <td>${escapeHtml(row.resident_name  || '—')}</td>
     <td><span class="status-pill ${actionBadgeClass(row.action_type)}">${actionLabel(row.action_type)}</span></td>
