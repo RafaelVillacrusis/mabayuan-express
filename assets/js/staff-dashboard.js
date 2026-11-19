@@ -86,39 +86,104 @@ function docStatusHtml(row) {
   return `<div style="font-size:12px;line-height:1.6">${id}${cert}</div>`;
 }
 
-// Renders an uploaded document (image or PDF) for the review modal
-function reviewDocHtml(title, subtitle, url, storedPath) {
-  if (!storedPath || storedPath.startsWith('missing:')) {
-    return `<div class="review-doc"><div class="review-doc-head"><strong>${title}</strong><span>${escapeHtml(subtitle)}</span></div>
-      <div class="review-doc-empty">Not provided${storedPath ? ' (file lost — resident must re-upload)' : ''}</div></div>`;
-  }
-  const isPdf = /\.pdf$/i.test(storedPath);
-  const preview = isPdf
-    ? `<iframe src="${url}" title="${title}"></iframe>`
-    : `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${title}"></a>`;
-  return `<div class="review-doc"><div class="review-doc-head"><strong>${title}</strong><span>${escapeHtml(subtitle)}</span>
-    <a class="btn btn-small btn-ghost" href="${url}" target="_blank" rel="noopener">Open full size ↗</a></div>
-    <div class="review-doc-preview">${preview}</div></div>`;
+// ── Resident registration review ───────────────────────────────────────────
+const REVIEW_CHECKS = [
+  { key: 'identity', label: 'Name and birth date on the ID match the details', needs: 'id' },
+  { key: 'idValid', label: 'ID is clear, complete, and not expired', needs: 'id' },
+  { key: 'residency', label: 'Certificate is from Barangay Mabayuan and names this applicant', needs: 'cert' },
+];
+const MISSING_CERT_REASON = 'Missing Barangay Certificate of Residency. Please re-register and upload your certificate.';
+const MISSING_ID_REASON = 'Valid ID was not provided or could not be opened. Please re-register with a clear photo of your valid ID.';
+let reviewState = null;
+
+function docInfo(storedPath) {
+  if (!storedPath) return { state: 'none' };
+  if (storedPath.startsWith('missing:')) return { state: 'lost' };
+  return { state: 'ok', isPdf: /\.pdf$/i.test(storedPath) };
+}
+
+function ageFrom(birth) {
+  if (!birth) return null;
+  const b = new Date(birth), t = new Date();
+  let a = t.getFullYear() - b.getFullYear();
+  const m = t.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
+  return isNaN(a) ? null : a;
+}
+
+function relDays(value) {
+  const d = Math.floor((Date.now() - new Date(value).getTime()) / 86400000);
+  if (d <= 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 30) return `${d} days ago`;
+  return formatDate(value);
 }
 
 function ensureReviewModal() {
   if (document.getElementById('residentReviewModal')) return;
   document.head.insertAdjacentHTML('beforeend', `<style>
-    #residentReviewModal .details-card { width:min(1000px,100%); max-height:92vh; }
-    .review-info { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 18px; margin-bottom:18px; font-size:14px; }
-    .review-info div span { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#9a7a7d; font-weight:700; }
-    .review-docs { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
-    .review-doc { border:1px solid #f0e4e5; border-radius:14px; overflow:hidden; background:#fdf8f8; display:flex; flex-direction:column; }
-    .review-doc-head { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:10px 12px; border-bottom:1px solid #f0e4e5; background:#fff; }
-    .review-doc-head strong { flex:1 1 100%; font-size:14px; color:#2d1518; }
-    .review-doc-head span { flex:1; font-size:12px; color:#6b5b6e; }
-    .review-doc-preview { height:340px; display:flex; align-items:center; justify-content:center; background:#f5f0f1; }
-    .review-doc-preview a { display:flex; width:100%; height:100%; align-items:center; justify-content:center; }
-    .review-doc-preview img { max-width:100%; max-height:100%; object-fit:contain; }
-    .review-doc-preview iframe { width:100%; height:100%; border:0; background:#fff; }
-    .review-doc-empty { padding:40px 16px; text-align:center; color:#dc2626; font-size:13px; }
-    .review-checklist { margin:18px 0 0; padding:12px 16px; background:#fdf4dc; border:1px solid #e8d48a; border-radius:10px; font-size:13px; color:#5c4500; }
-    .review-checklist ul { margin:6px 0 0; padding-left:18px; }
+    #residentReviewModal .details-card { width:min(1240px,100%); height:min(880px,94vh); max-height:none; }
+    #residentReviewModal .details-body { padding:0; overflow:hidden; display:grid; grid-template-columns:340px minmax(0,1fr); }
+    .rv-side { overflow-y:auto; padding:20px 22px; border-right:1px solid #f0e4e5; background:#fff; }
+    .rv-person { display:flex; gap:12px; align-items:center; margin-bottom:16px; }
+    .rv-avatar { width:48px; height:48px; border-radius:50%; background:#fbe9eb; color:var(--primary-dark,#8b3d46); display:grid; place-items:center; font-weight:800; font-size:17px; flex-shrink:0; }
+    .rv-person strong { display:block; font-size:16px; line-height:1.3; }
+    .rv-person span { font-size:12.5px; color:var(--muted); }
+    .rv-dl { margin:0 0 16px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 12px; font-size:13.5px; }
+    .rv-dl dt { color:var(--muted); font-size:12.5px; padding-top:1px; }
+    .rv-dl dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
+    .rv-dl .rv-warn { color:#b42318; }
+    .rv-h { font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#9a7a7d; margin:18px 0 8px; }
+    .rv-docs { display:flex; flex-direction:column; gap:6px; }
+    .rv-docrow { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid #f0e4e5; border-radius:12px; font-size:13.5px; cursor:pointer; background:#fff; text-align:left; font:inherit; width:100%; }
+    .rv-docrow:hover { border-color:var(--primary); }
+    .rv-docrow.active { border-color:var(--primary); background:#fdf2f3; }
+    .rv-docrow .rv-st { margin-left:auto; font-size:11.5px; font-weight:800; border-radius:999px; padding:2px 8px; }
+    .rv-st.ok { background:#e6f6ea; color:#16653a; } .rv-st.bad { background:#fde8e8; color:#b42318; }
+    .rv-checks { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+    .rv-checks label { display:flex; gap:10px; align-items:flex-start; padding:9px 11px; border:1px solid #f0e4e5; border-radius:12px; font-size:13.5px; line-height:1.4; cursor:pointer; background:#fff; }
+    .rv-checks input { width:18px; height:18px; accent-color:var(--primary); margin:1px 0 0; flex-shrink:0; }
+    .rv-checks label:has(input:checked) { background:#f3fbf5; border-color:#a3d9b1; }
+    .rv-checks label.disabled { opacity:.55; cursor:not-allowed; }
+    .rv-alert { margin-top:14px; background:#fef2f2; border:1px solid #fecaca; color:#8f1d16; border-radius:12px; padding:11px 13px; font-size:13px; line-height:1.5; }
+    .rv-alert strong { display:block; margin-bottom:2px; }
+    .rv-alert button { margin-top:8px; background:#b42318; color:#fff; border:none; border-radius:999px; padding:7px 14px; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
+
+    .rv-viewer { display:flex; flex-direction:column; min-width:0; min-height:0; background:#f5f0f1; }
+    .rv-tabs { display:flex; gap:4px; padding:10px 12px 0; background:#fff; border-bottom:1px solid #f0e4e5; }
+    .rv-tab { border:none; background:none; font:inherit; font-size:14px; font-weight:700; color:var(--muted); padding:10px 14px; border-radius:10px 10px 0 0; cursor:pointer; border-bottom:3px solid transparent; display:flex; gap:8px; align-items:center; }
+    .rv-tab[aria-selected="true"] { color:var(--primary-dark,#8b3d46); border-bottom-color:var(--primary); background:#fdf8f8; }
+    .rv-tab .rv-dot { width:8px; height:8px; border-radius:50%; background:#16a34a; }
+    .rv-tab .rv-dot.bad { background:#dc2626; }
+    .rv-tools { display:flex; align-items:center; gap:6px; padding:8px 12px; background:#fff; border-bottom:1px solid #f0e4e5; flex-wrap:wrap; }
+    .rv-tools .rv-sub { font-size:13px; color:var(--muted); margin-right:auto; }
+    .rv-tools button, .rv-tools a { border:1px solid #e4d4d6; background:#fff; border-radius:9px; min-width:34px; height:32px; padding:0 10px; font:inherit; font-size:13px; font-weight:700; color:#3d2326; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:4px; }
+    .rv-tools button:hover, .rv-tools a:hover { border-color:var(--primary); color:var(--primary); }
+    .rv-tools [hidden] { display:none; }
+    .rv-zoom { font-size:12px; color:var(--muted); min-width:44px; text-align:center; }
+    .rv-stage { flex:1; min-height:0; overflow:auto; display:flex; align-items:center; justify-content:center; padding:16px; }
+    .rv-stage.zoomed { align-items:flex-start; justify-content:flex-start; }
+    .rv-stage img { max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,.18); background:#fff; transition:transform .15s; cursor:zoom-in; }
+    .rv-stage.zoomed img { max-width:none; max-height:none; cursor:zoom-out; }
+    .rv-stage iframe { width:100%; height:100%; border:0; border-radius:8px; background:#fff; box-shadow:0 10px 30px rgba(0,0,0,.12); }
+    .rv-stage.pdf { padding:12px; }
+    .rv-empty { text-align:center; max-width:380px; color:#5b3a3f; }
+    .rv-empty div { font-size:44px; margin-bottom:8px; }
+    .rv-empty strong { display:block; font-size:16px; margin-bottom:6px; color:#2d1518; }
+    .rv-empty p { margin:0; font-size:13.5px; line-height:1.55; color:var(--muted); }
+
+    #residentReviewModal .details-foot { align-items:center; }
+    .rv-progress { margin-right:auto; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+    .rv-progress b { color:var(--text); }
+    #reviewApproveBtn:disabled { opacity:.45; cursor:not-allowed; }
+
+    @media (max-width:860px) {
+      #residentReviewModal .details-card { height:96vh; }
+      #residentReviewModal .details-body { display:flex; flex-direction:column; overflow-y:auto; }
+      .rv-side { overflow:visible; border-right:none; border-bottom:1px solid #f0e4e5; }
+      .rv-viewer { min-height:62vh; }
+      .rv-progress { width:100%; }
+    }
   </style>`);
   document.body.insertAdjacentHTML('afterbegin', `
     <div class="details-modal" id="residentReviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
@@ -127,49 +192,173 @@ function ensureReviewModal() {
           <h2 id="reviewTitle">Review Registration</h2>
           <button class="details-close" onclick="closeReviewModal()" aria-label="Close">✕</button>
         </div>
-        <div class="details-body" id="reviewBody"></div>
-        <div class="details-foot" style="justify-content:flex-end;">
-          <span id="reviewError" style="display:none;color:#dc2626;font-size:13px;align-self:center;margin-right:auto;"></span>
+        <div class="details-body">
+          <aside class="rv-side" id="reviewSide"></aside>
+          <section class="rv-viewer" aria-label="Uploaded documents">
+            <div class="rv-tabs" role="tablist" id="rvTabs"></div>
+            <div class="rv-tools" id="rvTools">
+              <span class="rv-sub" id="rvSub"></span>
+              <button type="button" data-z="out" title="Zoom out" aria-label="Zoom out">−</button>
+              <span class="rv-zoom" id="rvZoom">Fit</span>
+              <button type="button" data-z="in" title="Zoom in" aria-label="Zoom in">+</button>
+              <button type="button" data-z="fit" title="Fit to screen">Fit</button>
+              <button type="button" data-z="rotate" title="Rotate" aria-label="Rotate">↻</button>
+              <a id="rvOpen" target="_blank" rel="noopener" title="Open in a new tab">Open ↗</a>
+            </div>
+            <div class="rv-stage" id="rvStage"></div>
+          </section>
+        </div>
+        <div class="details-foot">
+          <span class="rv-progress" id="rvProgress"></span>
+          <span id="reviewError" style="display:none;color:#dc2626;font-size:13px;"></span>
           <button class="btn-delete" id="reviewDeclineBtn">Decline</button>
           <button class="btn-view" id="reviewApproveBtn">✓ Approve Account</button>
         </div>
       </div>
     </div>`);
-  document.getElementById('residentReviewModal').addEventListener('click', e => { if (e.target.id === 'residentReviewModal') closeReviewModal(); });
+  const modal = document.getElementById('residentReviewModal');
+  modal.addEventListener('click', e => { if (e.target.id === 'residentReviewModal') closeReviewModal(); });
+  document.getElementById('rvTools').addEventListener('click', e => {
+    const b = e.target.closest('[data-z]');
+    if (!b || !reviewState) return;
+    const v = reviewState.view;
+    if (b.dataset.z === 'in') v.zoom = Math.min(4, (v.zoom || 1) + 0.25);
+    if (b.dataset.z === 'out') v.zoom = Math.max(0.5, (v.zoom || 1) - 0.25);
+    if (b.dataset.z === 'fit') { v.zoom = 1; v.rotate = 0; }
+    if (b.dataset.z === 'rotate') v.rotate = ((v.rotate || 0) + 90) % 360;
+    applyView();
+  });
+}
+
+function applyView() {
+  const v = reviewState.view;
+  const img = document.querySelector('#rvStage img');
+  const stage = document.getElementById('rvStage');
+  if (!img) return;
+  const zoomed = v.zoom > 1;
+  stage.classList.toggle('zoomed', zoomed);
+  img.style.width = zoomed ? `${Math.round((stage.clientWidth - 32) * v.zoom)}px` : '';
+  img.style.transform = `rotate(${v.rotate}deg)${v.zoom < 1 ? ` scale(${v.zoom})` : ''}`;
+  document.getElementById('rvZoom').textContent = v.zoom === 1 ? 'Fit' : `${Math.round(v.zoom * 100)}%`;
+}
+
+function showReviewDoc(which) {
+  const r = reviewState.resident;
+  reviewState.active = which;
+  reviewState.view = { zoom: 1, rotate: 0 };
+  const isId = which === 'id';
+  const path = isId ? r.valid_id_path : r.residency_cert_path;
+  const info = docInfo(path);
+  const url = `/api/staff/residents/${r.resident_id}/${isId ? 'id-image' : 'residency-cert'}`;
+  const label = isId ? 'Valid ID' : 'Barangay Certificate of Residency';
+
+  document.querySelectorAll('#rvTabs .rv-tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.doc === which)));
+  document.querySelectorAll('.rv-docrow').forEach(t => t.classList.toggle('active', t.dataset.doc === which));
+  document.getElementById('rvSub').textContent = isId ? (r.valid_id_type || 'ID type not specified') : 'Proof of residency in Barangay Mabayuan';
+  const imageTools = info.state === 'ok' && !info.isPdf;
+  document.querySelectorAll('#rvTools [data-z], #rvZoom').forEach(el => { el.hidden = !imageTools; });
+  const open = document.getElementById('rvOpen');
+  open.hidden = info.state !== 'ok';
+  open.href = url;
+
+  const stage = document.getElementById('rvStage');
+  stage.className = 'rv-stage';
+  if (info.state !== 'ok') {
+    const lost = info.state === 'lost';
+    stage.innerHTML = `<div class="rv-empty"><div>${isId ? '🪪' : '📄'}</div>
+      <strong>${label} ${lost ? 'file is missing' : 'was not provided'}</strong>
+      <p>${lost
+        ? 'The uploaded file was lost during a server update. The resident needs to upload it again.'
+        : isId ? 'This applicant did not upload a valid ID.'
+               : 'This applicant registered before the certificate was required, so there is nothing to check. You can decline with the reason "Missing Barangay Certificate of Residency" so they can register again with it.'}</p></div>`;
+    return;
+  }
+  if (info.isPdf) {
+    stage.classList.add('pdf');
+    stage.innerHTML = `<iframe src="${url}#toolbar=0&navpanes=0&view=FitH" title="${label}"></iframe>`;
+    return;
+  }
+  stage.innerHTML = `<img src="${url}" alt="${label} uploaded by the applicant">`;
+  const img = stage.querySelector('img');
+  img.addEventListener('click', () => { reviewState.view.zoom = reviewState.view.zoom > 1 ? 1 : 2; applyView(); });
+  img.addEventListener('error', () => {
+    stage.innerHTML = `<div class="rv-empty"><div>⚠️</div><strong>Couldn't display this file</strong>
+      <p>Try opening it in a new tab. If it still doesn't load, the resident may need to upload it again.</p></div>`;
+  });
+}
+
+function updateReviewProgress() {
+  const boxes = [...document.querySelectorAll('#rvChecks input')];
+  const done = boxes.filter(b => b.checked).length;
+  const total = REVIEW_CHECKS.length;
+  const approve = document.getElementById('reviewApproveBtn');
+  const blocked = reviewState.missing.length > 0;
+  approve.disabled = blocked || done < total || reviewState.busy;
+  approve.title = blocked ? 'A required document is missing' : done < total ? 'Tick every check first' : '';
+  document.getElementById('rvProgress').innerHTML = blocked
+    ? '⚠️ <span>Can\'t approve: a required document is missing.</span>'
+    : done < total
+      ? `☑️ <span><b>${done} of ${total}</b> checks done — tick all to approve</span>`
+      : '✅ <span><b>All checks done.</b> Ready to approve.</span>';
 }
 
 function openReviewModal(residentId) {
   const r = pendingResidentsById.get(String(residentId));
   if (!r) return;
   ensureReviewModal();
+  const idInfo = docInfo(r.valid_id_path), certInfo = docInfo(r.residency_cert_path);
+  const missing = [];
+  if (idInfo.state !== 'ok') missing.push('id');
+  if (certInfo.state !== 'ok') missing.push('cert');
+  reviewState = { resident: r, missing, busy: false, view: { zoom: 1, rotate: 0 } };
+
   const fullName = [r.first_name, r.middle_name, r.last_name, r.suffix].filter(Boolean).join(' ');
+  const initials = ((r.first_name || '')[0] || '') + ((r.last_name || '')[0] || '');
+  const age = ageFrom(r.birth_date);
   document.getElementById('reviewTitle').textContent = `Review Registration — ${fullName}`;
-  document.getElementById('reviewBody').innerHTML = `
-    <div class="review-info">
-      <div><span>Full name</span>${escapeHtml(fullName)}</div>
-      <div><span>Birth date</span>${r.birth_date ? formatDate(r.birth_date) : '—'}</div>
-      <div><span>Email</span>${escapeHtml(r.email)}</div>
-      <div><span>Phone</span>${escapeHtml(r.phone_number || '—')}</div>
-      <div style="grid-column:1/-1"><span>Address</span>${escapeHtml(r.address || '—')}</div>
-      <div><span>Registered</span>${formatDateTime(r.created_at)}</div>
-    </div>
-    <div class="review-docs">
-      ${reviewDocHtml('Valid ID', r.valid_id_type || 'ID type not specified', `/api/staff/residents/${r.resident_id}/id-image`, r.valid_id_path)}
-      ${reviewDocHtml('Barangay Certificate of Residency', 'Proof of residency in Barangay Mabayuan', `/api/staff/residents/${r.resident_id}/residency-cert`, r.residency_cert_path)}
-    </div>
-    <div class="review-checklist"><strong>Before approving, confirm that:</strong>
-      <ul>
-        <li>The name and birth date on the valid ID match the details above.</li>
-        <li>The ID is clear, readable, and not expired.</li>
-        <li>The Certificate of Residency was issued by Barangay Mabayuan and names this applicant.</li>
-      </ul>
-    </div>`;
+
+  const docRow = (key, label) => {
+    const ok = !missing.includes(key);
+    return `<button type="button" class="rv-docrow" data-doc="${key}">${key === 'id' ? '🪪' : '📄'} ${label}<span class="rv-st ${ok ? 'ok' : 'bad'}">${ok ? 'Uploaded' : 'Missing'}</span></button>`;
+  };
+  const checks = REVIEW_CHECKS.map(c => {
+    const off = missing.includes(c.needs);
+    return `<li><label class="${off ? 'disabled' : ''}"><input type="checkbox" data-check="${c.key}" ${off ? 'disabled' : ''}><span>${c.label}</span></label></li>`;
+  }).join('');
+  const reason = missing.includes('id') ? MISSING_ID_REASON : MISSING_CERT_REASON;
+
+  document.getElementById('reviewSide').innerHTML = `
+    <div class="rv-person"><div class="rv-avatar">${escapeHtml(initials.toUpperCase() || '?')}</div>
+      <div><strong>${escapeHtml(fullName)}</strong><span>Registered ${(() => { const rel = relDays(r.created_at), abs = formatDate(r.created_at); return escapeHtml(rel === abs ? abs : `${rel} · ${abs}`); })()}</span></div></div>
+    <dl class="rv-dl">
+      <dt>Birth date</dt><dd>${r.birth_date ? escapeHtml(formatDate(r.birth_date)) : '—'}${age != null ? ` <span style="color:var(--muted);font-weight:500">· ${age} yrs old</span>` : ''}</dd>
+      <dt>Email</dt><dd>${escapeHtml(r.email || '—')}</dd>
+      <dt>Mobile</dt><dd>${escapeHtml(r.phone_number || '—')}</dd>
+      <dt>Address</dt><dd>${escapeHtml(r.address || '—')}</dd>
+      <dt>ID type</dt><dd class="${r.valid_id_type ? '' : 'rv-warn'}">${escapeHtml(r.valid_id_type || 'Not specified')}</dd>
+    </dl>
+    <div class="rv-h">Documents</div>
+    <div class="rv-docs">${docRow('id', 'Valid ID')}${docRow('cert', 'Certificate of Residency')}</div>
+    <div class="rv-h">Verification checklist</div>
+    <ul class="rv-checks" id="rvChecks">${checks}</ul>
+    ${missing.length ? `<div class="rv-alert"><strong>${missing.includes('id') ? 'Valid ID' : 'Certificate of Residency'} is missing</strong>
+      This account can't be approved without it. Decline it so the applicant can register again with the required document.
+      <br><button type="button" id="rvDeclineMissing">Decline: missing document</button></div>` : ''}`;
+
+  document.getElementById('rvTabs').innerHTML = [['id', '🪪 Valid ID'], ['cert', '📄 Certificate of Residency']].map(([k, l]) =>
+    `<button type="button" class="rv-tab" role="tab" data-doc="${k}">${l}<span class="rv-dot ${missing.includes(k) ? 'bad' : ''}"></span></button>`).join('');
+  document.querySelectorAll('#rvTabs .rv-tab, .rv-docrow').forEach(b => b.addEventListener('click', () => showReviewDoc(b.dataset.doc)));
+  document.querySelectorAll('#rvChecks input').forEach(c => c.addEventListener('change', updateReviewProgress));
+  document.getElementById('rvDeclineMissing')?.addEventListener('click', () => { closeReviewModal(); showDeclineModal(residentId, reason); });
+
   document.getElementById('reviewError').style.display = 'none';
   const approveBtn = document.getElementById('reviewApproveBtn');
-  approveBtn.disabled = false;
   approveBtn.textContent = '✓ Approve Account';
   approveBtn.onclick = () => approveResident(residentId);
-  document.getElementById('reviewDeclineBtn').onclick = () => { closeReviewModal(); declineResident(residentId); };
+  document.getElementById('reviewDeclineBtn').onclick = () => { closeReviewModal(); showDeclineModal(residentId, missing.length ? reason : ''); };
+
+  showReviewDoc(missing.includes('id') && !missing.includes('cert') ? 'cert' : 'id');
+  updateReviewProgress();
   document.getElementById('residentReviewModal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -200,7 +389,7 @@ async function declineResident(id) {
   showDeclineModal(id);
 }
 
-function showDeclineModal(residentId) {
+function showDeclineModal(residentId, presetReason = '') {
   // Inject modal if not exists
   if (!document.getElementById('declineReasonModal')) {
     document.body.insertAdjacentHTML('afterbegin', `
@@ -222,6 +411,8 @@ function showDeclineModal(residentId) {
               <option value="Incomplete personal information provided.">Incomplete personal information</option>
               <option value="Applicant is not a registered resident of Barangay Mabayuan.">Not a registered resident of Barangay Mabayuan</option>
               <option value="Duplicate account detected.">Duplicate account detected</option>
+              <option value="${MISSING_CERT_REASON}">Missing Barangay Certificate of Residency</option>
+              <option value="${MISSING_ID_REASON}">Missing or unreadable valid ID</option>
               <option value="others">Others (custom reason)</option>
             </select>
           </div>
@@ -239,7 +430,7 @@ function showDeclineModal(residentId) {
     </div>`);
   }
   document.getElementById('declineReasonModal')._residentId = residentId;
-  document.getElementById('declineReasonSelect').value = '';
+  document.getElementById('declineReasonSelect').value = presetReason || '';
   document.getElementById('declineCustomWrap').style.display = 'none';
   document.getElementById('declineCustomReason').value = '';
   document.getElementById('declineReasonError').style.display = 'none';
