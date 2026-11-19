@@ -89,31 +89,17 @@ async function loadResidentRequests() {
 
 const FILTER_LABELS = { pending: 'Pending', processing: 'Processing', ready: 'Ready for Pickup', declined: 'Declined' };
 
-async function loadAvailableDocuments() {
-  const list = document.getElementById('rdDocs');
+// Latest barangay announcements (captain messages to residents) for the sidebar
+function renderAnnouncements(msgs, lastSeen) {
+  const list = document.getElementById('rdAnnouncements');
   if (!list) return;
-  try {
-    const res = await fetch('/api/public/documents');
-    const docs = await res.json();
-    list.innerHTML = docs.length ? docs.map(d => {
-      const days = Number(d.processing_days) || 0;
-      const price = Number(d.price) > 0 ? peso(d.price) : 'Free';
-      return `<li><div><div class="rd-doc-name">${escapeHtml(d.document_name)}</div>
-        <div class="rd-doc-meta">${price} · ${days ? `${days} day${days === 1 ? '' : 's'}` : 'Same day'}</div></div>
-        <a href="/resident/request?document=${encodeURIComponent(d.document_id)}">Request →</a></li>`;
-    }).join('') : '<li class="rd-muted">No documents are available right now.</li>';
-  } catch {
-    list.innerHTML = '<li class="rd-muted">Could not load documents.</li>';
-  }
-}
-
-function renderRecentUpdates(items) {
-  const list = document.getElementById('rdUpdates');
-  if (!list) return;
-  list.innerHTML = items.length ? items.slice(0, 4).map(item => `
-    <li class="${item.is_read ? '' : 'unread'}"><span class="rd-dot"></span>
-      <div><strong>${escapeHtml(item.title)}</strong><span>${formatDateTime(item.created_at)}</span></div></li>`).join('')
-    : '<li class="rd-muted">No updates yet. You\'ll be notified here when your requests change.</li>';
+  list.innerHTML = msgs.length ? msgs.slice(0, 3).map(m => `
+    <li>
+      <div class="rd-ann-title">${m.message_id > lastSeen ? '<span class="rd-ann-new">NEW</span>' : ''}<span>${escapeHtml(m.subject)}</span></div>
+      <div class="rd-ann-meta">${formatDate(m.created_at)}${m.captain_name ? ` · ${escapeHtml(m.captain_name)}` : ''}</div>
+      <p class="rd-ann-body">${escapeHtml(m.body)}</p>
+    </li>`).join('')
+    : '<li class="rd-muted">No announcements yet. Barangay news and advisories will appear here.</li>';
 }
 
 async function loadNotifications(markRead = false) {
@@ -127,7 +113,6 @@ async function loadNotifications(markRead = false) {
       <p>${escapeHtml(item.message)}</p>
       <span>${formatDateTime(item.created_at)}</span>
     </div>`).join('') || '<p class="empty-state">No notifications yet.</p>';
-  renderRecentUpdates(items);
 
   if (markRead && unread > 0) {
     await fetch('/api/resident/notifications/read', { method: 'POST' });
@@ -139,6 +124,7 @@ async function loadInboxBadge() {
   const res = await fetch('/api/resident/inbox');
   const msgs = await res.json();
   const lastSeen = parseInt(localStorage.getItem('inbox_last_seen') || '0', 10);
+  renderAnnouncements(msgs, lastSeen);
   const unread = msgs.filter(m => m.message_id > lastSeen).length;
   const badge = document.getElementById('inboxBadge');
   if (!badge) return;
@@ -166,7 +152,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   showStatusMessage('pageMessage');
   const today = document.getElementById('rdToday');
   if (today) today.textContent = new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  loadAvailableDocuments();
   await loadResidentProfile();
   await loadResidentStats();
   await loadResidentRequests();

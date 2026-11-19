@@ -56,21 +56,18 @@
     .rd-side h3, .rd-how h3 { margin:0 0 12px; font-size:16px; display:flex; align-items:center; gap:8px; }
     .rd-panel-sub { margin:4px 0 0; color:var(--muted); font-size:13px; }
 
-    .rd-docs { list-style:none; margin:0; padding:0; max-height:300px; overflow-y:auto; }
-    .rd-docs li { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f3e9ea; }
-    .rd-docs li:last-child { border-bottom:none; }
-    .rd-docs .rd-doc-name { font-weight:700; font-size:14px; }
-    .rd-docs .rd-doc-meta { font-size:12.5px; color:var(--muted); }
-    .rd-docs a { margin-left:auto; font-size:12.5px; font-weight:700; color:var(--primary); text-decoration:none; white-space:nowrap; }
-    .rd-docs a:hover { text-decoration:underline; }
-
-    .rd-updates { list-style:none; margin:0; padding:0; }
-    .rd-updates li { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f3e9ea; font-size:13.5px; }
-    .rd-updates li:last-child { border-bottom:none; }
-    .rd-dot { width:9px; height:9px; border-radius:50%; background:#d9c4c6; margin-top:6px; flex-shrink:0; }
-    .rd-updates li.unread .rd-dot { background:var(--primary); }
-    .rd-updates strong { display:block; }
-    .rd-updates span { font-size:12px; color:var(--muted); }
+    .rd-ann { list-style:none; margin:0; padding:0; }
+    .rd-ann li { padding:12px 0; border-bottom:1px solid #f3e9ea; }
+    .rd-ann li:first-child { padding-top:0; }
+    .rd-ann li:last-child { border-bottom:none; }
+    .rd-ann-title { display:flex; align-items:flex-start; gap:8px; font-weight:700; font-size:14px; line-height:1.4; }
+    .rd-ann-new { background:var(--primary); color:#fff; font-size:10px; font-weight:800; letter-spacing:.04em;
+      border-radius:999px; padding:2px 7px; margin-top:2px; flex-shrink:0; }
+    .rd-ann-meta { font-size:12px; color:var(--muted); margin:3px 0 6px; }
+    .rd-ann-body { font-size:13.5px; line-height:1.55; color:#3d2326; margin:0; white-space:pre-line;
+      display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+    .rd-ann-all { display:inline-block; margin-top:12px; font-size:13px; font-weight:700; color:var(--primary); text-decoration:none; }
+    .rd-ann-all:hover { text-decoration:underline; }
 
     .rd-steps { list-style:none; margin:0; padding:0; counter-reset:rd; }
     .rd-steps li { counter-increment:rd; display:flex; gap:12px; padding:7px 0; font-size:13.5px; line-height:1.45; }
@@ -314,12 +311,9 @@
 
       <aside class="rd-side">
         <section class="panel">
-          <h3>📋 Available Documents</h3>
-          <ul class="rd-docs" id="rdDocs"><li class="rd-muted">Loading…</li></ul>
-        </section>
-        <section class="panel">
-          <h3>🔔 Recent Updates</h3>
-          <ul class="rd-updates" id="rdUpdates"><li class="rd-muted">Loading…</li></ul>
+          <h3>📢 Announcements</h3>
+          <ul class="rd-ann" id="rdAnnouncements"><li class="rd-muted">Loading…</li></ul>
+          <a class="rd-ann-all" href="/resident/inbox">View all announcements →</a>
         </section>
       </aside>
       </div>
