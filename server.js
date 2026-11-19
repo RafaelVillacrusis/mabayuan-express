@@ -50,7 +50,8 @@ app.use((req, res) => {
 });
 
 // Ensure new columns/tables exist (see resident_verification_migration.sql, ai_migration.sql)
-require('./actions/schema.actions').ensureSchema();
+require('./actions/schema.actions').ensureSchema()
+  .then(() => require('./actions/notification.actions').startAnnouncementScheduler());
 
 const port = process.env.PORT || 3000;
 server.listen(port, () => {

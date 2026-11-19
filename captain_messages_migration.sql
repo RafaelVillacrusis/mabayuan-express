@@ -12,3 +12,10 @@ CREATE TABLE IF NOT EXISTS captain_messages (
 
 -- Index for fast history lookup
 CREATE INDEX IF NOT EXISTS idx_captain_messages_created ON captain_messages (created_at DESC);
+
+-- Scheduled announcements and expiry dates (also applied automatically on server start)
+ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS publish_at  TIMESTAMPTZ;
+ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS expires_at  TIMESTAMPTZ;
+ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ;
+UPDATE captain_messages SET publish_at = created_at, notified_at = created_at WHERE publish_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_captain_messages_publish ON captain_messages (publish_at DESC);

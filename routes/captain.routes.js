@@ -15,7 +15,7 @@ const {
   sendCaptainMessage,
   getCaptainMessages
 } = require('../actions/notification.actions');
-const { getFilteredAuditLogs } = require('../actions/audit.actions');
+const { getFilteredAuditLogs, createAuditLog } = require('../actions/audit.actions');
 const { sendRequestApprovedEmail, sendRequestDeclinedEmail } = require('../actions/email.actions');
 
 const { sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
@@ -306,28 +306,100 @@ router.get('/api/captain/messages', requireRole('captain'), async (req, res) => 
   }
 });
 
+// Dates from the form are Philippine time (UTC+8, no daylight saving)
+const PH_OFFSET = '+08:00';
+function parsePhDateTime(v) {           // "YYYY-MM-DDTHH:mm"
+  if (!v || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) return null;
+  const d = new Date(`${v}:00${PH_OFFSET}`);
+  return isNaN(d) ? null : d;
+}
+function endOfPhDay(v) {                // "YYYY-MM-DD" → start of the next day, PH time
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+  const d = new Date(`${v}T00:00:00${PH_OFFSET}`);
+  if (isNaN(d)) return null;
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d;
+}
+
 router.post('/api/captain/messages', requireRole('captain'), async (req, res) => {
   try {
-    const { target_audience, subject, body } = req.body;
-    if (!target_audience || !subject || !body) {
-      return res.status(400).json({ error: 'target_audience, subject, and body are required.' });
+    const { target_audience, subject, body, publish_at, expires_on } = req.body;
+    if (!target_audience || !subject || !String(subject).trim() || !body || !String(body).trim()) {
+      return res.status(400).json({ error: 'Please enter a subject and a message.' });
     }
     const validAudiences = ['resident', 'staff', 'all'];
     if (!validAudiences.includes(target_audience)) {
       return res.status(400).json({ error: 'Invalid target_audience.' });
     }
 
+    // Optional schedule
+    let publishAt = null;
+    if (publish_at) {
+      publishAt = parsePhDateTime(publish_at);
+      if (!publishAt) return res.status(400).json({ error: 'Please choose a valid publish date and time.', field: 'publish_at' });
+      if (publishAt < new Date(Date.now() - 60 * 1000)) return res.status(400).json({ error: 'The publish date and time has already passed. Choose a future time, or select "Post now".', field: 'publish_at' });
+      if (publishAt > new Date(Date.now() + 366 * 86400000)) return res.status(400).json({ error: 'Announcements can be scheduled up to one year ahead.', field: 'publish_at' });
+    }
+
+    // Optional expiry — the announcement stays visible through the whole chosen day
+    let expiresAt = null;
+    if (expires_on) {
+      expiresAt = endOfPhDay(expires_on);
+      if (!expiresAt) return res.status(400).json({ error: 'Please choose a valid expiry date.', field: 'expires_on' });
+      const start = publishAt && publishAt > new Date() ? publishAt : new Date();
+      if (expiresAt <= start) return res.status(400).json({ error: 'The expiry date must be on or after the day the announcement is published.', field: 'expires_on' });
+    }
+
     const msg = await sendCaptainMessage({
       captainUserId: req.session.user.user_id,
       targetAudience: target_audience,
-      subject: subject.trim(),
-      body: body.trim()
+      subject: String(subject).trim(),
+      body: String(body).trim(),
+      publishAt,
+      expiresAt
     });
 
-    res.json({ ok: true, message_id: msg.message_id });
+    res.json({ ok: true, message_id: msg.message_id, scheduled: msg.scheduled, publish_at: msg.publish_at, expires_at: msg.expires_at });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not send message.' });
+  }
+});
+
+// Cancel a scheduled announcement (deletes it) or take a live one down now
+router.post('/api/captain/messages/:id/end', requireRole('captain'), async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT message_id, subject, COALESCE(publish_at, created_at) AS publish_at, expires_at
+       FROM captain_messages WHERE message_id = $1`, [req.params.id]);
+    const msg = rows[0];
+    if (!msg) return res.status(404).json({ error: 'Announcement not found.' });
+
+    let action;
+    if (new Date(msg.publish_at) > new Date()) {
+      await pool.query('DELETE FROM captain_messages WHERE message_id = $1', [msg.message_id]);
+      action = 'cancelled';
+    } else if (msg.expires_at && new Date(msg.expires_at) <= new Date()) {
+      return res.status(400).json({ error: 'This announcement has already expired.' });
+    } else {
+      await pool.query('UPDATE captain_messages SET expires_at = NOW() WHERE message_id = $1', [msg.message_id]);
+      action = 'ended';
+    }
+
+    await createAuditLog({
+      actorUserId: req.session.user.user_id,
+      actorRole: 'captain',
+      targetType: 'captain_message',
+      targetId: msg.message_id,
+      action: action === 'cancelled' ? 'CAPTAIN_MESSAGE_CANCELLED' : 'CAPTAIN_MESSAGE_ENDED',
+      description: `Captain ${action === 'cancelled' ? 'cancelled scheduled' : 'took down'} announcement "${msg.subject}".`,
+      metadata: {}
+    });
+    refreshRoleDashboards('resident', 'staff', 'captain');
+    res.json({ ok: true, action });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not update the announcement.' });
   }
 });
 

@@ -38,6 +38,42 @@
     .msg-log-body { font-size: 0.88rem; color: var(--text, #374151); margin-bottom: 6px; white-space: pre-wrap; }
     .msg-log-meta { font-size: 0.78rem; color: var(--text-muted, #9ca3af); }
     .empty-log { text-align: center; color: var(--text-muted, #9ca3af); padding: 32px; }
+
+    /* Schedule & expiry */
+    .when-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; }
+    .when-box { border:1px solid var(--border, #e5e7eb); border-radius:12px; padding:14px; background:#fdfafa; }
+    .when-box > .when-title { display:block; font-size:0.85rem; font-weight:700; margin-bottom:8px; color:var(--text, #374151); }
+    .seg { display:inline-flex; background:#f3ecec; border-radius:999px; padding:3px; gap:2px; flex-wrap:wrap; }
+    .seg button { border:0; background:transparent; padding:7px 14px; border-radius:999px; font:inherit; font-size:0.83rem; font-weight:700; color:#6b5a5c; cursor:pointer; }
+    .seg button.on { background:#fff; color:var(--primary); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+    .when-field { margin-top:10px; }
+    .when-field[hidden] { display:none; }
+    .when-field input { width:100%; padding:9px 12px; border:1px solid var(--border, #d1d5db); border-radius:8px; font:inherit; font-size:0.9rem; box-sizing:border-box; }
+    .when-field input.bad { border-color:#dc2626; }
+    .when-quick { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .when-quick button { border:1px solid var(--border, #e5e7eb); background:#fff; border-radius:999px; padding:4px 10px; font:inherit; font-size:0.78rem; font-weight:600; cursor:pointer; color:#4a3a3c; }
+    .when-quick button:hover { border-color:var(--primary); color:var(--primary); }
+    .when-hint { font-size:0.78rem; color:var(--muted, #6b7280); margin-top:6px; }
+    .when-summary { background:#eef6ff; border:1px solid #c9defa; color:#1e3a5f; border-radius:10px; padding:10px 14px; font-size:0.86rem; margin-bottom:14px; }
+    .when-summary.sched { background:#fdf4dc; border-color:#e8d48a; color:#5c4500; }
+    .msg-error { background:#fef2f2; color:#b42318; border:1px solid #fecaca; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.88rem; }
+    .msg-error[hidden] { display:none; }
+    @media (max-width:760px) { .when-grid { grid-template-columns:1fr; } }
+
+    /* History */
+    .msg-filter { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+    .msg-filter button { border:1px solid var(--border, #e5e7eb); background:#fff; border-radius:999px; padding:6px 14px; font:inherit; font-size:0.82rem; font-weight:700; cursor:pointer; color:#4a3a3c; }
+    .msg-filter button.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .state-badge { font-size:0.72rem; font-weight:800; padding:2px 10px; border-radius:12px; text-transform:uppercase; letter-spacing:.04em; }
+    .state-badge.live { background:#e6f6ea; color:#16653a; }
+    .state-badge.scheduled { background:#fdf4dc; color:#7a5a00; }
+    .state-badge.expired { background:#efedf0; color:#5b5560; }
+    .msg-log-item.expired { opacity:.72; }
+    .msg-log-item.scheduled { border-left:4px solid #e0b93a; }
+    .msg-log-item.live { border-left:4px solid #3fae63; }
+    .msg-log-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .msg-dates { display:flex; gap:14px; flex-wrap:wrap; font-size:0.8rem; color:#4a3a3c; margin:2px 0 6px; }
+    .msg-dates strong { font-weight:700; }
   
   </style>
 </head>
@@ -82,7 +118,7 @@
     <div class="st-head">
       <div>
         <h1>📢 Announcements</h1>
-        <p>Send news and advisories to residents, staff, or everyone. They arrive as real-time notifications, and announcements for <strong>Residents</strong> or <strong>Everyone</strong> also appear on the website's home page.</p>
+        <p>Send news and advisories to residents, staff, or everyone. Post now or schedule ahead, and choose when each one expires. Announcements for <strong>Residents</strong> or <strong>Everyone</strong> also appear on the website's home page while they're live.</p>
       </div>
     </div>
 
@@ -111,12 +147,57 @@
         <textarea id="msgBody" placeholder="Write your announcement here…" maxlength="2000"></textarea>
       </div>
 
-      <button class="btn send-btn" id="sendBtn" onclick="sendMessage()">📢 Send Announcement</button>
+      <div class="when-grid">
+        <div class="when-box">
+          <span class="when-title">🗓 When to post</span>
+          <div class="seg" role="group" aria-label="When to post">
+            <button type="button" class="on" data-when="now">Post now</button>
+            <button type="button" data-when="later">Schedule for later</button>
+          </div>
+          <div class="when-field" id="publishField" hidden>
+            <label for="publishAt" style="font-size:0.8rem;font-weight:600;color:var(--muted,#6b7280);display:block;margin-bottom:4px">Publish on (date &amp; time)</label>
+            <input type="datetime-local" id="publishAt">
+            <div class="when-quick" id="publishQuick">
+              <button type="button" data-pub="tomorrow8">Tomorrow 8:00 AM</button>
+              <button type="button" data-pub="monday8">Next Monday 8:00 AM</button>
+            </div>
+            <div class="when-hint">Residents and staff won't see it, or get notified, until this time.</div>
+          </div>
+        </div>
+        <div class="when-box">
+          <span class="when-title">⏳ Expires</span>
+          <div class="seg" role="group" aria-label="Expiry">
+            <button type="button" class="on" data-exp="never">Never</button>
+            <button type="button" data-exp="date">On a date</button>
+          </div>
+          <div class="when-field" id="expiryField" hidden>
+            <label for="expiresOn" style="font-size:0.8rem;font-weight:600;color:var(--muted,#6b7280);display:block;margin-bottom:4px">Last day to show</label>
+            <input type="date" id="expiresOn">
+            <div class="when-quick" id="expiryQuick">
+              <button type="button" data-days="1">1 day</button>
+              <button type="button" data-days="3">3 days</button>
+              <button type="button" data-days="7">1 week</button>
+              <button type="button" data-days="30">1 month</button>
+            </div>
+            <div class="when-hint">It disappears automatically after 11:59 PM on this day.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="when-summary" id="whenSummary"></div>
+      <div class="msg-error" id="sendError" role="alert" hidden></div>
+      <button class="btn send-btn" id="sendBtn" onclick="sendMessage()">📢 Post Announcement</button>
     </div>
 
     <!-- Message History -->
     <section class="panel">
-      <div class="st-section-head"><div><h2>🕘 Sent Announcements</h2><p>Everything you have sent, newest first.</p></div></div>
+      <div class="st-section-head"><div><h2>🕘 Your Announcements</h2><p>Scheduled, live and expired announcements, newest first.</p></div></div>
+      <div class="msg-filter" id="msgFilter">
+        <button type="button" class="on" data-state="all">All</button>
+        <button type="button" data-state="scheduled">Scheduled</button>
+        <button type="button" data-state="live">Live</button>
+        <button type="button" data-state="expired">Expired</button>
+      </div>
       <div id="msgLogList" class="msg-log-list">
         <div class="empty-log">Loading…</div>
       </div>
@@ -134,76 +215,6 @@
   <script src="/socket.io/socket.io.js"></script>
 <script src="/assets/js/common.js"></script>
 <script src="/assets/js/captain-shell.js"></script>
-<script>
-  // Audience pill selection
-  document.querySelectorAll('.audience-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      document.querySelectorAll('.audience-pill').forEach(p => p.classList.remove('selected'));
-      pill.classList.add('selected');
-      document.getElementById('targetAudience').value = pill.dataset.val;
-    });
-  });
-
-  async function sendMessage() {
-    const target = document.getElementById('targetAudience').value;
-    const subject = document.getElementById('msgSubject').value.trim();
-    const body = document.getElementById('msgBody').value.trim();
-
-    if (!subject) { alert('Please enter a subject.'); return; }
-    if (!body) { alert('Please enter a message body.'); return; }
-
-    const btn = document.getElementById('sendBtn');
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-
-    try {
-      const res = await fetch('/api/captain/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_audience: target, subject, body })
-      });
-
-      if (!res.ok) { const err = await res.json(); alert(err.error || 'Could not send message.'); return; }
-
-      document.getElementById('msgSubject').value = '';
-      document.getElementById('msgBody').value = '';
-      const succ = document.getElementById('sendSuccess');
-      succ.style.display = 'block';
-      setTimeout(() => { succ.style.display = 'none'; }, 4000);
-      await loadMessages();
-    } catch (e) {
-      alert('Network error. Please try again.');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '📢 Send Announcement';
-    }
-  }
-
-  function audienceBadge(audience) {
-    const labels = { resident: 'Residents', staff: 'Staff', all: 'Everyone' };
-    return `<span class="audience-badge ${audience}">${labels[audience] || audience}</span>`;
-  }
-
-  async function loadMessages() {
-    const res = await fetch('/api/captain/messages');
-    const msgs = await res.json();
-    const list = document.getElementById('msgLogList');
-    if (!msgs.length) {
-      list.innerHTML = '<div class="empty-log">No messages sent yet.</div>';
-      return;
-    }
-    list.innerHTML = msgs.map(m => `
-      <div class="msg-log-item">
-        <div class="msg-log-header">
-          <span class="msg-log-subject">${escapeHtml(m.subject)}</span>
-          ${audienceBadge(m.target_audience)}
-        </div>
-        <div class="msg-log-body">${escapeHtml(m.body)}</div>
-        <div class="msg-log-meta">Sent by ${escapeHtml(m.captain_name || 'Captain')} · ${formatDateTime(m.created_at)}</div>
-      </div>`).join('');
-  }
-
-  document.addEventListener('DOMContentLoaded', loadMessages);
-</script>
+<script src="/assets/js/captain-messages.js?v=1"></script>
 </body>
 </html>

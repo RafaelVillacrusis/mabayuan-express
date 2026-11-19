@@ -13,6 +13,13 @@ async function ensureSchema() {
       ALTER TABLE requests  ADD COLUMN IF NOT EXISTS valid_id_path TEXT;
       ALTER TABLE requests  ADD COLUMN IF NOT EXISTS valid_id_type VARCHAR(80);
 
+      -- Announcements: schedule in advance and expire on a chosen date
+      ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS publish_at  TIMESTAMPTZ;
+      ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS expires_at  TIMESTAMPTZ;
+      ALTER TABLE captain_messages ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ;
+      UPDATE captain_messages SET publish_at = created_at, notified_at = created_at WHERE publish_at IS NULL;
+      CREATE INDEX IF NOT EXISTS idx_captain_messages_publish ON captain_messages (publish_at DESC);
+
       CREATE TABLE IF NOT EXISTS ai_inquiries (
         inquiry_id   SERIAL PRIMARY KEY,
         resident_id  INTEGER,
