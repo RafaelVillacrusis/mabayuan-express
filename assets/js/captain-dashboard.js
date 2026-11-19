@@ -1,8 +1,14 @@
 let socket;
 let allRows   = [];
-let sortCol   = 'suggested_release_date';
-let sortDir   = 'asc';
-let pendingFirst = true;   // requests needing the Captain are listed first until a column is sorted
+// List order: FIFO (oldest request first) by default; the Captain can switch to newest first.
+// The choice is remembered on this device.
+const ORDER_KEY = 'cp_request_order';
+const PENDING_KEY = 'cp_pending_first';
+function readPref(key, fallback) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } }
+function savePref(key, value) { try { localStorage.setItem(key, value); } catch { /* private mode */ } }
+let sortCol   = 'created_at';
+let sortDir   = readPref(ORDER_KEY, 'fifo') === 'newest' ? 'desc' : 'asc';
+let pendingFirst = readPref(PENDING_KEY, '1') === '1';   // "Needs decision" requests on top
 let currentPage = 1;
 const PAGE_SIZE = 10;
 
@@ -106,13 +112,29 @@ function getFilteredSorted() {
     else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ?  1 : -1;
-    return 0;
+    // Same value: keep submission order (FIFO), or reverse it for "Newest first"
+    const ta = String(a.created_at || ''), tb = String(b.created_at || '');
+    const tie = ta < tb ? -1 : ta > tb ? 1 : (a.request_id - b.request_id);
+    return sortCol === 'created_at' && sortDir === 'desc' ? -tie : tie;
   });
 
   return rows;
 }
 
+function syncOrderControls() {
+  const sel = document.getElementById('orderSelect');
+  const note = document.getElementById('orderNote');
+  if (!sel) return;
+  sel.value = sortCol === 'created_at' ? (sortDir === 'asc' ? 'fifo' : 'newest') : 'custom';
+  const colName = (document.querySelector(`#captainTable th[data-col="${sortCol}"]`) || {}).textContent || sortCol;
+  note.textContent = sel.value === 'fifo' ? 'First come, first served — the request waiting longest is at the top.'
+    : sel.value === 'newest' ? 'Most recent requests are at the top.'
+    : `Sorted by ${colName.trim()} (${sortDir === 'asc' ? 'ascending' : 'descending'}). Choose an order to go back.`;
+  document.getElementById('pendingFirstToggle').checked = pendingFirst;
+}
+
 function renderTable() {
+  syncOrderControls();
   const rows      = getFilteredSorted();
   const total     = rows.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -237,14 +259,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTable();
   });
 
+  // Order: FIFO / newest first
+  document.getElementById('orderSelect').addEventListener('change', e => {
+    if (e.target.value === 'custom') return;
+    sortCol = 'created_at';
+    sortDir = e.target.value === 'newest' ? 'desc' : 'asc';
+    savePref(ORDER_KEY, e.target.value);
+    currentPage = 1;
+    renderTable();
+  });
+  document.getElementById('pendingFirstToggle').addEventListener('change', e => {
+    pendingFirst = e.target.checked;
+    savePref(PENDING_KEY, pendingFirst ? '1' : '0');
+    currentPage = 1;
+    renderTable();
+  });
+
   // Column sort
   document.querySelectorAll('#captainTable thead th[data-col]').forEach(th => {
     th.style.cursor = 'pointer';
     th.addEventListener('click', () => {
       const col = th.dataset.col;
-      pendingFirst = false;
       if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       else { sortCol = col; sortDir = 'asc'; }
+      if (col === 'created_at') savePref(ORDER_KEY, sortDir === 'asc' ? 'fifo' : 'newest');
       currentPage = 1;
       renderTable();
     });

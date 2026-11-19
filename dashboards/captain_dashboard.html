@@ -15,7 +15,7 @@
 
   /* ── Dashboard filter bar — override audit-filter-grid proportions ── */
   #dashFilterForm.audit-filter-grid {
-    grid-template-columns: 2.2fr 1.3fr 1.1fr 1.1fr auto;
+    grid-template-columns: 2fr 1.15fr 1.35fr 1fr 1fr auto;
     gap: 10px;
     align-items: end;
     padding: 10px 14px;
@@ -68,6 +68,10 @@
   .cp-range-note strong { color:var(--primary); }
   .cp-range-note[hidden] { display:none; }
   #dashFilterForm .cp-field.invalid .input { border-color:#dc2626; }
+  .cp-order-row { grid-column:1 / -1; display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:-2px; }
+  .cp-order-row label { display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; color:#4a3a3c; }
+  .cp-order-row input { width:16px; height:16px; accent-color:var(--primary); margin:0; }
+  .cp-order-row strong { color:var(--primary); }
 
   /* Valid ID viewer */
   .cp-id-btn { margin-left:6px; }
@@ -145,11 +149,22 @@
     <option value="Ready for Pickup">Ready for Pickup</option>
     <option value="Claimed">Claimed</option>
   </select>
+  <label class="cp-field"><span>Order</span>
+    <select class="select" id="orderSelect" title="Choose the order requests are listed in">
+      <option value="fifo">Oldest first (FIFO)</option>
+      <option value="newest">Newest first</option>
+      <option value="custom" hidden>By column</option>
+    </select>
+  </label>
   <label class="cp-field" id="dateFromField"><span>From</span><input class="input" type="date" id="dateFromFilter" title="Show requests made on or after this date" /></label>
   <label class="cp-field" id="dateToField"><span>To</span><input class="input" type="date" id="dateToFilter" title="Show requests made on or before this date" /></label>
   <div class="button-row audit-filter-actions">
     <button class="btn btn-small" id="applyDashFilter">Apply</button>
     <button class="btn btn-small btn-ghost" id="resetDashFilter">Reset</button>
+  </div>
+  <div class="cp-order-row">
+    <label><input type="checkbox" id="pendingFirstToggle" checked> Show <strong>Needs decision</strong> requests first</label>
+    <span id="orderNote"></span>
   </div>
   <p class="cp-range-note" id="dateRangeNote" hidden></p>
 </div>
@@ -188,4 +203,4 @@
 <script src="/assets/js/common.js?v=3"></script>
 <script src="/assets/js/captain-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
-<script src="/assets/js/captain-dashboard.js?v=4"></script></body></html>
+<script src="/assets/js/captain-dashboard.js?v=5"></script></body></html>
