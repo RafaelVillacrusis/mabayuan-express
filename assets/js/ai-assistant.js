@@ -63,7 +63,7 @@
     $('brandRole').textContent = roleName;
     $('rsBrand').href = items[0] ? items[0][0] : '/';
     const link = ([href, label, icon, short, seenKey], mobile) =>
-      `<a href="${href}"${href.endsWith('/ai-assistant') ? ' aria-current="page"' : ''}><span class="rs-ico" aria-hidden="true">${icon}</span>${mobile ? short : label}` +
+      `<a href="${href}"${href.endsWith('/ai-assistant') ? ' aria-current="page"' : ''}>${mobile ? `<span class="rs-ico" aria-hidden="true">${icon}</span>` : ''}${mobile ? short : label}` +
       (seenKey ? `<span class="rs-badge" data-seen-key="${seenKey}" hidden></span>` : '') + '</a>';
     $('rsNav').innerHTML = items.map(i => link(i, false)).join('');
     $('rsBottom').innerHTML = items.filter(i => i[3] !== null).map(i => link(i, true)).join(''); // null short label = top nav only

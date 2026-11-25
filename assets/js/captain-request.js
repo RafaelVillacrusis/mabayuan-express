@@ -72,7 +72,7 @@ function renderHeader(req) {
   const done = document.getElementById('decisionDone');
   done.hidden = pending;
   if (!pending) {
-    done.innerHTML = `<h3>⚖️ Decision</h3>
+    done.innerHTML = `<h3>Decision</h3>
       <p style="margin:0 0 6px"><span class="status-pill status-${declined ? 'declined' : 'approved'}">${declined ? 'Declined' : 'Approved'}</span></p>
       ${req.captain_notes ? `<p style="margin:8px 0 0;line-height:1.6">Your note: “${escapeHtml(req.captain_notes)}”</p>` : '<p style="margin:8px 0 0;color:var(--muted)">No note was added.</p>'}`;
   }

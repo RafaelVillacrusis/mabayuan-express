@@ -174,7 +174,7 @@
   <div class="details-modal" id="deleteModal">
     <div class="details-card" style="max-width:400px;">
       <div class="details-head" style="background:linear-gradient(135deg,#8b1a22,#b03040);">
-        <h2>🗑 Delete Request</h2>
+        <h2>Delete Request</h2>
         <button class="details-close" onclick="closeDeleteModal()">✕</button>
       </div>
       <div class="details-body" style="text-align:center;padding:28px 24px;">
@@ -192,7 +192,7 @@
   <div class="details-modal" id="detailsModal">
     <div class="details-card">
       <div class="details-head">
-        <h2>📄 Request Details</h2>
+        <h2>Request Details</h2>
         <button class="details-close" onclick="closeDetails()">✕</button>
       </div>
       <div class="details-body" id="detailsBody">
@@ -218,9 +218,9 @@
         <div class="brand-copy"><div>Mabayuan Express</div><small>Resident Portal</small></div>
       </a>
       <nav class="rs-nav" aria-label="Main navigation">
-        <a href="/resident/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard</a>
-        <a href="/resident/request" data-nav="request"><span class="rs-ico" aria-hidden="true">📝</span>Request Document</a>
-        <a href="/resident/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📢</span>Announcements <span class="rs-badge" data-inbox-badge hidden></span></a>
+        <a href="/resident/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="/resident/request" data-nav="request">Request Document</a>
+        <a href="/resident/inbox" data-nav="inbox">Announcements <span class="rs-badge" data-inbox-badge hidden></span></a>
       </nav>
       <div class="rs-user">
         <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
@@ -228,9 +228,9 @@
         </button>
         <div class="rs-user-menu" id="rsUserMenu" hidden>
           <div class="rs-user-info"><strong id="rsMenuName">Resident</strong><span id="rsMenuEmail"></span></div>
-          <a href="/resident/dashboard">🏠 My dashboard</a>
-          <a href="/resident/request">📝 Request a document</a>
-          <a href="/help/faq">❓ Help &amp; FAQ</a>
+          <a href="/resident/dashboard">My dashboard</a>
+          <a href="/resident/request">Request a document</a>
+          <a href="/help/faq">Help &amp; FAQ</a>
           <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>
@@ -239,7 +239,7 @@
       <section class="rd-hero">
         <div>
           <span class="rd-date" id="rdToday"></span>
-          <h1>Hello, <span id="residentName">Resident</span> 👋</h1>
+          <h1>Hello, <span id="residentName">Resident</span></h1>
           <p>Track your document requests, check release dates, and get updates from Barangay Mabayuan.</p>
           <div class="rd-hero-actions">
             <a class="rd-btn-light" href="/resident/request">+ Request a document</a>
@@ -307,7 +307,7 @@
       </section>
 
       <section class="panel rd-how">
-        <h3>🧭 How It Works</h3>
+        <h3>How It Works</h3>
         <ol class="rd-steps">
           <li><div><strong>Submit a request</strong>Choose a document and its purpose.</div></li>
           <li><div><strong>Captain review</strong>The Barangay Captain checks your request.</div></li>
@@ -319,7 +319,7 @@
 
       <aside class="rd-side">
         <section class="panel">
-          <h3>📢 Announcements</h3>
+          <h3>Announcements</h3>
           <ul class="rd-ann" id="rdAnnouncements"><li class="rd-muted">Loading…</li></ul>
           <a class="rd-ann-all" href="/resident/inbox">View all announcements →</a>
         </section>

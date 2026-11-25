@@ -72,3 +72,6 @@
   .sa-portal .sa-quick-grid { grid-template-columns:minmax(0,1fr); }
   .sa-pipe-row { grid-template-columns:110px minmax(0,1fr) 36px; }
 }
+
+/* Header shows the page title only (no emoji icon) */
+.admin-topbar .page-icon { display:none; }

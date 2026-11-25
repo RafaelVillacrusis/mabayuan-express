@@ -24,7 +24,7 @@
 <div class="details-modal" id="editDocModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;width:min(500px,100%);box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden;">
     <div style="padding:18px 24px;background:linear-gradient(135deg,#8b1a22,#b03040);color:#fff;display:flex;align-items:center;justify-content:space-between;">
-      <h2 style="margin:0;font-size:17px;">✏️ Edit Document</h2>
+      <h2 style="margin:0;font-size:17px;">Edit Document</h2>
       <button onclick="closeEditDocModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;">✕</button>
     </div>
     <div style="padding:24px;display:grid;gap:14px;">
@@ -125,7 +125,7 @@
         <div class="admin-page-header">
           <div>
             <span class="st-date" id="saToday" style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--admin-bg,#8b3d46);margin-bottom:4px;"></span>
-            <h1>Welcome, <span id="adminName">System Admin</span> 👋</h1>
+            <h1>Welcome, <span id="adminName">System Admin</span></h1>
             <p>Here's how Mabayuan Express is running today.</p>
           </div>
         </div>
@@ -151,14 +151,14 @@
 
         <div class="sa-row2">
           <div class="sa-panel">
-            <div class="sa-panel-header"><h2>📈 Request Pipeline</h2><a class="sa-panel-link" href="/system-admin/recent-requests">View requests →</a></div>
+            <div class="sa-panel-header"><h2>Request Pipeline</h2><a class="sa-panel-link" href="/system-admin/recent-requests">View requests →</a></div>
             <div class="sa-panel-body">
               <div class="sa-pipe" id="saPipeline"><p style="margin:0;color:#9a7a7d">Loading…</p></div>
               <div class="sa-pipe-foot">Where every document request currently is, from submission to pickup.</div>
             </div>
           </div>
           <div class="sa-panel">
-            <div class="sa-panel-header"><h2>🕘 Recent Activity</h2><a class="sa-panel-link" href="/system-admin/audit-trail">Full audit trail →</a></div>
+            <div class="sa-panel-header"><h2>Recent Activity</h2><a class="sa-panel-link" href="/system-admin/audit-trail">Full audit trail →</a></div>
             <div class="sa-panel-body" style="padding-top:8px;padding-bottom:8px;">
               <ul class="sa-activity" id="saActivity"><li><p style="color:#9a7a7d">Loading…</p></li></ul>
             </div>
@@ -166,7 +166,7 @@
         </div>
 
         <div class="sa-panel">
-          <div class="sa-panel-header"><h2>⚡ Quick Actions</h2></div>
+          <div class="sa-panel-header"><h2>Quick Actions</h2></div>
           <div class="sa-panel-body">
             <div class="sa-quick-grid">
               <a class="sa-quick-card" href="/system-admin/dashboard?section=documents" data-quick-section="documents">
@@ -205,7 +205,7 @@
           <button class="sa-btn sa-btn-primary sa-btn-sm" onclick="toggleDocForm()">+ Add Document</button>
         </div>
         <div class="sa-panel" id="docFormPanel" style="display:none;margin-bottom:20px;">
-          <div class="sa-panel-header"><h2>📝 New Document</h2></div>
+          <div class="sa-panel-header"><h2>New Document</h2></div>
           <div class="sa-panel-body">
             <form action="/api/system-admin/documents" method="POST">
               <div class="sa-form-grid">
@@ -223,7 +223,7 @@
           </div>
         </div>
         <div class="sa-panel">
-          <div class="sa-panel-header"><h2>📄 All Documents</h2></div>
+          <div class="sa-panel-header"><h2>All Documents</h2></div>
           <div class="table-wrap">
             <table class="sa-table">
               <thead><tr><th>Document</th><th>Price</th><th>Days</th><th>Status</th><th>Actions</th></tr></thead>
@@ -253,15 +253,15 @@
           <div class="sa-stat-card"><div class="sa-stat-icon mauve">⚠️</div><div><div class="sa-stat-val" id="aiFailed">0</div><div class="sa-stat-label">Failed Requests</div></div></div>
         </div>
         <div class="sa-panel" style="margin-bottom:20px">
-          <div class="sa-panel-header"><h2>📊 Performance Testing Record</h2></div>
+          <div class="sa-panel-header"><h2>Performance Testing Record</h2></div>
           <div class="table-wrap"><table class="sa-table"><thead><tr><th>Indicator</th><th>Result</th></tr></thead><tbody id="aiRecord"></tbody></table></div>
         </div>
         <div class="sa-panel" style="margin-bottom:20px">
-          <div class="sa-panel-header"><h2>🧩 By Feature</h2></div>
+          <div class="sa-panel-header"><h2>By Feature</h2></div>
           <div class="table-wrap"><table class="sa-table"><thead><tr><th>Feature</th><th>Requests</th><th>Failed</th><th>Avg response</th></tr></thead><tbody id="aiByFeature"></tbody></table></div>
         </div>
         <div class="sa-panel">
-          <div class="sa-panel-header"><h2>🚨 Errors &amp; Fallbacks</h2></div>
+          <div class="sa-panel-header"><h2>Errors &amp; Fallbacks</h2></div>
           <div class="table-wrap"><table class="sa-table"><thead><tr><th>Code</th><th>Meaning</th><th>Count</th></tr></thead><tbody id="aiByError"></tbody></table></div>
         </div>
       </div>

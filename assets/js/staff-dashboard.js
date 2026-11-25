@@ -425,7 +425,7 @@ function showDeclineModal(residentId, presetReason = '') {
     <div class="details-modal" id="declineReasonModal">
       <div class="details-card" style="max-width:460px;">
         <div class="details-head" style="background:linear-gradient(135deg,#8b1a22,#b03040);">
-          <h2>🚫 Decline Account</h2>
+          <h2>Decline Account</h2>
           <button class="details-close" onclick="closeDeclineModal()">✕</button>
         </div>
         <div class="details-body" style="padding:22px 24px;">

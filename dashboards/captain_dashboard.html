@@ -116,13 +116,13 @@
         <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
       </a>
       <nav class="rs-nav" aria-label="Main navigation">
-        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
-        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
-        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
-        <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
-        <a href="/captain/rbac" data-nav="rbac"><span class="rs-ico" aria-hidden="true">🔐</span>Access</a>
-        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
-        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+        <a href="/captain/dashboard" data-nav="dashboard">Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics">Analytics</a>
+        <a href="/captain/messages" data-nav="messages">Announcements</a>
+        <a href="/captain/documents" data-nav="documents">Documents</a>
+        <a href="/captain/rbac" data-nav="rbac">Access</a>
+        <a href="/captain/audit-trail" data-nav="audit">Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai">AI Assistant</a>
       </nav>
       <div class="rs-user">
         <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
@@ -130,22 +130,22 @@
         </button>
         <div class="rs-user-menu" id="rsUserMenu" hidden>
           <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
-          <a href="/captain/dashboard">🏠 Dashboard</a>
-          <a href="/captain/messages">📢 Send an announcement</a>
-          <a href="/captain/analytics">📈 Analytics report</a>
-          <a href="/captain/documents">📄 Document configuration</a>
-          <a href="/captain/rbac">🔐 User access (RBAC)</a>
+          <a href="/captain/dashboard">Dashboard</a>
+          <a href="/captain/messages">Send an announcement</a>
+          <a href="/captain/analytics">Analytics report</a>
+          <a href="/captain/documents">Document configuration</a>
+          <a href="/captain/rbac">User access (RBAC)</a>
           <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>
-    </header><main class="container content-area"><div class="st-head"><div><span class="st-date" id="cpToday"></span><h1>Welcome, <span id="captainName">Captain</span> 👋</h1><p>Approve or decline resident document requests before staff process them.</p></div><div class="st-head-actions"><a class="btn btn-small btn-ghost" href="/captain/messages">📢 Send announcement</a><a class="btn btn-small btn-ghost" href="/captain/analytics">📈 View analytics</a></div></div><div class="st-next" id="cpPendingBanner" hidden></div><section class="filter-grid">
+    </header><main class="container content-area"><div class="st-head"><div><span class="st-date" id="cpToday"></span><h1>Welcome, <span id="captainName">Captain</span></h1><p>Approve or decline resident document requests before staff process them.</p></div><div class="st-head-actions"><a class="btn btn-small btn-ghost" href="/captain/messages">📢 Send announcement</a><a class="btn btn-small btn-ghost" href="/captain/analytics">📈 View analytics</a></div></div><div class="st-next" id="cpPendingBanner" hidden></div><section class="filter-grid">
   <div class="filter-card st-stat active" data-status="all"><span class="st-ico st-i-rose">📄</span><div><div class="filter-label">All Requests</div><div class="filter-value">0</div></div></div>
   <div class="filter-card st-stat" data-status="Pending Approval" id="cpPendingCard"><span class="st-ico st-i-amber">⏳</span><div><div class="filter-label">Needs Your Decision</div><div class="filter-value">0</div></div></div>
   <div class="filter-card st-stat" data-status="Approved"><span class="st-ico st-i-blue">⚙️</span><div><div class="filter-label">Approved</div><div class="filter-value">0</div></div></div>
   <div class="filter-card st-stat" data-status="Declined"><span class="st-ico st-i-red">✖️</span><div><div class="filter-label">Declined</div><div class="filter-value">0</div></div></div>
   <div class="filter-card st-stat" data-status="Ready for Pickup"><span class="st-ico st-i-green">📦</span><div><div class="filter-label">Ready for Pickup</div><div class="filter-value">0</div></div></div>
   <div class="filter-card st-stat" data-status="Claimed"><span class="st-ico st-i-gray">✅</span><div><div class="filter-label">Claimed</div><div class="filter-value">0</div></div></div>
-</section><section class="panel" id="cpQueue"><div class="st-section-head"><div><h2>📋 Document Requests <span class="st-count" id="cpPendingCount" hidden>0</span></h2><p id="cpQueueHint">Requests marked <strong>Needs decision</strong> are waiting for you. Click a card above to filter.</p></div></div><div class="audit-filter-grid" id="dashFilterForm">
+</section><section class="panel" id="cpQueue"><div class="st-section-head"><div><h2>Document Requests <span class="st-count" id="cpPendingCount" hidden>0</span></h2><p id="cpQueueHint">Requests marked <strong>Needs decision</strong> are waiting for you. Click a card above to filter.</p></div></div><div class="audit-filter-grid" id="dashFilterForm">
   <input class="input" type="text" id="captainSearch" placeholder="Search transaction, resident, or document…" autocomplete="off" />
   <select class="select" id="statusDropdown">
     <option value="all">All Statuses</option>
@@ -203,7 +203,7 @@
 <div id="paginationRow" class="pg-row"></div></section>
 <div class="cp-id-modal" id="idModal" hidden role="dialog" aria-modal="true" aria-labelledby="idModalTitle">
   <div class="cp-id-box">
-    <div class="cp-id-head"><div><h2 id="idModalTitle">🪪 Valid ID</h2><p id="idModalSub"></p></div><button type="button" class="cp-id-close" id="idModalClose" aria-label="Close">✕</button></div>
+    <div class="cp-id-head"><div><h2 id="idModalTitle">Valid ID</h2><p id="idModalSub"></p></div><button type="button" class="cp-id-close" id="idModalClose" aria-label="Close">✕</button></div>
     <div class="cp-id-body" id="validIdBody"></div>
     <div class="cp-id-foot"><button type="button" class="btn btn-small btn-ghost" id="idModalDone">Close</button><a class="btn btn-small" id="idModalReview" href="#">Open request</a></div>
   </div>

@@ -111,13 +111,13 @@
         <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
       </a>
       <nav class="rs-nav" aria-label="Main navigation">
-        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
-        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
-        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
-        <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
-        <a href="/captain/rbac" data-nav="rbac"><span class="rs-ico" aria-hidden="true">🔐</span>Access</a>
-        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
-        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+        <a href="/captain/dashboard" data-nav="dashboard">Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics">Analytics</a>
+        <a href="/captain/messages" data-nav="messages">Announcements</a>
+        <a href="/captain/documents" data-nav="documents">Documents</a>
+        <a href="/captain/rbac" data-nav="rbac">Access</a>
+        <a href="/captain/audit-trail" data-nav="audit">Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai">AI Assistant</a>
       </nav>
       <div class="rs-user">
         <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
@@ -125,11 +125,11 @@
         </button>
         <div class="rs-user-menu" id="rsUserMenu" hidden>
           <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
-          <a href="/captain/dashboard">🏠 Dashboard</a>
-          <a href="/captain/messages">📢 Send an announcement</a>
-          <a href="/captain/analytics">📈 Analytics report</a>
-          <a href="/captain/documents">📄 Document configuration</a>
-          <a href="/captain/rbac">🔐 User access (RBAC)</a>
+          <a href="/captain/dashboard">Dashboard</a>
+          <a href="/captain/messages">Send an announcement</a>
+          <a href="/captain/analytics">Analytics report</a>
+          <a href="/captain/documents">Document configuration</a>
+          <a href="/captain/rbac">User access (RBAC)</a>
           <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>
@@ -138,14 +138,14 @@
   <main class="container content-area">
     <div class="st-head">
       <div>
-        <h1>📢 Announcements</h1>
+        <h1>Announcements</h1>
         <p>Send news and advisories to residents, staff, or everyone. Post now or schedule ahead, and choose when each one expires. Announcements sent to <strong>Everyone</strong> also appear on the website's home page while they're live. Add an image to make a poster-style announcement.</p>
       </div>
     </div>
 
     <!-- Compose Form -->
     <div class="msg-form">
-      <h2>📢 Compose Announcement</h2>
+      <h2>Compose Announcement</h2>
       <div id="sendSuccess" class="msg-success">✅ Announcement sent!</div>
 
       <div class="form-row">
@@ -227,7 +227,7 @@
 
     <!-- Message History -->
     <section class="panel">
-      <div class="st-section-head"><div><h2>🕘 Your Announcements</h2><p>Scheduled, live and expired announcements, newest first.</p></div></div>
+      <div class="st-section-head"><div><h2>Your Announcements</h2><p>Scheduled, live and expired announcements, newest first.</p></div></div>
       <div class="msg-filter" id="msgFilter">
         <button type="button" class="on" data-state="all">All</button>
         <button type="button" data-state="scheduled">Scheduled</button>

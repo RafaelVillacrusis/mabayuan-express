@@ -23,13 +23,13 @@
         <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
       </a>
       <nav class="rs-nav" aria-label="Main navigation">
-        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
-        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
-        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
-        <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
-        <a href="/captain/rbac" data-nav="rbac"><span class="rs-ico" aria-hidden="true">🔐</span>Access</a>
-        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
-        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+        <a href="/captain/dashboard" data-nav="dashboard">Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics">Analytics</a>
+        <a href="/captain/messages" data-nav="messages">Announcements</a>
+        <a href="/captain/documents" data-nav="documents">Documents</a>
+        <a href="/captain/rbac" data-nav="rbac">Access</a>
+        <a href="/captain/audit-trail" data-nav="audit">Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai">AI Assistant</a>
       </nav>
       <div class="rs-user">
         <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
@@ -37,11 +37,11 @@
         </button>
         <div class="rs-user-menu" id="rsUserMenu" hidden>
           <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
-          <a href="/captain/dashboard">🏠 Dashboard</a>
-          <a href="/captain/messages">📢 Send an announcement</a>
-          <a href="/captain/analytics">📈 Analytics report</a>
-          <a href="/captain/documents">📄 Document configuration</a>
-          <a href="/captain/rbac">🔐 User access (RBAC)</a>
+          <a href="/captain/dashboard">Dashboard</a>
+          <a href="/captain/messages">Send an announcement</a>
+          <a href="/captain/analytics">Analytics report</a>
+          <a href="/captain/documents">Document configuration</a>
+          <a href="/captain/rbac">User access (RBAC)</a>
           <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>
@@ -57,7 +57,7 @@
   <li><span class="dot">3</span>Ready for pickup<small id="pgReady">Staff sets release date</small></li>
   <li><span class="dot">4</span>Claimed<small>Picked up by resident</small></li>
 </ol>
-<div class="st-next" id="stNext" hidden></div><div class="two-col"><section><div class="info-card"><h3>👤 Resident</h3><div class="info-list"><div><span>Resident name</span><strong id="residentName">-</strong></div><div><span>Address</span><strong id="residentAddress">-</strong></div><div><span>Contact number</span><strong id="residentContact">-</strong></div><div><span>Email</span><strong id="residentEmail">-</strong></div></div></div><div class="info-card"><h3>📄 Request Details</h3><div class="info-list"><div><span>Transaction</span><strong id="requestTransaction">-</strong></div><div><span>Document</span><strong id="requestDocument">-</strong></div><div><span>Price</span><strong id="requestPrice">-</strong></div><div><span>Suggested Release</span><strong id="requestSuggested">-</strong></div><div><span>Status</span><strong id="requestStatus">-</strong></div></div></div><div class="info-card"><h3>🎯 Purpose</h3><p id="requestPurpose" style="margin:0;line-height:1.7">-</p></div><div class="info-card" id="validIdCard"><h3>🪪 Valid ID</h3><div id="validIdBody"><p style="margin:0;color:var(--muted)">Loading…</p></div></div></section><section><div class="info-card" id="decisionCard" hidden><h3>⚖️ Your Decision</h3>
+<div class="st-next" id="stNext" hidden></div><div class="two-col"><section><div class="info-card"><h3>Resident</h3><div class="info-list"><div><span>Resident name</span><strong id="residentName">-</strong></div><div><span>Address</span><strong id="residentAddress">-</strong></div><div><span>Contact number</span><strong id="residentContact">-</strong></div><div><span>Email</span><strong id="residentEmail">-</strong></div></div></div><div class="info-card"><h3>Request Details</h3><div class="info-list"><div><span>Transaction</span><strong id="requestTransaction">-</strong></div><div><span>Document</span><strong id="requestDocument">-</strong></div><div><span>Price</span><strong id="requestPrice">-</strong></div><div><span>Suggested Release</span><strong id="requestSuggested">-</strong></div><div><span>Status</span><strong id="requestStatus">-</strong></div></div></div><div class="info-card"><h3>Purpose</h3><p id="requestPurpose" style="margin:0;line-height:1.7">-</p></div><div class="info-card" id="validIdCard"><h3>Valid ID</h3><div id="validIdBody"><p style="margin:0;color:var(--muted)">Loading…</p></div></div></section><section><div class="info-card" id="decisionCard" hidden><h3>Your Decision</h3>
   <p style="font-size:13px;color:#9a7a7d;margin:-4px 0 12px;">Approving sends the request to staff for processing. Declining ends the request. The resident is emailed either way.</p>
   <form method="POST" id="decisionForm" novalidate>
     <input type="hidden" name="decision" id="decisionValue">
@@ -71,7 +71,7 @@
     </div>
   </form>
 </div>
-<div class="info-card" id="decisionDone" hidden></div><div class="info-card"><h3>🕘 Request History</h3><ol id="logList" class="st-timeline"></ol></div></section></div></main></div><nav class="rs-bottom" aria-label="Quick navigation">
+<div class="info-card" id="decisionDone" hidden></div><div class="info-card"><h3>Request History</h3><ol id="logList" class="st-timeline"></ol></div></section></div></main></div><nav class="rs-bottom" aria-label="Quick navigation">
     <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home<span class="rs-badge" data-pending-badge hidden></span></a>
     <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
     <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announce</a>

@@ -90,13 +90,13 @@
         <div class="brand-copy"><div>Mabayuan Express</div><small>Captain Portal</small></div>
       </a>
       <nav class="rs-nav" aria-label="Main navigation">
-        <a href="/captain/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
-        <a href="/captain/analytics" data-nav="analytics"><span class="rs-ico" aria-hidden="true">📈</span>Analytics</a>
-        <a href="/captain/messages" data-nav="messages"><span class="rs-ico" aria-hidden="true">📢</span>Announcements</a>
-        <a href="/captain/documents" data-nav="documents"><span class="rs-ico" aria-hidden="true">📄</span>Documents</a>
-        <a href="/captain/rbac" data-nav="rbac"><span class="rs-ico" aria-hidden="true">🔐</span>Access</a>
-        <a href="/captain/audit-trail" data-nav="audit"><span class="rs-ico" aria-hidden="true">📋</span>Audit Trail</a>
-        <a href="/captain/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI Assistant</a>
+        <a href="/captain/dashboard" data-nav="dashboard">Dashboard <span class="rs-badge" data-pending-badge hidden></span></a>
+        <a href="/captain/analytics" data-nav="analytics">Analytics</a>
+        <a href="/captain/messages" data-nav="messages">Announcements</a>
+        <a href="/captain/documents" data-nav="documents">Documents</a>
+        <a href="/captain/rbac" data-nav="rbac">Access</a>
+        <a href="/captain/audit-trail" data-nav="audit">Audit Trail</a>
+        <a href="/captain/ai-assistant" data-nav="ai">AI Assistant</a>
       </nav>
       <div class="rs-user">
         <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
@@ -104,11 +104,11 @@
         </button>
         <div class="rs-user-menu" id="rsUserMenu" hidden>
           <div class="rs-user-info"><strong id="rsMenuName">Captain</strong><span id="rsMenuEmail"></span><span>Barangay Captain</span></div>
-          <a href="/captain/dashboard">🏠 Dashboard</a>
-          <a href="/captain/messages">📢 Send an announcement</a>
-          <a href="/captain/analytics">📈 Analytics report</a>
-          <a href="/captain/documents">📄 Document configuration</a>
-          <a href="/captain/rbac">🔐 User access (RBAC)</a>
+          <a href="/captain/dashboard">Dashboard</a>
+          <a href="/captain/messages">Send an announcement</a>
+          <a href="/captain/analytics">Analytics report</a>
+          <a href="/captain/documents">Document configuration</a>
+          <a href="/captain/rbac">User access (RBAC)</a>
           <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
         </div>
       </div>
@@ -117,7 +117,7 @@
   <main class="container content-area">
     <div class="st-head">
       <div>
-        <h1>🔐 User Access (RBAC)</h1>
+        <h1>User Access (RBAC)</h1>
         <p>See who can use the system and what each role can do. You can add, change and remove <strong>Staff</strong> and <strong>Captain</strong> accounts.</p>
       </div>
       <div class="st-head-actions"><button type="button" class="btn btn-small" id="addUserBtn">＋ Add user</button></div>
@@ -131,7 +131,7 @@
     </section>
 
     <section class="panel">
-      <div class="st-section-head"><div><h2>👤 Personnel Accounts</h2><p>Role changes and removals take effect within 30 seconds, even if the person is logged in.</p></div></div>
+      <div class="st-section-head"><div><h2>Personnel Accounts</h2><p>Role changes and removals take effect within 30 seconds, even if the person is logged in.</p></div></div>
       <div class="st-toolbar">
         <div class="st-search"><input class="input" id="userSearch" type="search" placeholder="Search name or email…" autocomplete="off" aria-label="Search accounts"></div>
         <div class="rb-filter" id="roleFilter">
@@ -151,7 +151,7 @@
     </section>
 
     <section class="panel">
-      <div class="st-section-head"><div><h2>📋 Roles &amp; Permissions</h2><p>What each role can do in Mabayuan Express.</p></div></div>
+      <div class="st-section-head"><div><h2>Roles &amp; Permissions</h2><p>What each role can do in Mabayuan Express.</p></div></div>
       <div class="rb-roles">
         <div class="rb-role r-system_admin"><h3>System Admin <span class="rb-tag">Highest</span></h3><p>Runs and maintains the platform.</p><ul>
           <li><span class="rb-yes">✓</span>Manage all accounts, including admins</li>
@@ -181,7 +181,7 @@
     </section>
 
     <section class="panel">
-      <div class="st-section-head"><div><h2>🛡️ Access Rules</h2></div></div>
+      <div class="st-section-head"><div><h2>Access Rules</h2></div></div>
       <ul class="rb-policy">
         <li>Every page and API checks the user's role — anyone without access gets <strong>403 Forbidden</strong>.</li>
         <li>Captains can't create, change or delete <strong>System Admin</strong> accounts, and can't change or delete their own account.</li>

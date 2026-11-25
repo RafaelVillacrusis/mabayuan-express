@@ -9,7 +9,7 @@
     <div class="details-modal" id="globalDeleteModal">
       <div class="details-card" style="max-width:400px;">
         <div class="details-head" style="background:linear-gradient(135deg,#8b1a22,#b03040);">
-          <h2 id="gdmTitle">🗑 Delete</h2>
+          <h2 id="gdmTitle">Delete</h2>
           <button class="details-close" onclick="closeDeleteModal()">✕</button>
         </div>
         <div class="details-body" style="text-align:center;padding:28px 24px;">
@@ -30,7 +30,8 @@
 
   window.showDeleteModal = function ({ title, message, onConfirm }) {
     injectModal();
-    document.getElementById('gdmTitle').textContent = title || '🗑 Delete';
+    // Dialog headings are plain text (no emoji)
+    document.getElementById('gdmTitle').textContent = String(title || 'Delete').replace(/[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]️?\s*/gu, '').trim() || 'Delete';
     document.getElementById('gdmMessage').textContent = message || 'Are you sure?';
     const modal = document.getElementById('globalDeleteModal');
     modal.classList.add('open');
