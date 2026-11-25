@@ -32,6 +32,8 @@ function getStaffQueueFiltered() {
       if (dateFrom && d < dateFrom) return false;
       if (dateTo   && d > dateTo)   return false;
     }
+    const g = document.getElementById('staffQueueGender')?.value || 'all';
+    if (g !== 'all' && (g === 'none' ? !!row.gender : row.gender !== g)) return false;
     if (search) {
       const hay = [row.transaction_no, row.resident_name, row.document_name, row.status].join(' ').toLowerCase();
       if (!hay.includes(search)) return false;
@@ -46,6 +48,7 @@ function getStaffQueueFiltered() {
     }
     let va = a[staffSortCol] ?? '', vb = b[staffSortCol] ?? '';
     va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
+    if (staffSortCol === 'gender') { va = genderSortKey(a.gender); vb = genderSortKey(b.gender); }
     if (va < vb) return staffSortDir === 'asc' ? -1 : 1;
     if (va > vb) return staffSortDir === 'asc' ?  1 : -1;
     // Same value: keep submission order (FIFO), reversed for "Newest first"
@@ -81,6 +84,7 @@ function renderStaffQueue() {
   staffReqPg.setRows(rows, row => `<tr>
     <td>${row.created_at ? formatDate(row.created_at) : '-'}</td>
     <td>${escapeHtml(row.resident_name)}</td>
+    <td>${genderPill(row.gender)}</td>
     <td>${escapeHtml(row.document_name)}</td>
     <td>${formatDate(row.suggested_release_date)}</td>
     <td>${formatDate(row.release_date)}</td>
@@ -356,6 +360,7 @@ function openReviewModal(residentId) {
       <div><strong>${escapeHtml(fullName)}</strong><span>Registered ${(() => { const rel = relDays(r.created_at), abs = formatDate(r.created_at); return escapeHtml(rel === abs ? abs : `${rel} · ${abs}`); })()}</span></div></div>
     <dl class="rv-dl">
       <dt>Birth date</dt><dd>${r.birth_date ? escapeHtml(formatDate(r.birth_date)) : '—'}${age != null ? ` <span style="color:var(--muted);font-weight:500">· ${age} yrs old</span>` : ''}</dd>
+      <dt>Gender</dt><dd>${escapeHtml(r.gender || 'Not specified')}</dd>
       <dt>Email</dt><dd>${escapeHtml(r.email || '—')}</dd>
       <dt>Mobile</dt><dd>${escapeHtml(r.phone_number || '—')}</dd>
       <dt>Address</dt><dd>${escapeHtml(r.address || '—')}</dd>
@@ -574,12 +579,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearTimeout(qTimer); qTimer = setTimeout(renderStaffQueue, 250);
   });
   document.getElementById('staffQueueStatus')?.addEventListener('change', renderStaffQueue);
+  document.getElementById('staffQueueGender')?.addEventListener('change', renderStaffQueue);
   document.getElementById('staffQueueApply')?.addEventListener('click', renderStaffQueue);
   document.getElementById('staffQueueReset')?.addEventListener('click', () => {
     document.getElementById('staffQueueSearch').value  = '';
     document.getElementById('staffQueueStatus').value  = 'all';
     document.getElementById('staffQueueDateFrom').value = '';
     document.getElementById('staffQueueDateTo').value   = '';
+    document.getElementById('staffQueueGender').value   = 'all';
     setFilter('all');
     document.querySelectorAll('.filter-card[data-status]').forEach(c =>
       c.classList.toggle('active', c.dataset.status === 'all'));

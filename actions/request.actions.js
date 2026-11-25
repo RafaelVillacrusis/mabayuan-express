@@ -131,7 +131,8 @@ async function getRequestsByRole(role, filter = 'all') {
   let sql = `
     SELECT
       r.*,
-      res.last_name || ', ' || res.first_name AS resident_name
+      res.last_name || ', ' || res.first_name AS resident_name,
+      res.gender
     FROM requests r
     JOIN residents res ON res.resident_id = r.resident_id
     WHERE ${baseWhere}
@@ -175,6 +176,7 @@ async function getRequestById(requestId) {
       res.middle_name,
       res.last_name,
       res.suffix,
+      res.gender,
       res.email,
       r.contact_number,
       r.valid_id_type,

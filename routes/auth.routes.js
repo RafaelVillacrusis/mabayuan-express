@@ -78,6 +78,7 @@ router.get('/api/session-check', (req, res) => {
 
 // Accepted ID types and upload helpers are shared with the document request form
 const { VALID_ID_TYPES, ALLOWED_UPLOAD_MIME, uploadToStorage } = require('../actions/upload.actions');
+const GENDERS = ['Male', 'Female', 'Prefer not to say'];
 const uploadRegistrationFile = (file, folder, email) => uploadToStorage(file, folder, email);
 
 // ── Resident Register ─────────────────────────────────────────────────────────
@@ -95,7 +96,8 @@ router.post('/auth/resident/register', (req, res, next) => {
   });
 }, async (req, res) => {
   try {
-    const { first_name, middle_name, last_name, suffix, birth_date, phone_number, address, email, password, confirm_password, valid_id_type } = req.body;
+    const { first_name, middle_name, last_name, suffix, birth_date, phone_number, address, email, password, confirm_password, valid_id_type, gender } = req.body;
+    if (!GENDERS.includes(gender)) return redirectWithError(res, '/resident/register', 'Please choose your gender.');
     const validIdFile = req.files?.valid_id?.[0];
     const residencyFile = req.files?.residency_cert?.[0];
     if (!VALID_ID_TYPES.includes(valid_id_type)) return redirectWithError(res, '/resident/register', 'Please select the type of valid ID you are uploading.');
@@ -127,9 +129,9 @@ router.post('/auth/resident/register', (req, res, next) => {
     if (!residencyCertPath) return redirectWithError(res, '/resident/register', 'Failed to upload Certificate of Residency. Please try again.');
 
     const { rows: result } = await pool.query(
-      `INSERT INTO residents (first_name,middle_name,last_name,suffix,email,password_hash,status,birth_date,phone_number,address,valid_id_path,valid_id_type,residency_cert_path)
-       VALUES ($1,$2,$3,$4,$5,$6,'Pending',$7,$8,$9,$10,$11,$12) RETURNING resident_id`,
-      [first_name, middle_name||null, last_name, suffix||null, email, hash, birth_date||null, phone_number||null, address||null, validIdPath, valid_id_type, residencyCertPath]
+      `INSERT INTO residents (first_name,middle_name,last_name,suffix,email,password_hash,status,birth_date,phone_number,address,valid_id_path,valid_id_type,residency_cert_path,gender)
+       VALUES ($1,$2,$3,$4,$5,$6,'Pending',$7,$8,$9,$10,$11,$12,$13) RETURNING resident_id`,
+      [first_name, middle_name||null, last_name, suffix||null, email, hash, birth_date||null, phone_number||null, address||null, validIdPath, valid_id_type, residencyCertPath, gender]
     );
     await createAuditLog({ actorRole:'resident', targetType:'resident', targetId:result[0].resident_id, action:'RESIDENT_REGISTERED', description:`Resident registration submitted for ${first_name} ${last_name}.`, metadata:{email, valid_id_type} });
 

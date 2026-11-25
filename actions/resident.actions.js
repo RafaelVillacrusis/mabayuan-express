@@ -2,7 +2,7 @@ const pool = require('../db');
 
 async function getPendingResidents() {
   const result = await pool.query(
-  `SELECT resident_id, first_name, middle_name, last_name, email, status, created_at, valid_id_path, valid_id_type, residency_cert_path,
+  `SELECT resident_id, first_name, middle_name, last_name, email, status, created_at, valid_id_path, valid_id_type, residency_cert_path, gender,
           phone_number, address, suffix, birth_date
    FROM residents
    WHERE status = 'Pending'
@@ -50,7 +50,7 @@ async function getAllResidents({ status = 'all', search = '', archived = false }
   const result = await pool.query(
     `SELECT r.resident_id, r.first_name, r.middle_name, r.last_name, r.suffix,
             r.email, r.phone_number, r.address, r.birth_date,
-            r.status, r.is_archived, r.valid_id_path, r.valid_id_type, r.residency_cert_path, r.created_at,
+            r.status, r.is_archived, r.valid_id_path, r.valid_id_type, r.residency_cert_path, r.gender, r.created_at,
             COUNT(req.request_id)::int AS total_requests
      FROM residents r
      LEFT JOIN requests req ON req.resident_id = r.resident_id
@@ -69,7 +69,7 @@ async function getResidentById(residentId) {
   const { rows } = await pool.query(
     `SELECT r.resident_id, r.first_name, r.middle_name, r.last_name, r.suffix,
             r.email, r.phone_number, r.address, r.birth_date,
-            r.status, r.valid_id_path, r.valid_id_type, r.residency_cert_path, r.created_at,
+            r.status, r.valid_id_path, r.valid_id_type, r.residency_cert_path, r.gender, r.created_at,
             COUNT(req.request_id)::int AS total_requests
      FROM residents r
      LEFT JOIN requests req ON req.resident_id = r.resident_id

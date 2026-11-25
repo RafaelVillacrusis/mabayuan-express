@@ -228,3 +228,15 @@ function renderRequestValidId(req, role) {
   });
   img.src = url;
 }
+
+
+/** Gender badge for request queues; residents who registered before gender was asked show "Not specified". */
+function genderPill(gender) {
+  if (!gender) return '<span class="g-pill g-none">Not specified</span>';
+  const cls = gender === 'Male' ? 'g-male' : gender === 'Female' ? 'g-female' : 'g-other';
+  return `<span class="g-pill ${cls}">${escapeHtml(gender)}</span>`;
+}
+/** Sort order for the Gender column: Female, Male, Prefer not to say, then Not specified. */
+function genderSortKey(gender) {
+  return { Female: '1', Male: '2', 'Prefer not to say': '3' }[gender] || '9';
+}

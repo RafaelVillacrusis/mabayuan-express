@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/assets/css/staff.css?v=5" />  <style>
   /* ── Staff Processing Queue filter bar ── */
   #staffQueueFilter.audit-filter-grid {
-    grid-template-columns: 2fr 1.15fr 1.35fr 1fr 1fr auto;
+    grid-template-columns: 1.7fr 1fr 1fr 1.3fr .95fr .95fr auto;
     gap: 10px;
     align-items: end;
     padding: 10px 14px;
@@ -33,6 +33,12 @@
   }
   #staffQueueFilter input[type="date"].input { padding: 0 10px; cursor: pointer; }
   #staffQueueFilter .select { cursor: pointer; }
+  .g-pill { display:inline-block; font-size:11.5px; font-weight:700; border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  .g-male { background:#e6effc; color:#1d4ed8; } .g-female { background:#fbe9f1; color:#b0306b; }
+  .g-other { background:#efedf0; color:#4a4250; } .g-none { background:transparent; color:#9a8f91; font-weight:600; padding-left:0; }
+  @media (max-width: 1200px) and (min-width: 861px) {
+    #staffQueueFilter.audit-filter-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
   .sq-field { display:flex; flex-direction:column; gap:4px; min-width:0; margin:0; }
   .sq-field > span { font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
   .sq-order-row { grid-column:1 / -1; display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); }
@@ -118,6 +124,15 @@
       <option value="Ready for Pickup">Ready for Pickup</option>
       <option value="Claimed">Claimed</option>
     </select>
+    <label class="sq-field"><span>Gender</span>
+      <select class="select" id="staffQueueGender" title="Show requests from residents of this gender">
+        <option value="all">All genders</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Prefer not to say">Prefer not to say</option>
+        <option value="none">Not specified</option>
+      </select>
+    </label>
     <label class="sq-field"><span>Order</span>
       <select class="select" id="staffQueueOrder" title="Choose the order requests are listed in">
         <option value="fifo">Oldest first (FIFO)</option>
@@ -142,6 +157,7 @@
         <tr>
           <th data-col="created_at">Request Date</th>
           <th data-col="resident_name">Resident</th>
+          <th data-col="gender">Gender</th>
           <th data-col="document_name">Document</th>
           <th data-col="suggested_release_date">Suggested Release</th>
           <th data-col="release_date">Release Date</th>
@@ -149,7 +165,7 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody id="staffRequestRows" data-empty-colspan="7" data-empty="No requests match these filters."></tbody>
+      <tbody id="staffRequestRows" data-empty-colspan="8" data-empty="No requests match these filters."></tbody>
     </table>
   </div>
   <div id="staffReqPg" class="pg-row" style="border-top:1px solid #f0e4e5;"></div>
@@ -161,7 +177,7 @@
     <a href="/staff/ai-assistant" data-nav="ai"><span class="rs-ico" aria-hidden="true">🤖</span>AI</a>
   </nav>
   <script src="/socket.io/socket.io.js"></script><script src="/assets/js/common-pagination.js"></script>
-<script src="/assets/js/common.js"></script>
+<script src="/assets/js/common.js?v=6"></script>
 <script src="/assets/js/staff-shell.js"></script>
 <script src="/assets/js/delete-modal.js"></script>
-<script src="/assets/js/staff-dashboard.js?v=5"></script></body></html>
+<script src="/assets/js/staff-dashboard.js?v=6"></script></body></html>

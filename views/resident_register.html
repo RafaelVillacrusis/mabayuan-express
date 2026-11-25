@@ -136,6 +136,14 @@
     .rg-grid .full { grid-column:1/-1; }
     .rg-req { color:#b42318; }
     .rg-opt { color:var(--muted); font-weight:400; font-size:12px; }
+    span.form-label { display:block; }
+    .rg-gender { display:flex; gap:6px; flex-wrap:wrap; }
+    .rg-gender label { position:relative; display:inline-flex; align-items:center; min-height:44px; padding:0 12px; border:1.5px solid var(--border,#e5d6d8); border-radius:12px; background:#fff; cursor:pointer; font-size:14px; font-weight:600; color:#3d2326; transition:border-color .15s, background .15s; }
+    .rg-gender label:hover { border-color:var(--primary,#a64d57); }
+    .rg-gender input { position:absolute; opacity:0; pointer-events:none; }
+    .rg-gender label:has(input:checked) { border-color:var(--primary,#a64d57); background:var(--primary,#a64d57); color:#fff; }
+    .rg-gender label:has(input:focus-visible) { outline:3px solid #f4c2c8; outline-offset:2px; }
+    .rg-gender.rg-invalid label { border-color:#dc2626; }
     .rg-hint { font-size:12.5px; color:var(--muted); margin-top:6px; }
     .rg-note { display:flex; gap:10px; align-items:flex-start; background:#fdf8f8; border:1px solid #f0e4e5; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.55; color:#5b3a3f; margin:10px 0 16px; }
     .rg-note-warn { background:#fdf4dc; border-color:#e8d48a; color:#6b5000; margin-bottom:0; }
@@ -355,11 +363,19 @@
                     <option>Jr.</option><option>Sr.</option><option>II</option><option>III</option><option>IV</option><option>V</option>
                   </select>
                 </div>
-                <div class="full">
+                <div>
                   <label class="form-label" for="birthField">Birth date <span class="rg-req">*</span></label>
                   <input class="input" type="date" name="birth_date" id="birthField" max="9999-12-31" autocomplete="bday">
                   <div id="birthNotice" class="rg-hint">You must be at least 18 years old to register.</div>
                   <div id="birthHint" style="display:none;font-size:12px;margin-top:3px;font-weight:600;"></div>
+                </div>
+                <div>
+                  <span class="form-label" id="genderLabel">Gender <span class="rg-req">*</span></span>
+                  <div class="rg-gender" role="radiogroup" aria-labelledby="genderLabel" onchange="this.classList.remove('rg-invalid')">
+                    <label><input type="radio" name="gender" value="Male"><span>♂ Male</span></label>
+                    <label><input type="radio" name="gender" value="Female"><span>♀ Female</span></label>
+                    <label><input type="radio" name="gender" value="Prefer not to say"><span>Prefer not to say</span></label>
+                  </div>
                 </div>
               </div>
             </fieldset>
@@ -503,7 +519,7 @@
     const MAX_FILE = 5 * 1024 * 1024;
     const OK_TYPES = /^(image\/(jpeg|png|gif|webp)|application\/pdf)$/;
     const SAVE_KEY = 'mx_register_draft';
-    const SAVED_FIELDS = ['first_name', 'middle_name', 'last_name', 'suffix', 'birth_date', 'email', 'phone_number', 'address', 'valid_id_type'];
+    const SAVED_FIELDS = ['first_name', 'middle_name', 'last_name', 'suffix', 'birth_date', 'gender', 'email', 'phone_number', 'address', 'valid_id_type'];
     let current = 1;
     let maxReached = 1;
 
@@ -557,6 +573,11 @@
         const age = ageOf(birth.value);
         if (isNaN(age) || age > 120 || age < 0) return fail('Please enter a valid birth date.', birth);
         if (age < 18) return fail('You must be at least 18 years old to register.', birth);
+        if (!form.querySelector('input[name="gender"]:checked')) {
+          const g = form.querySelector('.rg-gender');
+          g.classList.add('rg-invalid');
+          return fail('Please choose your gender.', form.querySelector('input[name="gender"]'));
+        }
       }
       if (n === 2) {
         const email = $('emailField'), phone = $('phoneField'), addr = $('addressField');
@@ -628,7 +649,7 @@
       const birth = $('birthField').value ? new Date($('birthField').value + 'T00:00:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
       const files = [$('validIdFile').files[0], $('residencyFile').files[0]].map(f => f ? f.name : '—');
       const rows = [
-        ['Name', name, 1], ['Birth date', birth, 1],
+        ['Name', name, 1], ['Birth date', birth, 1], ['Gender', (form.querySelector('input[name="gender"]:checked') || {}).value || '—', 1],
         ['Email', $('emailField').value.trim(), 2], ['Mobile', $('phoneField').value ? '+63 ' + $('phoneField').value : '—', 2],
         ['Address', $('addressField').value.trim(), 2],
         ['Valid ID', `${$('validIdType').value || '—'} · ${files[0]}`, 3], ['Certificate', files[1], 3],

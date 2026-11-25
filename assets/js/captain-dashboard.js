@@ -91,6 +91,9 @@ function getFilteredSorted() {
       if (dateFrom && rowDate < dateFrom) return false;
       if (dateTo   && rowDate > dateTo)   return false;
     }
+    // Gender
+    const g = (document.getElementById('genderFilter') || {}).value || 'all';
+    if (g !== 'all' && (g === 'none' ? !!row.gender : row.gender !== g)) return false;
     // Search
     if (search) {
       const hay = [row.transaction_no, row.resident_name, row.document_name, row.status].join(' ').toLowerCase();
@@ -109,6 +112,7 @@ function getFilteredSorted() {
     let vb = b[sortCol] ?? '';
     // Numeric sort for price
     if (sortCol === 'price_at_request') { va = Number(va); vb = Number(vb); }
+    else if (sortCol === 'gender') { va = genderSortKey(a.gender); vb = genderSortKey(b.gender); }
     else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ?  1 : -1;
@@ -156,6 +160,7 @@ function renderTable() {
         <tr>
           <td>${row.created_at ? formatDate(row.created_at) : '-'}</td>
           <td>${escapeHtml(row.resident_name)}</td>
+          <td>${genderPill(row.gender)}</td>
           <td>${escapeHtml(row.document_name)}</td>
           <td>${peso(row.price_at_request)}</td>
           <td>${formatDate(row.suggested_release_date)}</td>
@@ -166,7 +171,7 @@ function renderTable() {
             ? `<button type="button" class="btn btn-small btn-ghost cp-id-btn" data-id-view="${row.request_id}" title="View the valid ID uploaded with this request">🪪 ID</button>`
             : ''}</td>
         </tr>`).join('')
-    : `<tr><td colspan="7" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
+    : `<tr><td colspan="8" class="empty-state">${getFilter() === 'Pending Approval' ? '🎉 No requests waiting for your decision.' : 'No requests match these filters.'}</td></tr>`;
 
   // Render pagination using shared pg-row style
   const pgEl = document.getElementById('paginationRow');
@@ -252,12 +257,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('statusDropdown').value  = 'all';
     document.getElementById('dateFromFilter').value  = '';
     document.getElementById('dateToFilter').value    = '';
+    document.getElementById('genderFilter').value    = 'all';
     getDateRange();
     setFilter('all');
     document.querySelectorAll('.filter-card').forEach(c => c.classList.toggle('active', c.dataset.status === 'all'));
     currentPage = 1;
     renderTable();
   });
+
+  document.getElementById('genderFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
 
   // Order: FIFO / newest first
   document.getElementById('orderSelect').addEventListener('change', e => {
