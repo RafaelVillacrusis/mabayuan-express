@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <link rel="manifest" href="/assets/manifest.json">
+  <meta name="theme-color" content="#a64d57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mabayuan">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile — Mabayuan Express</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/resident.css" />
+  
+  <style>
+    .pf-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:20px; align-items:start; }
+    .pf-col { display:grid; gap:20px; }
+    .pf-card { margin:0; padding:22px 24px; }
+    .pf-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+    .pf-card-head h2 { margin:0; font-size:17px; }
+    .pf-card-head p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+    .pf-info { display:grid; grid-template-columns:auto 1fr; gap:10px 16px; margin:0; font-size:14px; }
+    .pf-info dt { color:var(--muted); }
+    .pf-info dd { margin:0; font-weight:700; overflow-wrap:anywhere; }
+    .pf-note { margin:16px 0 0; padding:10px 12px; background:#fdf8f8; border:1px solid #f3e9ea; border-radius:10px; font-size:12.5px; color:#5b4648; }
+    .pf-current { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 12px; background:#fdf8f8; border:1px solid #f3e9ea; border-radius:10px; font-size:14px; }
+    .pf-current span { color:var(--muted); }
+    .pf-current strong { overflow-wrap:anywhere; }
+    .pf-step { margin-top:14px; padding-top:14px; border-top:1px solid #f3e9ea; }
+    .pf-card [hidden] { display:none !important; }
+    .pf-step .input { width:100%; box-sizing:border-box; }
+    .pf-step .input.bad, #pfPhone.bad { border-color:#dc2626; }
+    .pf-pw { position:relative; }
+    .pf-pw .input { padding-right:70px; }
+    .pf-pw button { position:absolute; right:6px; top:50%; transform:translateY(-50%); border:0; background:#f3ecec; border-radius:8px; padding:5px 10px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+    .pf-hint { font-size:12.5px; color:var(--muted); margin-top:10px; }
+    .pf-actions { display:flex; justify-content:flex-end; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+    .pf-spacer { flex:1; }
+    .pf-msg { margin-top:12px; border-radius:10px; padding:9px 12px; font-size:13px; background:#fef2f2; border:1px solid #fecaca; color:#b42318; }
+    .pf-msg.ok { background:#e9f9ee; border-color:#a3d9b1; color:#16653a; }
+    .pf-sent { background:#eef6ff; border:1px solid #c9defa; color:#1e3a5f; border-radius:10px; padding:10px 12px; font-size:13.5px; margin-bottom:12px; }
+    .pf-code { font-size:24px; letter-spacing:10px; text-align:center; font-variant-numeric:tabular-nums; max-width:240px; }
+    .pf-link { border:0; background:none; padding:0; color:var(--primary); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+    .pf-link:disabled { color:var(--muted); cursor:default; }
+    .pf-rules { list-style:none; margin:8px 0 12px; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; font-size:12.5px; color:var(--muted); }
+    .pf-rules li::before { content:'○ '; }
+    .pf-rules li.ok { color:#16653a; }
+    .pf-rules li.ok::before { content:'✓ '; font-weight:800; }
+    @media (max-width:900px) { .pf-grid { grid-template-columns:minmax(0,1fr); } }
+    @media (max-width:520px) { .pf-card { padding:18px 16px; } .pf-card-head { flex-direction:column; } .pf-rules { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body class="rs-portal" data-page="profile">
+  <div class="page-shell">
+    <header class="topbar rs-topbar">
+      <a class="brand" href="/resident/dashboard" aria-label="Mabayuan Express — go to dashboard">
+        <div class="brand-mark" style="background:transparent;padding:0;overflow:visible;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="6" y="3" width="20" height="26" rx="3" fill="rgba(255,255,255,0.22)"/>
+  <path d="M20 3 L26 9 L20 9 Z" fill="rgba(255,255,255,0.18)"/>
+  <path d="M20 3 L20 9 L26 9" stroke="rgba(255,255,255,0.55)" stroke-width="1" fill="none"/>
+  <line x1="10" y1="14" x2="22" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="22" x2="17" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="28" r="7" fill="#fff"/>
+  <polyline points="22.5,28 25,30.5 29.5,25.5" stroke="#8b2131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></div>
+        <div class="brand-copy"><div>Mabayuan Express</div><small>Resident Portal</small></div>
+      </a>
+      <nav class="rs-nav" aria-label="Main navigation">
+        <a href="/resident/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="/resident/request" data-nav="request">Request Document</a>
+        <a href="/resident/inbox" data-nav="inbox">Announcements <span class="rs-badge" data-inbox-badge hidden></span></a>
+      </nav>
+      <div class="rs-user">
+        <button type="button" class="rs-user-btn" id="rsUserBtn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+          <span class="rs-avatar" id="rsAvatar">R</span><span class="rs-user-name" id="rsUserName">Resident</span><span class="rs-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rs-user-menu" id="rsUserMenu" hidden>
+          <div class="rs-user-info"><strong id="rsMenuName">Resident</strong><span id="rsMenuEmail"></span></div>
+          <a href="/resident/profile">My profile</a>
+          <a href="/resident/dashboard">My dashboard</a>
+          <a href="/resident/request">Request a document</a>
+          <a href="/help/faq">Help &amp; FAQ</a>
+          <form action="/auth/logout" method="POST"><button class="rs-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </div>
+    </header>
+<main class="container content-area">
+      <div class="rs-page-head">
+        <div>
+          <a class="rs-crumb" href="/resident/dashboard">← Back to dashboard</a>
+          <h1>My Profile</h1>
+          <p>Update your contact number, email and password. Email and password changes are confirmed with a code sent by email.</p>
+        </div>
+      </div>
+
+      <div class="pf-grid">
+        <section class="panel pf-card">
+          <div class="pf-card-head"><div><h2>Personal information</h2><p>Verified with your valid ID by barangay staff.</p></div></div>
+          <dl class="pf-info">
+            <dt>Full name</dt><dd id="pfName">—</dd>
+            <dt>Birth date</dt><dd id="pfBirth">—</dd>
+            <dt>Gender</dt><dd id="pfGender">—</dd>
+            <dt>Address</dt><dd id="pfAddress">—</dd>
+            <dt>Member since</dt><dd id="pfSince">—</dd>
+          </dl>
+          <p class="pf-note">To correct your name, birth date or address, please visit the Barangay Hall with a valid ID.</p>
+        </section>
+
+        <div class="pf-col">
+          <!-- Contact number -->
+          <section class="panel pf-card">
+            <div class="pf-card-head"><div><h2>Contact number</h2><p>Used if the barangay needs to reach you about a request.</p></div></div>
+            <form id="contactForm" novalidate>
+              <label class="form-label" for="pfPhone">Mobile number</label>
+              <div class="ph-phone-wrap">
+                <div class="ph-phone-prefix">🇵🇭 +63</div>
+                <input class="input" id="pfPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="9XXXXXXXXX" oninput="phPhoneInput(this)" onblur="phPhoneValidate(this)">
+              </div>
+              <div class="ph-phone-hint" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></div>
+              <div class="pf-msg" id="contactMsg" role="status" hidden></div>
+              <div class="pf-actions"><button class="btn btn-small" type="submit" id="contactSave">Save number</button></div>
+            </form>
+          </section>
+
+          <!-- Email -->
+          <section class="panel pf-card">
+            <div class="pf-card-head">
+              <div><h2>Email address</h2><p>You log in and receive updates with this email.</p></div>
+              <button type="button" class="btn btn-small btn-ghost" id="emailStartBtn">Change email</button>
+            </div>
+            <div class="pf-current"><span>Current email</span><strong id="pfEmail">—</strong></div>
+
+            <form id="emailForm" class="pf-step" novalidate hidden>
+              <label class="form-label" for="pfNewEmail">New email address</label>
+              <input class="input" id="pfNewEmail" type="email" autocomplete="email" placeholder="name@example.com">
+              <label class="form-label" for="pfEmailPw" style="margin-top:12px">Current password</label>
+              <div class="pf-pw"><input class="input" id="pfEmailPw" type="password" autocomplete="current-password"><button type="button" data-show="pfEmailPw">Show</button></div>
+              <div class="pf-hint">We'll send a 6-digit code to the <strong>new</strong> email to confirm you own it.</div>
+              <div class="pf-msg" id="emailMsg" role="alert" hidden></div>
+              <div class="pf-actions"><button type="button" class="btn btn-small btn-ghost" data-cancel="email">Cancel</button><button class="btn btn-small" type="submit" id="emailSend">Send verification code</button></div>
+            </form>
+
+            <form id="emailCodeForm" class="pf-step" novalidate hidden>
+              <div class="pf-sent">📧 We sent a 6-digit code to <strong id="emailSentTo"></strong>. Enter it below to finish changing your email.</div>
+              <label class="form-label" for="emailCode">Verification code</label>
+              <input class="input pf-code" id="emailCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+              <div class="pf-msg" id="emailCodeMsg" role="alert" hidden></div>
+              <div class="pf-actions">
+                <button type="button" class="pf-link" id="emailResend">Resend code</button>
+                <span class="pf-spacer"></span>
+                <button type="button" class="btn btn-small btn-ghost" data-cancel="email">Cancel</button>
+                <button class="btn btn-small" type="submit" id="emailVerify">Verify &amp; change email</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Password -->
+          <section class="panel pf-card">
+            <div class="pf-card-head">
+              <div><h2>Password</h2><p>Use a strong password you don't use anywhere else.</p></div>
+              <button type="button" class="btn btn-small btn-ghost" id="pwStartBtn">Change password</button>
+            </div>
+
+            <form id="pwForm" class="pf-step" novalidate hidden>
+              <label class="form-label" for="pfCurPw">Current password</label>
+              <div class="pf-pw"><input class="input" id="pfCurPw" type="password" autocomplete="current-password"><button type="button" data-show="pfCurPw">Show</button></div>
+              <label class="form-label" for="pfNewPw" style="margin-top:12px">New password</label>
+              <div class="pf-pw"><input class="input" id="pfNewPw" type="password" autocomplete="new-password"><button type="button" data-show="pfNewPw">Show</button></div>
+              <ul class="pf-rules" id="pwRules">
+                <li data-rule="len">At least 8 characters</li>
+                <li data-rule="letter">A letter</li>
+                <li data-rule="num">A number</li>
+                <li data-rule="special">A special character (e.g. ! @ #)</li>
+              </ul>
+              <label class="form-label" for="pfConfirmPw">Confirm new password</label>
+              <div class="pf-pw"><input class="input" id="pfConfirmPw" type="password" autocomplete="new-password"><button type="button" data-show="pfConfirmPw">Show</button></div>
+              <div class="pf-hint">We'll send a 6-digit code to your current email to confirm it's you.</div>
+              <div class="pf-msg" id="pwMsg" role="alert" hidden></div>
+              <div class="pf-actions"><button type="button" class="btn btn-small btn-ghost" data-cancel="password">Cancel</button><button class="btn btn-small" type="submit" id="pwSend">Send verification code</button></div>
+            </form>
+
+            <form id="pwCodeForm" class="pf-step" novalidate hidden>
+              <div class="pf-sent">📧 We sent a 6-digit code to <strong id="pwSentTo"></strong>. Enter it below to finish changing your password.</div>
+              <label class="form-label" for="pwCode">Verification code</label>
+              <input class="input pf-code" id="pwCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+              <div class="pf-msg" id="pwCodeMsg" role="alert" hidden></div>
+              <div class="pf-actions">
+                <button type="button" class="pf-link" id="pwResend">Resend code</button>
+                <span class="pf-spacer"></span>
+                <button type="button" class="btn btn-small btn-ghost" data-cancel="password">Cancel</button>
+                <button class="btn btn-small" type="submit" id="pwVerify">Verify &amp; change password</button>
+              </div>
+            </form>
+            <div class="pf-msg ok" id="pwDone" role="status" hidden></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+    <nav class="rs-bottom" aria-label="Quick navigation">
+    <a href="/resident/dashboard" data-nav="dashboard"><span class="rs-ico" aria-hidden="true">🏠</span>Home</a>
+    <a href="/resident/request" data-nav="request"><span class="rs-ico" aria-hidden="true">📝</span>Request</a>
+    <a href="/resident/inbox" data-nav="inbox"><span class="rs-ico" aria-hidden="true">📢</span>News<span class="rs-badge" data-inbox-badge hidden></span></a>
+    <button type="button" data-nav="assistant"><span class="rs-ico" aria-hidden="true">💬</span>Assistant</button>
+  </nav>
+  <script src="/assets/js/common.js"></script>
+  <script src="/assets/js/resident-shell.js"></script>
+  <script src="/assets/js/ai-chat.js" defer></script>
+  <script src="/assets/js/resident-profile.js?v=1"></script>
+</body>
+</html>

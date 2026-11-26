@@ -24,6 +24,8 @@ const {
   getAnnouncementForImage
 } = require('../actions/notification.actions');
 const { createAuditLog } = require('../actions/audit.actions');
+const bcrypt = require('bcryptjs');
+const profile = require('../actions/profile.actions');
 const { VALID_ID_TYPES, ALLOWED_UPLOAD_MIME, uploadToStorage, removeFromStorage, sendStoredFile, FILE_NOT_FOUND_PAGE } = require('../actions/upload.actions');
 
 const router = express.Router();
@@ -94,13 +96,135 @@ router.get('/api/announcements/:id/image', async (req, res) => {
 /* ================= PROFILE ================= */
 router.get('/api/resident/profile', requireResident, async (req, res) => {
   const result = await pool.query(
-    `SELECT resident_id, first_name, last_name, email, phone_number
+    `SELECT resident_id, first_name, middle_name, last_name, suffix, email, phone_number,
+            address, birth_date, gender, created_at
      FROM residents
      WHERE resident_id = $1
      LIMIT 1`,
     [req.session.resident.resident_id]
   );
-  res.json(result.rows[0]);
+  const row = result.rows[0];
+  if (!row) return res.status(404).json({ error: 'Profile not found.' });
+  const pending = await profile.pendingChanges(row.resident_id).catch(() => []);
+  res.json({
+    ...row,
+    pending: pending.map(p => ({ purpose: p.purpose, new_email: p.new_email ? profile.maskEmail(p.new_email) : null, expires_at: p.expires_at })),
+  });
+});
+
+/* ================= PROFILE: edit ================= */
+router.get('/resident/profile', requireResident, (req, res) =>
+  res.sendFile(path.join(__dirname, '../dashboards/resident_profile.html'))
+);
+
+const STRONG_PASSWORD = p => p.length >= 8 && /[a-zA-Z]/.test(p) && /[0-9]/.test(p) && /[^a-zA-Z0-9]/.test(p);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+async function loadResident(req) {
+  const { rows } = await pool.query(
+    `SELECT resident_id, first_name, last_name, email, phone_number, password_hash FROM residents WHERE resident_id = $1`,
+    [req.session.resident.resident_id]);
+  return rows[0];
+}
+function profileError(res, err) {
+  if (err.status) return res.status(err.status).json({ error: err.message });
+  console.error('Profile error:', err);
+  return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+}
+async function profileAudit(residentId, action, description, metadata = {}) {
+  await createAuditLog({ actorRole: 'resident', targetType: 'resident', targetId: residentId, action, description, metadata }).catch(() => {});
+}
+
+// Contact number — no verification needed
+router.post('/api/resident/profile/contact', requireResident, async (req, res) => {
+  try {
+    let phone = String(req.body.phone_number || '').replace(/\D/g, '');
+    if (phone.startsWith('63')) phone = phone.slice(2);
+    if (phone.startsWith('0')) phone = phone.slice(1);
+    if (!/^9\d{9}$/.test(phone)) return res.status(400).json({ error: 'Enter a valid mobile number: 10 digits starting with 9 (e.g. 9171234567).', field: 'phone_number' });
+    const me = await loadResident(req);
+    const stored = '0' + phone;
+    if (me.phone_number === stored) return res.json({ ok: true, phone_number: stored, unchanged: true });
+    await pool.query('UPDATE residents SET phone_number = $1 WHERE resident_id = $2', [stored, me.resident_id]);
+    await profileAudit(me.resident_id, 'RESIDENT_CONTACT_UPDATED', `${me.first_name} ${me.last_name} updated their contact number.`);
+    res.json({ ok: true, phone_number: stored });
+  } catch (err) { profileError(res, err); }
+});
+
+// Email — step 1: confirm current password, send a code to the NEW address
+router.post('/api/resident/profile/email/start', requireResident, async (req, res) => {
+  try {
+    const newEmail = String(req.body.new_email || '').trim().toLowerCase();
+    const me = await loadResident(req);
+    if (!EMAIL_RE.test(newEmail)) return res.status(400).json({ error: 'Please enter a valid email address.', field: 'new_email' });
+    if (newEmail === String(me.email).toLowerCase()) return res.status(400).json({ error: 'That is already your email address.', field: 'new_email' });
+    if (!(await bcrypt.compare(String(req.body.current_password || ''), me.password_hash))) {
+      return res.status(400).json({ error: 'Your current password is incorrect.', field: 'current_password' });
+    }
+    const { rows: taken } = await pool.query(
+      `SELECT 1 FROM residents WHERE LOWER(email) = $1 AND resident_id <> $2
+       UNION ALL SELECT 1 FROM users WHERE LOWER(email) = $1 LIMIT 1`, [newEmail, me.resident_id]);
+    if (taken.length) return res.status(400).json({ error: 'This email is already used by another account.', field: 'new_email' });
+    const out = await profile.startChange({ resident: me, purpose: 'email', sendTo: newEmail, newEmail });
+    res.json({ ok: true, ...out });
+  } catch (err) { profileError(res, err); }
+});
+
+// Email — step 2: enter the code
+router.post('/api/resident/profile/email/confirm', requireResident, async (req, res) => {
+  try {
+    const me = await loadResident(req);
+    const v = await profile.confirmChange({ residentId: me.resident_id, purpose: 'email', code: req.body.code });
+    const { rows: taken } = await pool.query(
+      `SELECT 1 FROM residents WHERE LOWER(email) = $1 AND resident_id <> $2
+       UNION ALL SELECT 1 FROM users WHERE LOWER(email) = $1 LIMIT 1`, [v.new_email, me.resident_id]);
+    if (taken.length) return res.status(400).json({ error: 'This email was just taken by another account. Please use a different one.' });
+    await pool.query('UPDATE residents SET email = $1 WHERE resident_id = $2', [v.new_email, me.resident_id]);
+    req.session.resident.email = v.new_email;
+    await profileAudit(me.resident_id, 'RESIDENT_EMAIL_CHANGED', `${me.first_name} ${me.last_name} changed their email (verified).`, { old_email: me.email, new_email: v.new_email });
+    profile.sendNotice({ to: me.email, firstName: me.first_name, title: 'Your email was changed',
+      body: `The email for your Mabayuan Express account was changed to <strong>${profile.maskEmail(v.new_email)}</strong>. From now on, log in and receive updates with the new address.` });
+    res.json({ ok: true, email: v.new_email });
+  } catch (err) { profileError(res, err); }
+});
+
+// Password — step 1: check current + new password, send a code to the CURRENT email
+router.post('/api/resident/profile/password/start', requireResident, async (req, res) => {
+  try {
+    const { current_password, new_password, confirm_password } = req.body;
+    const me = await loadResident(req);
+    if (!(await bcrypt.compare(String(current_password || ''), me.password_hash))) {
+      return res.status(400).json({ error: 'Your current password is incorrect.', field: 'current_password' });
+    }
+    const pw = String(new_password || '');
+    if (!STRONG_PASSWORD(pw)) return res.status(400).json({ error: 'Your new password must be at least 8 characters and include a letter, a number and a special character.', field: 'new_password' });
+    if (pw !== String(confirm_password || '')) return res.status(400).json({ error: 'The new passwords do not match.', field: 'confirm_password' });
+    if (await bcrypt.compare(pw, me.password_hash)) return res.status(400).json({ error: 'Your new password must be different from your current one.', field: 'new_password' });
+    const newHash = await bcrypt.hash(pw, 10);
+    const out = await profile.startChange({ resident: me, purpose: 'password', sendTo: me.email, newPasswordHash: newHash });
+    res.json({ ok: true, ...out });
+  } catch (err) { profileError(res, err); }
+});
+
+// Password — step 2: enter the code
+router.post('/api/resident/profile/password/confirm', requireResident, async (req, res) => {
+  try {
+    const me = await loadResident(req);
+    const v = await profile.confirmChange({ residentId: me.resident_id, purpose: 'password', code: req.body.code });
+    await pool.query('UPDATE residents SET password_hash = $1 WHERE resident_id = $2', [v.new_password_hash, me.resident_id]);
+    await profileAudit(me.resident_id, 'RESIDENT_PASSWORD_CHANGED', `${me.first_name} ${me.last_name} changed their password (verified).`);
+    profile.sendNotice({ to: me.email, firstName: me.first_name, title: 'Your password was changed',
+      body: 'The password for your Mabayuan Express account was just changed. Use your new password the next time you log in.' });
+    res.json({ ok: true });
+  } catch (err) { profileError(res, err); }
+});
+
+// Cancel a pending email/password change
+router.post('/api/resident/profile/:purpose(email|password)/cancel', requireResident, async (req, res) => {
+  try {
+    await profile.cancelChange(req.session.resident.resident_id, req.params.purpose);
+    res.json({ ok: true });
+  } catch (err) { profileError(res, err); }
 });
 
 // Lightweight "me" endpoint — includes valid_id_path for re-upload check

@@ -22,6 +22,20 @@ async function ensureSchema() {
       UPDATE captain_messages SET publish_at = created_at, notified_at = created_at WHERE publish_at IS NULL;
       CREATE INDEX IF NOT EXISTS idx_captain_messages_publish ON captain_messages (publish_at DESC);
 
+      CREATE TABLE IF NOT EXISTS profile_verifications (
+        verification_id   SERIAL PRIMARY KEY,
+        resident_id       INTEGER     NOT NULL,
+        purpose           VARCHAR(20) NOT NULL,          -- 'email' | 'password'
+        new_email         VARCHAR(160),
+        new_password_hash TEXT,
+        code_hash         TEXT        NOT NULL,
+        attempts          INTEGER     NOT NULL DEFAULT 0,
+        expires_at        TIMESTAMPTZ NOT NULL,
+        consumed_at       TIMESTAMPTZ,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_profile_verif_resident ON profile_verifications (resident_id, purpose);
+
       CREATE TABLE IF NOT EXISTS ai_inquiries (
         inquiry_id   SERIAL PRIMARY KEY,
         resident_id  INTEGER,

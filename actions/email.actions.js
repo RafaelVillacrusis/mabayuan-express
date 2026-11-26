@@ -340,7 +340,7 @@ async function sendRegistrationReceivedEmail({ firstName, lastName, email }) {
   }
 }
 
-module.exports = { sendAccountApprovedEmail, sendAccountDeclinedEmail, sendRegistrationReceivedEmail, sendReadyForPickupEmail, sendRequestApprovedEmail, sendRequestDeclinedEmail };
+module.exports = { sendBrevoEmail, sendAccountApprovedEmail, sendAccountDeclinedEmail, sendRegistrationReceivedEmail, sendReadyForPickupEmail, sendRequestApprovedEmail, sendRequestDeclinedEmail };
 
 async function sendReadyForPickupEmail({ firstName, lastName, email, documentName, releaseDate, transactionNo }) {
   const fullName = `${firstName} ${lastName}`;
